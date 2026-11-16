@@ -704,6 +704,15 @@
       "title": "The Future of Prediction Markets is Decision Markets (Devcon 8 workshop, 6 Nov, Ethereum Foundation recording)",
       "speaker": "Clément Lesaege and Devansh Mehta",
       "url": "https://www.youtube.com/watch?v=tb-Gah-wTzM"
+    },
+    {
+      "id": "2026-11-16-blog-kleros-development-update-october-2026",
+      "kind": "material",
+      "source": "https://blog.kleros.io/kleros-development-update-october-2026/",
+      "event_slug": "ground-truth-mumbai",
+      "material_kind": "link",
+      "title": "Kleros blog, October 2026 development update: the Devcon side-event markets closed, and the side event was Truth Pays, a tuk-tuk street food and cocktail night in Mumbai on 4 November (Foresight section)",
+      "url": "https://blog.kleros.io/kleros-development-update-october-2026/"
     }
   ]
 }
