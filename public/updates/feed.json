@@ -713,6 +713,153 @@
       "material_kind": "link",
       "title": "Kleros blog, October 2026 development update: the Devcon side-event markets closed, and the side event was Truth Pays, a tuk-tuk street food and cocktail night in Mumbai on 4 November (Foresight section)",
       "url": "https://blog.kleros.io/kleros-development-update-october-2026/"
+    },
+    {
+      "id": "2026-11-17-yt-EDV8zJWeVAc",
+      "kind": "material",
+      "source": "https://www.youtube.com/watch?v=EDV8zJWeVAc",
+      "event_slug": "legal-governance-hub-devcon-8-2026",
+      "material_kind": "video",
+      "title": "From ODR to AI-Assisted Dispute Resolution: Saravanan Dhandapani of CNICA on AI in arbitration (Legal & Governance Hub, Devcon 8, 5 Nov, Kleros recording)",
+      "speaker": "Saravanan Dhandapani",
+      "url": "https://www.youtube.com/watch?v=EDV8zJWeVAc"
+    },
+    {
+      "id": "2026-11-17-yt-BVwDJsVZtFE",
+      "kind": "material",
+      "source": "https://www.youtube.com/watch?v=BVwDJsVZtFE",
+      "event_slug": "legal-governance-hub-devcon-8-2026",
+      "material_kind": "video",
+      "title": "Can a Fintech Let Users Judge Its Complaints? Federico Ast, Lucía Bocalandro and Facundo Trotz on Lemon (Legal & Governance Hub, Devcon 8, 5 Nov, Kleros recording)",
+      "speaker": "Federico Ast, Lucía Bocalandro and Facundo Trotz",
+      "url": "https://www.youtube.com/watch?v=BVwDJsVZtFE"
+    },
+    {
+      "id": "2026-11-17-yt-yyz-AF8DGVo",
+      "kind": "material",
+      "source": "https://www.youtube.com/watch?v=yyz-AF8DGVo",
+      "event_slug": "legal-governance-hub-devcon-8-2026",
+      "material_kind": "video",
+      "title": "AI Art's Copyright Disputes: Parul Anand of the Kleros Fellowship of Justice (Legal & Governance Hub, Devcon 8, 5 Nov, Kleros recording)",
+      "speaker": "Parul Anand",
+      "url": "https://www.youtube.com/watch?v=yyz-AF8DGVo"
+    },
+    {
+      "id": "2026-11-17-yt-PLRpKt6uAMHQ8",
+      "kind": "material",
+      "source": "https://www.youtube.com/playlist?list=PLRpKt6uAMHQ8",
+      "event_slug": "legal-governance-hub-devcon-8-2026",
+      "material_kind": "link",
+      "title": "YouTube playlist: the Legal & Governance Hub recordings from Devcon 8 (Kleros channel)",
+      "url": "https://www.youtube.com/playlist?list=PLRpKt6uAMHQ8"
+    },
+    {
+      "id": "2026-11-17-x-2120589969454481574",
+      "kind": "material",
+      "source": "https://x.com/Kleros_io/status/2120589969454481574",
+      "event_slug": "legal-governance-hub-devcon-8-2026",
+      "material_kind": "social",
+      "title": "Kleros recap of the Legal & Governance Hub day on 5 Nov: one line from each of four talks, with a short video and the YouTube links in the reply",
+      "url": "https://x.com/Kleros_io/status/2120589969454481574"
+    },
+    {
+      "id": "2026-11-17-x-2122276785593168070",
+      "kind": "material",
+      "source": "https://x.com/Kleros_io/status/2122276785593168070",
+      "event_slug": "legal-governance-hub-devcon-8-2026",
+      "material_kind": "video",
+      "title": "Clip: Lucía Bocalandro walks through a Lemon case decided by jurors in Kleros Court (from 'Can a Fintech Let Users Judge Its Complaints?', 5 Nov)",
+      "speaker": "Lucía Bocalandro",
+      "url": "https://x.com/Kleros_io/status/2122276785593168070"
+    },
+    {
+      "id": "2026-11-17-x-2118702687663374640",
+      "kind": "material",
+      "source": "https://x.com/Kleros_io/status/2118702687663374640",
+      "event_slug": "devcon-8-mumbai",
+      "material_kind": "social",
+      "title": "Kleros recap of the two Jasmine Stage 4 lightning talks on 5 Nov: Facundo Trotz on the first Kleros pilots in Argentina, then Federico Ast on disputes between people and AI agents (with a clip)",
+      "speaker": "Facundo Trotz and Federico Ast",
+      "url": "https://x.com/Kleros_io/status/2118702687663374640"
+    },
+    {
+      "id": "2026-11-17-x-2119885709347537288",
+      "kind": "material",
+      "source": "https://x.com/Kleros_io/status/2119885709347537288",
+      "event_slug": "devcon-8-mumbai",
+      "material_kind": "video",
+      "title": "Clip from Facundo Trotz's Devcon 8 lightning talk (5 Nov): consumer complaints in Junín, Argentina",
+      "speaker": "Facundo Trotz",
+      "url": "https://x.com/Kleros_io/status/2119885709347537288"
+    },
+    {
+      "id": "2026-11-17-x-2120214130090979529",
+      "kind": "material",
+      "source": "https://x.com/Kleros_io/status/2120214130090979529",
+      "event_slug": "devcon-8-mumbai",
+      "material_kind": "video",
+      "title": "Clip from Facundo Trotz's Devcon 8 lightning talk (5 Nov): governments want a service, not a protocol, so Kleros started with advisory rulings in cities",
+      "speaker": "Facundo Trotz",
+      "url": "https://x.com/Kleros_io/status/2120214130090979529"
+    },
+    {
+      "id": "2026-11-17-x-2121163964994175337",
+      "kind": "material",
+      "source": "https://x.com/Kleros_io/status/2121163964994175337",
+      "event_slug": "devcon-8-mumbai",
+      "material_kind": "video",
+      "title": "Clip from Facundo Trotz's Devcon 8 lightning talk (5 Nov): why an Argentine consumer protection office sends its cases to a court where only certified lawyers can be drawn as jurors",
+      "speaker": "Facundo Trotz",
+      "url": "https://x.com/Kleros_io/status/2121163964994175337"
+    },
+    {
+      "id": "2026-11-17-x-2120553292472184975",
+      "kind": "material",
+      "source": "https://x.com/Kleros_io/status/2120553292472184975",
+      "event_slug": "devcon-8-mumbai",
+      "material_kind": "video",
+      "title": "Clip from Federico Ast's Devcon 8 lightning talk (5 Nov): does an AI agent have a right to a fair trial?",
+      "speaker": "Federico Ast",
+      "url": "https://x.com/Kleros_io/status/2120553292472184975"
+    },
+    {
+      "id": "2026-11-17-x-2118615110553858508",
+      "kind": "material",
+      "source": "https://x.com/Kleros_io/status/2118615110553858508",
+      "event_slug": "devcon-8-mumbai",
+      "material_kind": "image",
+      "title": "Kleros team group photo at the Devcon VIII India sign, posted on the last day (6 Nov)",
+      "url": "https://x.com/Kleros_io/status/2118615110553858508"
+    },
+    {
+      "id": "2026-11-17-x-2120230551722643928",
+      "kind": "material",
+      "source": "https://x.com/weiwei_ooi/status/2120230551722643928",
+      "event_slug": "devcon-8-mumbai",
+      "material_kind": "image",
+      "title": "Wei Wei Ooi's Devcon 8 wrap-up, with four photos from the week",
+      "speaker": "Wei Wei Ooi",
+      "url": "https://x.com/weiwei_ooi/status/2120230551722643928"
+    },
+    {
+      "id": "2026-11-17-x-2120063170744074622",
+      "kind": "material",
+      "source": "https://x.com/federicoast/status/2120063170744074622",
+      "event_slug": "devcon-8-mumbai",
+      "material_kind": "image",
+      "title": "Federico Ast's wrap-up of the Devcon 8 week in Mumbai, with four photos",
+      "speaker": "Federico Ast",
+      "url": "https://x.com/federicoast/status/2120063170744074622"
+    },
+    {
+      "id": "2026-11-17-x-2120374475506204809",
+      "kind": "material",
+      "source": "https://x.com/Kleros_io/status/2120374475506204809",
+      "event_slug": "onchain-legal-summit-devcon-india",
+      "material_kind": "video",
+      "title": "Clip: Federico Ast with Husam Abboud at the Onchain Legal Summit on who decides when deals between AI agents go wrong (the full session is on YouTube)",
+      "speaker": "Federico Ast and Husam Abboud",
+      "url": "https://x.com/Kleros_io/status/2120374475506204809"
     }
   ]
 }
