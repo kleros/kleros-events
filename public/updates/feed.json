@@ -896,6 +896,28 @@
           "Community"
         ]
       }
+    },
+    {
+      "id": "2026-11-18-web-ethcc-10",
+      "kind": "event",
+      "source": "https://ethcc.io/",
+      "event": {
+        "slug": "ethcc-10-cannes-2027",
+        "title": "EthCC[10]",
+        "kleros_role": "attending",
+        "organizer": "Ethereum France",
+        "event_type": "Conference",
+        "starts_on": "2027-04-12",
+        "ends_on": "2027-04-15",
+        "city": "Cannes",
+        "country": "France",
+        "region": "Europe",
+        "url": "https://ethcc.io",
+        "description": "EthCC[10], the Ethereum Community Conference, returns to the Palais des Festivals in Cannes from 12 to 15 April 2027. The Kleros team will be there.",
+        "topics": [
+          "Community"
+        ]
+      }
     }
   ]
 }
