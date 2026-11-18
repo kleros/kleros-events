@@ -17,6 +17,12 @@ export async function GET(request: Request) {
     ok = !error;
   }
   if (!ok) {
+    // an old sign-in email opened again by someone who is still signed in: just go on
+    const { data } = await (await supabaseServer()).auth.getUser();
+    if (data.user && !data.user.is_anonymous) {
+      const dest = new URL(next, url.origin);
+      return NextResponse.redirect(dest.origin === url.origin ? dest : new URL("/me", url.origin));
+    }
     const back = new URL("/login", url.origin);
     back.searchParams.set("next", next);
     back.searchParams.set("failed", "1");

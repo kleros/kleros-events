@@ -73,6 +73,12 @@
    at 57px) is about 164px tall with a one-line title, so it ends near 221px. 124px more lands the
    heading about 16px below it. The selector outranks globals.css's section[id] rule. */
 .ed-body > .ed-sec { scroll-margin-top: 124px; }
+/* keep the pinned bar one row tall on wide screens, so the offset above holds for long titles too */
+@media (min-width: 861px) {
+  .ed-top { flex-wrap: nowrap; }
+  .ed-title { min-width: 0; }
+  .ed-title h1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
+}
 .ed-sec-h { display: grid; gap: 2px; }
 .ed-sec-h p { margin: 0; }
 
@@ -88,6 +94,8 @@
   .acc-form .btn { justify-self: start; }
   /* the site header wraps on small screens, so the editor header scrolls with the page */
   .ed-head { position: static; }
+  /* all section links stay in view on a phone instead of scrolling off with a hidden scrollbar */
+  .ed-anchors { flex-wrap: wrap; overflow: visible; }
   /* nothing is pinned here, and html's scroll-padding (16px) is room enough */
   .ed-body > .ed-sec { scroll-margin-top: 0; }
 }

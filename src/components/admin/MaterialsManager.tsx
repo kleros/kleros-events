@@ -77,7 +77,7 @@ export default function MaterialsManager({ event, initial }: { event: EventRow; 
         extra={<>
           {/* opens the recorder on the event page */}
           <a className="btn primary" href={`/events/${event.slug}#record`}><span className="dot" aria-hidden /> Record a session</a>
-          <button className="btn" type="button" aria-expanded={talkOpen} onClick={() => setTalkOpen(!talkOpen)}>Add a recorded talk (slides + audio file)</button>
+          <button className="btn" type="button" style={{ whiteSpace: "normal", textAlign: "left" }} aria-expanded={talkOpen} onClick={() => setTalkOpen(!talkOpen)}>Add a recorded talk (slides + audio file)</button>
         </>} />
       {err && <div className="note">{err}</div>}
       {talkOpen && <TalkBuilder eventId={event.id} slug={event.slug} onSaved={(m) => { added(m); setTalkOpen(false); }} />}

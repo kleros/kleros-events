@@ -751,7 +751,7 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
         </div>
       )}
 
-      {warn && !((phase === "review" || phase === "saving") && blob) && <div className="note" role="status">{warn}</div>}
+      {warn && phase !== "saved" && !((phase === "review" || phase === "saving") && blob) && <div className="note" role="status">{warn}</div>}
       {err && <div className="note" role="alert">{err}</div>}
       {leftoverList}
     </section>

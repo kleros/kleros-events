@@ -200,7 +200,7 @@ export default function AskWidget({ enabled, signedIn, account, note }: {
   return (
     <>
       {!open && (
-        <button type="button" ref={fab} className="ask-fab" onClick={() => setOpen(true)} aria-label="Ask about Kleros events">
+        <button type="button" ref={fab} className="ask-fab" onClick={() => setOpen(true)} aria-label="Ask AI about Kleros events">
           <span aria-hidden>✦</span> <span className="ask-fab-label">Ask AI</span>
         </button>
       )}
@@ -233,7 +233,7 @@ export default function AskWidget({ enabled, signedIn, account, note }: {
               <div className="ask-empty">
                 {note && <DevNote note={note} />}
                 <p className="muted small">Ask about Kleros events, talks and recordings. {signedIn ? "Answers include everything your account can see." : "Answers cover what is public on this site."}</p>
-                <p className="muted small">This assistant answers from the site. It does not pass questions to speakers. Use the Questions section of an event page for that.</p>
+                <p className="muted small">This assistant answers from the site. It does not pass questions to speakers. For that, use Ask the speaker on the event page.</p>
                 <div className="ask-chips">
                   {suggestions(path).map((s) => <button key={s} type="button" className="ask-chip" onClick={(e) => {
                     // keep keyboard focus in the panel, but don't pop up a phone's keyboard over the answer

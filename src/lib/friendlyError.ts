@@ -6,7 +6,7 @@ import { fmtSize } from "./format";
 /** Uploaded files must stay under this (the storage plan's limit). */
 export const MAX_UPLOAD_BYTES = 50e6;
 
-export const NO_ACCESS = "This account cannot change this. Check that you are signed in with your Kleros email.";
+export const NO_ACCESS = "This account cannot change this. Check that you are signed in with the email address that has access.";
 const SIGNED_OUT = "Your sign-in expired. Sign in again and retry.";
 const TOO_BIG = "This file is over 50 MB. Upload it to Google Drive or YouTube and add the link instead.";
 const OFFLINE = "No connection. Check the wifi and try again.";

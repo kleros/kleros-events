@@ -216,7 +216,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
           <section id="ask" className="sec">
             <h2>{past ? "Questions for the speakers" : "Ask the speaker"}</h2>
-            <AskTheSpeaker eventId={e.id} signedIn={!!user} isTeam={canEdit} displayName={profile?.display_name ?? ""} slug={e.slug} past={past} />
+            <AskTheSpeaker eventId={e.id} signedIn={!!user} isTeam={canEdit} displayName={profile?.display_name ?? ""} slug={e.slug} past={past} isPrivate={e.visibility === "private"} />
           </section>
 
           {/* visitors often land here from a QR code or a post, so say what Kleros is */}

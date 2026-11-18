@@ -50,7 +50,7 @@ export default function TeamPicker({ eventId, roster, initial }: { eventId: stri
     }
     saved.current = { ...saved.current, [id]: part };
   }
-  if (!roster.length) return <div className="empty"><b>No team members yet</b><Link href="/admin/team">Add the Kleros team roster</Link> first.</div>;
+  if (!roster.length) return <div className="empty"><b>No team members yet</b><Link href="/admin/team">Add people to list on event pages</Link> first.</div>;
   return (
     <div className="panel">
       {roster.map((m) => (

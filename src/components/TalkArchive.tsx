@@ -74,7 +74,7 @@ export default function TalkArchive({ materials, events }: { materials: Material
         </div>
       </div>
       <div className="refine">
-        <input className="search" type="search" placeholder="Search by title, speaker or event" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search the archive" />
+        <input className="search" type="search" placeholder="Search by title, speaker or event" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search the talks" />
       </div>
       <div className="result-line" role="status">
         <span>{plural(shown, current.one, current.many)} from {plural(groups.length, "event")}</span>
@@ -118,8 +118,8 @@ export default function TalkArchive({ materials, events }: { materials: Material
       )}
       {!groups.length && (
         <div className="empty">
-          <b>{materials.length ? "Nothing matches" : "Nothing in the archive yet"}</b>
-          {materials.length ? (tab !== "all" && !needle ? "Try Everything to see slides, photos and posts too." : "Try another type or a shorter search.") : "Talks, slides and recordings appear here after each event."}
+          <b>{!materials.length ? "Nothing here yet" : needle ? "Nothing matches" : `No ${current.many} yet`}</b>
+          {materials.length ? (needle ? "Try another type or a shorter search." : tab === "talks" ? "Try Everything to see slides, photos and posts too." : tab !== "all" ? "Try Everything to see all talks, files and links." : "Try another type.") : "Talks, slides and recordings appear here after each event."}
         </div>
       )}
     </div>

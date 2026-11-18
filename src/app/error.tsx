@@ -14,7 +14,7 @@ export default function PageError({ error, reset }: { error: Error & { digest?: 
     <div className="wrap page con-gate">
       <div className="eyebrow">Something went wrong</div>
       <h1>This page could not load</h1>
-      <p className="muted">The events did not load just now. Try again in a minute.</p>
+      <p className="muted">Something on this page did not load just now. Try again in a minute.</p>
       <div className="row-flex">
         {/* the error came from the server, so fetch the page again before rendering it again */}
         <button className="btn primary" onClick={() => startTransition(() => { router.refresh(); reset(); })}>Try again</button>

@@ -103,7 +103,7 @@
   .studio-tabs button { flex: 1 1 auto; padding-inline: 8px; white-space: normal; line-height: 1.25; }
   .recl-row { grid-template-columns: 36px minmax(0, 1fr); }
   .recl-row .ico { width: 36px; height: 36px; }
-  .recl-side { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; align-items: center; }
+  .recl-side { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; justify-content: flex-start; align-items: center; }
   .le-inner { padding: var(--s-4); }
   .le-foot .btn { flex: 1 1 auto; justify-content: center; }
   .le-foot > .muted { flex-basis: 100%; }

@@ -26,7 +26,7 @@ export default function CollaboratorsEditor({ eventId, slug, title, creatorEmail
   useEffect(() => () => clearTimeout(timer.current), []);
 
   async function copyInvite() {
-    const msg = `You have been added to ${title} on Kleros Events. Open ${window.location.origin}/events/${slug} and sign in with this email address.`;
+    const msg = `You have been added to ${title} on Kleros Events. Open ${window.location.origin}/events/${slug} and sign in with the email address you were added with.`;
     try {
       await navigator.clipboard.writeText(msg);
       setManual(""); setCopied(true);

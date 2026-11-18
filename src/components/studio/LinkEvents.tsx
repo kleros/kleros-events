@@ -8,7 +8,7 @@ import { fmtRange, place, slugify, todayIso } from "@/lib/format";
 import { friendlyError, NO_ACCESS } from "@/lib/friendlyError";
 import type { KlerosRole } from "@/lib/types";
 
-const PRIVATE_ONLY = "Private events take only recordings made for them. Record from the private event's page next time.";
+const PRIVATE_ONLY = "Private events take only items added on their own page. To show it there, open the private event and add it again with Add a link or post, or upload the file there.";
 
 /**
  * "Link to events": a dialog to pick any number of events (drafts included) for a recording,
@@ -128,7 +128,7 @@ export default function LinkEvents({ materialId, title, linked, onChange, label 
             <div className="le-title">
               <div className="eyebrow">Link to events</div>
               <h2 id={`le-h-${materialId}`}>{title}</h2>
-              <p className="muted small">A recording can belong to several events. It shows in the Talks of each one, and in the archive under each.</p>
+              <p className="muted small">A recording can belong to several events. It shows in the Talks of each one, and on the Talks page under each.</p>
             </div>
             <button type="button" className="btn ghost sm le-x" onClick={close} aria-label="Close">✕</button>
           </header>

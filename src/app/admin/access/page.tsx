@@ -4,7 +4,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import NotTeam from "@/components/NotTeam";
 import AccessManager, { type AccessRow } from "@/components/admin/AccessManager";
 
-export const metadata: Metadata = { title: "Access" };
+export const metadata: Metadata = { title: "Who can sign in" };
 export const dynamic = "force-dynamic";
 
 export default async function AccessPage() {
@@ -14,7 +14,7 @@ export default async function AccessPage() {
   const head = (
     <header className="adm-head">
       <div>
-        <h1>Access</h1>
+        <h1>Who can sign in</h1>
         <p className="muted">Anyone signing in with a confirmed @kleros.io email gets team access: they can create events and run them with Run live. Admins can give access to other people by email or remove it. Wei Wei is the master admin.</p>
       </div>
     </header>

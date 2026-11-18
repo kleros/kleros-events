@@ -62,7 +62,7 @@ export default async function EditEventPage({ params, searchParams }: { params: 
           <div className="ed-top">
             <div className="ed-title">
               <Link href={isTeam ? "/admin" : "/me"} className="small muted ed-back">← {isTeam ? "Team desk" : "My events"}</Link>
-              <h1>{e.title}</h1>
+              <h1 title={e.title}>{e.title}</h1>
               <div className="meta">
                 <span>{fmtRange(e.starts_on, e.ends_on)}</span><span aria-hidden>·</span><span>{place(e)}</span>
                 {isPrivate ? <span className="pill draft">Private</span> : e.status === "draft" ? <span className="pill plain">Draft</span> : <span className="pill live">Published</span>}
@@ -105,7 +105,7 @@ export default async function EditEventPage({ params, searchParams }: { params: 
           <TeamPicker eventId={id} roster={(roster.data ?? []) as TeamMember[]} initial={team.data ?? []} />
         </section>
         <section id="materials" className="ed-sec">
-          <div className="ed-sec-h"><h2>Talks, files and links</h2><p className="muted small">Talks, slides, recordings and links, listed on the event page and in the archive.</p></div>
+          <div className="ed-sec-h"><h2>Talks, files and links</h2><p className="muted small">Talks, slides, recordings and links, listed on the event page and on the Talks page.</p></div>
           <MaterialsManager event={e} initial={materials} />
         </section>
       </div>

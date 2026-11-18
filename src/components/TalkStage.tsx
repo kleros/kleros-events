@@ -179,8 +179,8 @@ export default function TalkStage({ pdf, mode, audioUrl, marks, notes, onNotes, 
           <div className="row-flex">
             <button className="btn sm" onClick={() => (audio.current!.paused ? audio.current!.play() : audio.current!.pause())} aria-label={playing ? "Pause" : "Play"}>{playing ? "❚❚" : "▶"}</button>
             <span className="mono small" style={{ whiteSpace: "nowrap" }}>{fmtDur(time)} / {fmtDur(total)}</span>
-            {/* a tap on the slider below has already seeked: its click is ignored here */}
-            <div className="tl" onClick={(e) => { if (mode === "sync" || !total || e.target instanceof HTMLInputElement) return; const r = e.currentTarget.getBoundingClientRect(); audio.current!.currentTime = ((e.clientX - r.left) / r.width) * total; }}>
+            {/* a tap on the invisible slider below lands here too (an iPhone moves a slider only from its thumb), so seek from the tap */}
+            <div className="tl" onClick={(e) => { if (mode === "sync" || !total) return; const r = e.currentTarget.getBoundingClientRect(); audio.current!.currentTime = ((e.clientX - r.left) / r.width) * total; }}>
               {total && ms.length ? ms.map((m, i) => { const end = i + 1 < ms.length ? ms[i + 1].t : total; return <span key={i} className={m.p === page ? "cur" : ""} title={`Slide ${m.p} · ${fmtDur(m.t)}`} style={{ flex: Math.max(0.5, end - m.t) }} />; }) : <span style={{ flex: 1 }} />}
               <i className="head" style={{ left: total ? `${Math.min(100, (time / total) * 100)}%` : 0 }} />
               {/* invisible native slider over the strip: arrow keys and a finger can seek too */}

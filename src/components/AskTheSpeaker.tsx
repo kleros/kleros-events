@@ -6,7 +6,7 @@ import { authorOf, byNew, byTop, useQuestions } from "@/lib/useQuestions";
 import { qaError } from "@/lib/qaErrors";
 import type { Question } from "@/lib/types";
 
-export default function AskTheSpeaker({ eventId, signedIn, isTeam, displayName, slug, past = false }: { eventId: string; signedIn: boolean; isTeam: boolean; displayName: string; slug: string; past?: boolean }) {
+export default function AskTheSpeaker({ eventId, signedIn, isTeam, displayName, slug, past = false, isPrivate = false }: { eventId: string; signedIn: boolean; isTeam: boolean; displayName: string; slug: string; past?: boolean; isPrivate?: boolean }) {
   // the same live list as the phone page: realtime filtered to this event, reloads gathered and spread out
   const { questions, myVotes, uid, reload } = useQuestions(eventId, { poll: false });
   const [body, setBody] = useState("");
@@ -84,9 +84,11 @@ export default function AskTheSpeaker({ eventId, signedIn, isTeam, displayName, 
           </div>
         );
       })}
-      {!list.length && <p className="quiet-empty">{past
-        ? "No questions yet. The Kleros team reads every question left here. Answers are not posted on this page, so to hear back by email, use Request a meeting."
-        : "No questions yet. Questions work during the talk and after it, and the speakers see them all."}</p>}
+      {!list.length && <p className="quiet-empty">{isPrivate
+        ? "No questions yet. Only the people who can open this event see the questions left here."
+        : past
+          ? "No questions yet. The Kleros team reads every question left here. Answers are not posted on this page, so to hear back by email, use Request a meeting under Meet Kleros."
+          : "No questions yet. Questions work during the talk and after it, and the speakers see them all."}</p>}
     </div>
   );
 }

@@ -5,7 +5,7 @@ import NotTeam from "@/components/NotTeam";
 import RosterEditor from "@/components/admin/RosterEditor";
 import type { TeamMember } from "@/lib/types";
 
-export const metadata: Metadata = { title: "Team roster" };
+export const metadata: Metadata = { title: "People on event pages" };
 export const dynamic = "force-dynamic";
 
 export default async function TeamPage() {
@@ -17,7 +17,7 @@ export default async function TeamPage() {
     <div className="wrap page stack adm-page">
       <header className="adm-head">
         <div>
-          <h1>Team roster</h1>
+          <h1>People on event pages</h1>
           <p className="muted">The people who can be listed on event pages. Adding a booking link turns on “Pick a time” for visitors. Changes save when a field loses focus.</p>
         </div>
       </header>

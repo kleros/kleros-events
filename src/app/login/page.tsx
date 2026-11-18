@@ -5,7 +5,7 @@ import { safeNext } from "@/lib/format";
 export const metadata: Metadata = { title: "Sign in" };
 
 // Pages only the team (or people invited to a private event) can open.
-const isHost = (next: string) => /\/host(?=[/?#]|$)/.test(next);
+const isHost = (next: string) => /\/host(?=[/?#]|$)/.test(next) || /^\/admin\/events\//.test(next);
 const forTeam = (next: string) => /^\/(admin|record)(?=[/?#]|$)/.test(next) || isHost(next);
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; failed?: string }> }) {
@@ -21,7 +21,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       )}
       {forTeam(next) && (
         <p className="muted small">
-          Team sign-in: use your @kleros.io address.
+          Team sign-in: use your @kleros.io address, or the email address you were given access with.
           {isHost(next) && " Invited to run a private event? Use the email address that was invited."}
         </p>
       )}

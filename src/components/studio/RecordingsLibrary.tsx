@@ -72,8 +72,18 @@ export default function RecordingsLibrary({ materials, events, txStatus, linksRe
     const { data, error } = await supabaseBrowser().from("materials").delete().eq("id", m.id).select("id");
     if (error) { setErr(friendlyError(error)); return; }
     if (!data?.length) { setErr(NO_ACCESS); return; }
-    // files go after the row, once nothing uses them
-    const filesGone = await removeFiles([m.file_path, m.pdf_path, m.audio_path]);
+    // files go after the row, and only those no other item still uses (as Take the PDF off does)
+    const sb = supabaseBrowser();
+    const free: string[] = [];
+    let checked = true;
+    for (const p of [...new Set([m.file_path, m.pdf_path, m.audio_path])]) {
+      if (!p || /^https?:\/\//.test(p)) continue;
+      const uses = await Promise.all((["file_path", "pdf_path", "audio_path"] as const).map((c) =>
+        sb.from("materials").select("id", { count: "exact", head: true }).eq(c, p)));
+      if (uses.some((r) => r.error)) checked = false;
+      else if (uses.every((r) => !r.count)) free.push(p);
+    }
+    const filesGone = (await removeFiles(free)) && checked;
     setGone((g) => [...g, m.id]);
     if (editing === m.id) setEditing("");
     if (!filesGone) setErr(`"${m.title}" is deleted, but its file could not be removed from storage. Send Wei Wei the title so the file can be cleared by hand.`);
@@ -114,6 +124,9 @@ export default function RecordingsLibrary({ materials, events, txStatus, linksRe
         <ul className="recl-list">
           {list.map((m) => {
             const evs = evsOf(m);
+            // an item on no event is listed only here, and this page lists recordings and videos only,
+            // so turning it into a post or a link would leave it on no page at all: names only
+            const ed = evs.length ? m : { ...m, kind: undefined };
             const tx = TX_LABEL[txStatus[m.id] ?? ""];
             const sub = [m.speaker, KIND_LABEL[m.kind] ?? m.kind, m.duration_seconds ? fmtDur(m.duration_seconds) : "", `added ${fmtRange(m.created_at.slice(0, 10))}`].filter(Boolean).join(" · ");
             return (
@@ -133,7 +146,7 @@ export default function RecordingsLibrary({ materials, events, txStatus, linksRe
                     )) : <span className="pill ex">Not linked to an event</span>}
                   </div>
                   {editing === m.id && (
-                    <MaterialEditor m={m} onCancel={() => setEditing("")}
+                    <MaterialEditor m={ed} onCancel={() => setEditing("")}
                       onSaved={(v) => setNames((n) => ({ ...n, [m.id]: v }))} />
                   )}
                 </div>
@@ -146,7 +159,7 @@ export default function RecordingsLibrary({ materials, events, txStatus, linksRe
                   )}
                   <div className="recl-acts">
                     <button className="btn sm ghost" type="button" aria-expanded={editing === m.id}
-                      onClick={() => setEditing(editing === m.id ? "" : m.id)}>{editLabel(m)}</button>
+                      onClick={() => setEditing(editing === m.id ? "" : m.id)}>{editLabel(ed)}</button>
                     {!(links[m.id] ?? []).length && (
                       <button className={`btn sm ghost${armed === `del:${m.id}` ? " danger-armed" : ""}`} type="button" onClick={() => del(m)}
                         aria-label={armed === `del:${m.id}` ? `Delete ${m.title} for good` : `Delete ${m.title}`}>
