@@ -1,4 +1,6 @@
-// How often people may ask. Outside the team, questions are taken only while the counts live in
+// How often people may ask. Search answers (the default) cost nothing and are only kept from
+// flooding the database, per server instance (takeSearch). For Claude answers, which are paid,
+// questions from outside the team are taken only while the counts live in
 // the database (SUPABASE_SERVICE_ROLE_KEY set and ask_take from migration 0013 or 0014), so the limits
 // hold across every server instance. Counts kept in each instance's memory would stop one person
 // but not a script that spreads its requests over many instances. The team, whose accounts are
@@ -116,7 +118,14 @@ export async function take(key: string, tier: Tier): Promise<Refusal | null> {
   return reason ? { status: 429, error: reason } : null;
 }
 
-// ---------------------------------------------------------------- in-memory fallback (team only)
+/** Plain search answers cost nothing; this only stops one address from flooding the database. */
+export function takeSearch(key: string, tier: Tier): Refusal | null {
+  if (tier === "team") return null;
+  const reason = takeHere(`search:${key}`, { burst: env("ASK_LIMIT_SEARCH", 40), daily: 0, overall: 0 });
+  return reason ? { status: 429, error: reason } : null;
+}
+
+// ---------------------------------------------------------------- in-memory counts (the team, and search)
 const recent = new Map<string, number[]>();
 
 function takeHere(key: string, l: Limits): string | null {

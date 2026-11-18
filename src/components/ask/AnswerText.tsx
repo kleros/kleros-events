@@ -48,7 +48,11 @@ export default function AnswerText({ text, links }: { text: string; links: Reado
   return <div className="ask-md">{blocks}</div>;
 }
 
-const TOKEN = /(\*\*[^*\n]+\*\*|\[[^\]\n]+\]\([^)\s]+\)|https?:\/\/[^\s)<>\]]+)/g;
+// bold, a link (its label may hold escaped brackets), a bare web address (without the full stop or
+// comma after it), or an escaped character: \ [ ] * and the # - + • > . ) and digits that would
+// otherwise start a heading or a list
+const TOKEN = /(\*\*(?:\\.|[^*\\\n])+\*\*|\[(?:\\.|[^\]\\\n])+\]\([^)\s]+\)|https?:\/\/[^\s)<>\]\\]*[^\s)<>\]\\.,;:!?'"\u201d\u2019]|\\[\\[\]*#\-+\u2022>.)0-9])/g;
+const unescape = (s: string) => s.replace(/\\([\\[\]*#\-+\u2022>.)0-9])/g, "$1");
 
 function Inline({ text, links }: { text: string; links: ReadonlySet<string> }) {
   const out: React.ReactNode[] = [];
@@ -56,10 +60,11 @@ function Inline({ text, links }: { text: string; links: ReadonlySet<string> }) {
   for (const m of text.matchAll(TOKEN)) {
     if (m.index! > at) out.push(text.slice(at, m.index));
     const tok = m[0];
-    if (tok.startsWith("**")) out.push(<b key={m.index}>{tok.slice(2, -2)}</b>);
+    if (tok.startsWith("\\")) out.push(tok.slice(1));
+    else if (tok.startsWith("**")) out.push(<b key={m.index}>{unescape(tok.slice(2, -2))}</b>);
     else if (tok.startsWith("[")) {
-      const [, label, href] = tok.match(/^\[([^\]]+)\]\(([^)\s]+)\)$/)!;
-      out.push(<SafeLink key={m.index} href={href} links={links} labelled>{label}</SafeLink>);
+      const [, label, href] = tok.match(/^\[((?:\\.|[^\]\\])+)\]\(([^)\s]+)\)$/)!;
+      out.push(<SafeLink key={m.index} href={href} links={links} labelled>{unescape(label)}</SafeLink>);
     } else out.push(<SafeLink key={m.index} href={tok} links={links}>{tok.replace(/^https?:\/\/(www\.)?/, "")}</SafeLink>);
     at = m.index! + tok.length;
   }

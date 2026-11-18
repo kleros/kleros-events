@@ -21,38 +21,14 @@ function suggestions(path: string) {
   return ["Which events are coming up?", "Which talks covered AI agents?", "Where will Kleros be next month?"];
 }
 
-/** A note for the team: one plain sentence, and the steps to switch it on. */
-export interface TeamNote { text: string; dev: string }
-
-/** The plain sentence, with the technical text folded away under it. */
-function DevNote({ note }: { note: TeamNote }) {
-  return (
-    <div className="note small ask-note">
-      <p>{note.text}</p>
-      <details className="small muted">
-        <summary>How to switch it on</summary>
-        <p>{note.dev}</p>
-      </details>
-    </div>
-  );
-}
-
-const SWITCHED_OFF: TeamNote = {
-  text: "The assistant is off until the site has an Anthropic API key. Until then, only the team sees this button.",
-  dev: "In the Claude Console (platform.claude.com), create an API key, ideally in a workspace with a monthly spend limit. On Netlify (Project configuration, Environment variables) and on Vercel (Settings, Environment Variables), add it as ANTHROPIC_API_KEY, then redeploy. To open it to visitors too, also add the secret key from Supabase (Project Settings, API Keys) as SUPABASE_SERVICE_ROLE_KEY.",
-};
-
 /**
- * The floating "Ask AI" button and its chat panel, on every page. Answers stream from /api/ask,
- * which looks things up with the visitor's own access. The conversation survives moving between
+ * The floating Ask button and its panel, on every page. Answers come from /api/ask, which looks
+ * things up with the visitor's own access: a smart search of the site by default (`ai` false), or
+ * Claude's written answers where those are switched on. The conversation survives moving between
  * pages (and a reload, within the tab), and belongs to one account: signing out or switching
  * accounts starts a new one, so nobody sees answers drawn from someone else's access.
  */
-export default function AskWidget({ enabled, signedIn, account, note }: {
-  enabled: boolean; signedIn: boolean; account: string;
-  /** for the team, while only the team can ask: what is missing */
-  note?: TeamNote;
-}) {
+export default function AskWidget({ ai, signedIn, account }: { ai: boolean; signedIn: boolean; account: string }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -131,14 +107,14 @@ export default function AskWidget({ enabled, signedIn, account, note }: {
 
   async function send(q: string) {
     const question = q.trim();
-    if (!question || busy || !enabled) return;
+    if (!question || busy) return;
     // a question goes back only with the answer it got; a stopped or failed one is left out
     const kept = (a?: Turn) => a?.role === "assistant" && !a.error && !a.stopped;
     const history = [...turns.filter((t, i) => (t.role === "assistant" ? kept(t) : kept(turns[i + 1]))), { role: "user" as const, content: question }];
     setTurns((t) => [...t, { role: "user", content: question }]);
     // a suggestion chip leaves what was typed in the box
     if (q === input) setInput("");
-    setDraft(""); setStatus("Thinking…"); setSaid(""); setBusy(true);
+    setDraft(""); setStatus(ai ? "Thinking…" : "Searching the site…"); setSaid(""); setBusy(true);
     const ctl = new AbortController();
     abort.current = ctl;
     const mine = key;
@@ -200,8 +176,8 @@ export default function AskWidget({ enabled, signedIn, account, note }: {
   return (
     <>
       {!open && (
-        <button type="button" ref={fab} className="ask-fab" onClick={() => setOpen(true)} aria-label="Ask AI about Kleros events">
-          <span aria-hidden>✦</span> <span className="ask-fab-label">Ask AI</span>
+        <button type="button" ref={fab} className="ask-fab" onClick={() => setOpen(true)} aria-label={ai ? "Ask AI about Kleros events" : "Ask about Kleros events"}>
+          <span aria-hidden>✦</span> <span className="ask-fab-label">{ai ? "Ask AI" : "Ask"}</span>
         </button>
       )}
       {open && (
@@ -214,7 +190,7 @@ export default function AskWidget({ enabled, signedIn, account, note }: {
           <header className="ask-head">
             <div>
               <b>Ask Kleros Events</b>
-              <span className="muted small">Answers come from this site</span>
+              <span className="muted small">{ai ? "Answers come from this site" : "Finds the answer on this site"}</span>
             </div>
             <div className="row-flex">
               {turns.length > 0 && !busy && <button type="button" className="btn sm ghost" onClick={() => { setTurns([]); setDraft(""); box.current?.focus(); }}>New</button>}
@@ -227,13 +203,10 @@ export default function AskWidget({ enabled, signedIn, account, note }: {
             // on a phone the panel covers the page: close it when a link in it was followed
             if (e.defaultPrevented && (e.target as Element).closest("a") && window.matchMedia("(max-width: 560px)").matches) close();
           }}>
-            {!enabled ? (
-              <DevNote note={SWITCHED_OFF} />
-            ) : turns.length === 0 && !busy ? (
+            {turns.length === 0 && !busy ? (
               <div className="ask-empty">
-                {note && <DevNote note={note} />}
-                <p className="muted small">Ask about Kleros events, talks and recordings. {signedIn ? "Answers include everything your account can see." : "Answers cover what is public on this site."}</p>
-                <p className="muted small">This assistant answers from the site. It does not pass questions to speakers. For that, use Ask the speaker on the event page.</p>
+                <p className="muted small">Ask about Kleros events, places, topics, speakers and what was said in a talk. {signedIn ? "Answers include everything your account can see." : "Answers cover what is public on this site."}</p>
+                <p className="muted small">Questions here are not passed to speakers. For that, use Ask the speaker on the event page.</p>
                 <div className="ask-chips">
                   {suggestions(path).map((s) => <button key={s} type="button" className="ask-chip" onClick={(e) => {
                     // keep keyboard focus in the panel, but don't pop up a phone's keyboard over the answer
@@ -264,8 +237,8 @@ export default function AskWidget({ enabled, signedIn, account, note }: {
           </div>
 
           <form className="ask-form" onSubmit={(e) => { e.preventDefault(); send(input); }}>
-            <textarea ref={box} value={input} rows={1} maxLength={2000} disabled={!enabled}
-              placeholder={enabled ? "Ask a question" : "Not switched on yet"} aria-label="Your question"
+            <textarea ref={box} value={input} rows={1} maxLength={2000}
+              placeholder={ai ? "Ask a question" : "An event, a place, a topic or a speaker"} aria-label="Your question"
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing && e.keyCode !== 229) { e.preventDefault(); send(input); } }} />
             {busy
@@ -274,9 +247,9 @@ export default function AskWidget({ enabled, signedIn, account, note }: {
                 if (e.detail > 1) return;
                 abort.current?.abort();
               }}>Stop</button>
-              : <button type="submit" className="btn sm primary" disabled={!enabled || !input.trim()}>Ask</button>}
+              : <button type="submit" className="btn sm primary" disabled={!input.trim()}>Ask</button>}
           </form>
-          <p className="ask-foot muted">Answers can be wrong. Check the linked pages. Not legal or financial advice.</p>
+          <p className="ask-foot muted">{ai ? "Answers can be wrong. Check the linked pages. Not legal or financial advice." : "Answers are matches from this site, with links to the pages."}</p>
         </section>
       )}
     </>

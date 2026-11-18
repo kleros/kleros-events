@@ -24,8 +24,8 @@ The rest are optional. Set them under **Project configuration → Environment va
 |---|---|---|
 | `NEXT_PUBLIC_SITE_URL` | no | Leave unset. Netlify's main site address is used for share links, QR codes and calendar files, and that becomes `https://events.kleros.io` once the domain is set as primary. |
 | `GROQ_API_KEY` | no | Turns on transcripts of recordings. Mark it as secret. |
-| `ANTHROPIC_API_KEY` | no | Turns on talk summaries and the site assistant (the Ask button). Mark it as secret. Give the key's Anthropic workspace a monthly spend limit (see the README under "Site assistant", with the other `ASK_*` settings). |
-| `SUPABASE_SERVICE_ROLE_KEY` | for the assistant outside the team | Required, with migration `0014_security.sql` run in Supabase, before visitors and accounts outside the team can use the assistant: it keeps their question limits in the database. Without it only the team sees the Ask button. It also lets a failed transcript run always record its error. Mark it as secret. |
+| `ANTHROPIC_API_KEY` | no | Turns on talk summaries. Ask does not need it: by default Ask is a free search of the site. Only with `ASK_PROVIDER=claude` as well does Ask write answers with Claude, which is paid; then give the key's Anthropic workspace a monthly spend limit (see the README under "Site assistant", with the other `ASK_*` settings). Mark it as secret. |
+| `SUPABASE_SERVICE_ROLE_KEY` | only for written answers outside the team | Only matters with `ASK_PROVIDER=claude`: with migration `0014_security.sql` run in Supabase, it keeps the question limits in the database so that visitors and accounts outside the team get Claude's written answers. Without it they get the free search, as everyone does by default. It also lets a failed transcript run always record its error. Mark it as secret. |
 
 Changing a variable needs a new deploy before it takes effect (**Deploys → Trigger deploy**).
 

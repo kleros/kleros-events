@@ -3,7 +3,7 @@
 // drafts for the team, private events for their members only. Nothing here writes.
 import type Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { fmtDur } from "@/lib/format";
+import { fmtDur, fold } from "@/lib/format";
 import type { Segment, Summary } from "@/lib/transcript/types";
 
 export interface Source { href: string; label: string }
@@ -23,7 +23,21 @@ type Json = Record<string, unknown>;
 const MAX_RESULT_CHARS = 60_000;
 const TRANSCRIPT_PAGE_CHARS = 45_000;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const SLUG = /^[a-z0-9][a-z0-9-]{0,199}$/;
+export const SLUG = /^[a-z0-9][a-z0-9-]{0,199}$/;
+
+/**
+ * Whether an address is a plain web address that is safe to show as a link: http or https, a host,
+ * no spaces, and none of the characters that could end a Markdown link early or start another.
+ */
+export function cleanUrl(u: string | null | undefined): u is string {
+  if (!u || u.length > 2000 || !/^https?:\/\/[^\s()<>[\]\\*"'`]+$/i.test(u)) return false;
+  try {
+    const p = new URL(u);
+    return (p.protocol === "https:" || p.protocol === "http:") && !!p.hostname && !p.username && !p.password;
+  } catch {
+    return false;
+  }
+}
 
 // ---------------------------------------------------------------- definitions
 
@@ -88,35 +102,61 @@ const ROLE: Record<string, string> = {
 };
 
 /** Words worth searching for: letters and digits only, so they are safe inside a PostgREST filter. */
-const STOP = new Set("the and for with that this what when where which who whom whose about from into over under than then them they their there were was are is be been being have has had does did do not but you your our out all any can could would should will just more most some such only own same very how why its it's of to in on at by an a or as if".split(" "));
-export function searchTerms(q: string): string[] {
+const STOP = new Set((
+  "the and for with that this what when where which who whom whose about from into over under than then them they their there were was are is be been being have has had does did do not but you your our out all any can could would should will just more most some such only own same very how why its it's of to in on at by an a or as if " +
+  // Spanish and Portuguese
+  "en de del la el los las que para con es por un una al lo se da dos das em um uma uns umas na no nas nos ao"
+).split(" "));
+export function searchTerms(q: string, limit = 6): string[] {
   const words = q.toLowerCase().normalize("NFKC").match(/[\p{L}\p{N}][\p{L}\p{N}-]*/gu) ?? [];
   const out: string[] = [];
   for (const w of words) {
     const t = w.replace(/^-+|-+$/g, "");
-    if (t.length < 2 || STOP.has(t) || out.includes(t)) continue;
+    if (t.length < 2 || STOP.has(t) || STOP.has(fold(t)) || out.includes(t)) continue;
     out.push(t);
-    if (out.length === 6) break;
+    if (out.length >= limit) break;
   }
   return out;
 }
 
-const orIlike = (cols: string[], terms: string[]) => cols.flatMap((c) => terms.map((t) => `${c}.ilike.*${t}*`)).join(",");
-const hits = (text: string, terms: string[]) => { const l = text.toLowerCase(); return terms.filter((t) => l.includes(t)).length; };
+/**
+ * A term as an ilike pattern that ignores accents: an accented letter, and from 4 letters on every
+ * vowel, matches any one letter, so "bogota" finds "Bogotá" and "lucía" finds "Lucia". The rows
+ * that come back are checked again with hits(), so the wider pattern only widens what is fetched.
+ */
+export function likeTerm(t: string) {
+  const long = t.length >= 4;
+  return [...t].map((c) => (fold(c) !== c || (long && /[aeiou]/.test(c)) ? "_" : c)).join("");
+}
+
+const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/**
+ * Whether a folded text has the term. Terms of up to 3 letters (like "ai" or "dao") must be whole
+ * words, so "ai" does not find "said" or "Chiang Mai"; longer ones may sit anywhere ("chain" finds
+ * "blockchain").
+ */
+export function hasTerm(text: string, term: string) {
+  const t = fold(term);
+  return t.length <= 3 ? new RegExp(`(?<![\\p{L}\\p{N}])${esc(t)}(?![\\p{L}\\p{N}])`, "u").test(text) : text.includes(t);
+}
+const short = (terms: string[]) => terms.some((t) => t.length <= 3);
+
+const orIlike = (cols: string[], terms: string[]) => cols.flatMap((c) => terms.map((t) => `${c}.ilike.*${likeTerm(t)}*`)).join(",");
+const hits = (text: string, terms: string[]) => { const l = fold(text); return terms.filter((t) => hasTerm(l, t)).length; };
 
 // Fields that hold an address the team set (event page, slides, material link, booking link).
 // Addresses inside descriptions or transcripts are not collected: anyone can put words there.
 const LINK_KEYS = new Set(["event_link", "link", "slides_link", "book_a_meeting"]);
-function collectLinks(v: unknown, into: Set<string>) {
+export function collectLinks(v: unknown, into: Set<string>) {
   if (Array.isArray(v)) { for (const x of v) collectLinks(x, into); return; }
   if (!v || typeof v !== "object") return;
   for (const [k, x] of Object.entries(v)) {
-    if (LINK_KEYS.has(k) && typeof x === "string") { if (/^https?:\/\//.test(x)) into.add(x); }
+    if (LINK_KEYS.has(k) && typeof x === "string") { if (cleanUrl(x)) into.add(x); }
     else collectLinks(x, into);
   }
 }
 
-function remember(ctx: ToolContext, href: string, label: string) {
+export function remember(ctx: ToolContext, href: string, label: string) {
   if (!ctx.sources.has(href)) ctx.sources.set(href, { href, label });
 }
 
@@ -134,7 +174,7 @@ type EventLite = {
   status: string; visibility: string; recap: string | null;
 };
 
-async function listEvents(ctx: ToolContext, input: { when: string; query: string | null }) {
+export async function listEvents(ctx: ToolContext, input: { when: string; query: string | null }) {
   const { data, error } = await ctx.sb.from("events")
     .select("id, slug, title, kleros_role, organizer, event_type, starts_on, ends_on, start_time, timezone, city, country, region, venue, topics, status, visibility, recap")
     .eq("is_example", false).order("starts_on", { ascending: true }).limit(500);
@@ -165,7 +205,7 @@ type MaterialRow = {
   pdf_path: string | null; audio_path: string | null; pages: number | null; duration_seconds: number | null; created_at: string;
 };
 
-async function getEvent(ctx: ToolContext, input: { slug: string }) {
+export async function getEvent(ctx: ToolContext, input: { slug: string }) {
   const slug = input.slug.trim().toLowerCase();
   if (!SLUG.test(slug)) return { error: "That is not a valid event slug. Use list_events or search to find it." };
   const { data: e } = await ctx.sb.from("events").select("*").eq("slug", slug).maybeSingle();
@@ -210,34 +250,37 @@ async function getEvent(ctx: ToolContext, input: { slug: string }) {
   };
 }
 
-async function search(ctx: ToolContext, input: { query: string }) {
+export async function search(ctx: ToolContext, input: { query: string }) {
   const terms = searchTerms(input.query);
   if (!terms.length) return { error: "Give a few distinctive words to search for." };
+  // a short term ("ai") also matches inside longer words in the database, so fetch more and let
+  // hits() keep the rows where it is a word of its own
+  const limit = short(terms) ? 400 : 100;
   const [ev, ag, mat, txRows] = await Promise.all([
-    ctx.sb.from("events").select("slug, title, starts_on, ends_on, city, country, organizer, description, recap, status, visibility")
-      .eq("is_example", false).or(orIlike(["title", "description", "recap", "organizer", "city", "country", "venue"], terms)).limit(60),
+    ctx.sb.from("events").select("slug, title, starts_on, ends_on, city, country, region, venue, organizer, description, recap, status, visibility")
+      .eq("is_example", false).or(orIlike(["title", "description", "recap", "organizer", "city", "country", "region", "venue"], terms)).limit(limit),
     ctx.sb.from("agenda_items").select("title, speaker, starts_at, events(slug, title, starts_on)")
-      .or(orIlike(["title", "speaker"], terms)).limit(60),
+      .or(orIlike(["title", "speaker"], terms)).limit(limit),
     ctx.sb.from("materials").select("id, kind, title, speaker, url, file_path, events!materials_event_id_fkey(slug, title, starts_on)")
-      .or(orIlike(["title", "speaker"], terms)).limit(60),
+      .or(orIlike(["title", "speaker"], terms)).limit(limit),
     searchTranscripts(ctx, terms),
   ]);
   if (ev.error && mat.error) throw new Error(`Search failed: ${ev.error.message}`);
 
-  type EvHit = { slug: string; title: string; starts_on: string; ends_on: string | null; city: string | null; country: string | null; organizer: string | null; description: string | null; recap: string | null; status: string; visibility: string };
+  type EvHit = { slug: string; title: string; starts_on: string; ends_on: string | null; city: string | null; country: string | null; region: string | null; venue: string | null; organizer: string | null; description: string | null; recap: string | null; status: string; visibility: string };
   const events = ((ev.data ?? []) as EvHit[])
-    .map((e) => ({ e, n: hits([e.title, e.organizer, e.city, e.country, e.description, e.recap].join(" "), terms) }))
-    .sort((a, b) => b.n - a.n).slice(0, 12)
+    .map((e) => ({ e, n: hits([e.title, e.organizer, e.city, e.country, e.region, e.venue, e.description, e.recap].join(" "), terms) }))
+    .filter((x) => x.n > 0).sort((a, b) => b.n - a.n).slice(0, 12)
     .map(({ e }) => ({ slug: e.slug, title: e.title, dates: dates(e), place: placeOf(e), page: `/events/${e.slug}`, notes: flags(e).length ? flags(e) : undefined, snippet: snippet([e.description, e.recap].filter(Boolean).join(" \n"), terms) }));
 
   type AgHit = { title: string; speaker: string | null; starts_at: string | null; events: { slug: string; title: string; starts_on: string } | null };
   const agenda = ((ag.data ?? []) as unknown as AgHit[]).filter((a) => a.events)
-    .map((a) => ({ a, n: hits(`${a.title} ${a.speaker ?? ""}`, terms) })).sort((x, y) => y.n - x.n).slice(0, 12)
+    .map((a) => ({ a, n: hits(`${a.title} ${a.speaker ?? ""}`, terms) })).filter((x) => x.n > 0).sort((x, y) => y.n - x.n).slice(0, 12)
     .map(({ a }) => ({ title: a.title, speaker: a.speaker, time: a.starts_at?.slice(0, 5) ?? null, event: a.events!.title, event_slug: a.events!.slug, date: a.events!.starts_on }));
 
   type MatHit = { id: string; kind: string; title: string; speaker: string | null; url: string | null; file_path: string | null; events: { slug: string; title: string; starts_on: string } | null };
   const materials = ((mat.data ?? []) as unknown as MatHit[])
-    .map((m) => ({ m, n: hits(`${m.title} ${m.speaker ?? ""}`, terms) })).sort((a, b) => b.n - a.n).slice(0, 15)
+    .map((m) => ({ m, n: hits(`${m.title} ${m.speaker ?? ""}`, terms) })).filter((x) => x.n > 0).sort((a, b) => b.n - a.n).slice(0, 15)
     .map(({ m }) => ({ material_id: m.id, kind: m.kind, title: m.title, speaker: m.speaker, page: pageOf(m), link: m.url && /^https?:\/\//.test(m.url) ? m.url : null, event: m.events?.title ?? null, event_slug: m.events?.slug ?? null }));
 
   // transcript lines that match, with their times; the material rows say which talk they are
@@ -272,13 +315,20 @@ type TxHit = { material_id: string; tldr: string | null; score: number; lines: {
  */
 async function searchTranscripts(ctx: ToolContext, terms: string[]): Promise<TxHit[] | null> {
   const rpc = await ctx.sb.rpc("ask_search_transcripts", { p_terms: terms });
-  if (!rpc.error) return ((rpc.data ?? []) as TxHit[]).map((t) => ({ ...t, lines: (t.lines ?? []).filter((l) => typeof l.start === "number" && typeof l.text === "string") }));
+  // the database matches inside words, so a short term's lines are checked again here
+  if (!rpc.error) return ((rpc.data ?? []) as TxHit[])
+    .map((t) => ({ ...t, lines: (t.lines ?? []).filter((l) => typeof l.start === "number" && typeof l.text === "string" && hits(l.text, terms) > 0) }))
+    .filter((t) => t.lines.length);
   // only a missing function means "not set up yet"; after a timeout or other failure, downloading
   // whole transcripts would cost more than the search is worth (null: not searched)
   if (rpc.error.code !== "PGRST202" && rpc.error.code !== "42883") return null;
 
   // rank by the terms each transcript contains (rarer terms count more), then fetch the best few
-  const found = await Promise.all(terms.map((t) => ctx.sb.from("transcripts").select("material_id").ilike("text", `%${t}%`).limit(500)));
+  // a short term as a word of its own (a Postgres regular expression), a longer one ignoring accents
+  const found = await Promise.all(terms.map((t) => {
+    const q = ctx.sb.from("transcripts").select("material_id");
+    return (t.length <= 3 ? q.filter("text", "imatch", `\\m${t}\\M`) : q.ilike("text", `%${likeTerm(t)}%`)).limit(500);
+  }));
   if (found.some((r) => r.error)) return null;
   const weight = new Map<string, number>();
   found.forEach((r) => { const ids = (r.data ?? []) as { material_id: string }[]; for (const { material_id } of ids) weight.set(material_id, (weight.get(material_id) ?? 0) + 1 / ids.length); });
@@ -290,7 +340,7 @@ async function searchTranscripts(ctx: ToolContext, terms: string[]): Promise<TxH
   if (error) return null;
   const rows = (data ?? []) as unknown as { material_id: string; segments: Segment[] | null; tldr: string | null }[];
   return rows.map((t) => {
-    const lines = (t.segments ?? []).map((s) => ({ s, has: terms.filter((x) => s.text.toLowerCase().includes(x)) })).filter((x) => x.has.length);
+    const lines = (t.segments ?? []).map((s) => { const f = fold(s.text); return { s, has: terms.filter((x) => hasTerm(f, x)) }; }).filter((x) => x.has.length);
     // the first line for each term, then the lines with most terms, then the earliest
     const firsts = new Set(terms.map((x) => lines.find((l) => l.has.includes(x))).filter(Boolean));
     const best = [...lines].sort((a, b) => Number(firsts.has(b)) - Number(firsts.has(a)) || b.has.length - a.has.length || a.s.start - b.s.start)
@@ -303,14 +353,16 @@ async function searchTranscripts(ctx: ToolContext, terms: string[]): Promise<TxH
 
 function snippet(text: string, terms: string[]) {
   if (!text) return undefined;
-  const l = text.toLowerCase();
-  const at = terms.map((t) => l.indexOf(t)).filter((i) => i >= 0).sort((a, b) => a - b)[0];
+  // folded text keeps its length for the usual accents; where it does not, plain lower case
+  const f = fold(text);
+  const l = f.length === text.length ? f : text.toLowerCase();
+  const at = terms.map((t) => l.indexOf(fold(t))).filter((i) => i >= 0).sort((a, b) => a - b)[0];
   if (at === undefined) return trimTo(text, 240);
   const from = Math.max(0, at - 120);
   return (from ? "…" : "") + trimTo(text.slice(from, at + 200), 320);
 }
 
-async function getTranscript(ctx: ToolContext, input: { material_id: string; from_seconds: number | null }) {
+export async function getTranscript(ctx: ToolContext, input: { material_id: string; from_seconds: number | null }) {
   const id = input.material_id.trim();
   if (!UUID.test(id)) return { error: "That is not a valid material id. Use get_event or search to find it." };
   const { data: m } = await ctx.sb.from("materials")
@@ -353,7 +405,7 @@ async function getTranscript(ctx: ToolContext, input: { material_id: string; fro
   };
 }
 
-async function listTeam(ctx: ToolContext) {
+export async function listTeam(ctx: ToolContext) {
   const { data, error } = await ctx.sb.from("team_members").select("name, title, x_handle, calendar_url").eq("active", true).order("sort");
   if (error) throw new Error(`The team list could not be read: ${error.message}`);
   return { team: (data ?? []).map((t) => ({ name: t.name, role: t.title, x: t.x_handle ? `@${String(t.x_handle).replace(/^@/, "")}` : undefined, book_a_meeting: t.calendar_url ?? undefined })) };

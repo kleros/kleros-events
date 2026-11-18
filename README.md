@@ -10,7 +10,7 @@ The public record of every event Kleros hosts or takes part in (conferences, sid
 - **Talk player:** the PDF deck is synced to the audio recording. Each slide change is timestamped, the timeline is split by slide, clicking a slide jumps the audio, and there are notes per slide.
 - **My events** (magic-link sign-in): saved, going and attended events, private notes, recommendations from topics, region and role, "Talks you missed", and "Continue watching".
 - Calendar file for every event (`/events/<slug>/calendar.ics`) and a projector view for live Q&A (`/events/<slug>/live`).
-- **Ask** (the ✦ button on every page once it is set up): questions about events, talks and recordings, answered by Claude from the site's own data with links to the pages and to the moment in a recording (`/talks/<id>?t=<seconds>`). It reads with the visitor's own access, so private and draft events never reach an answer for someone who cannot see them. See "Site assistant" below.
+- **Ask** (the ✦ button on every page): a free smart search of the site. It reads the question (coming up, past, a month or year, the event or talk on screen, the team, or a topic, place or speaker) and answers with the matching events, talks and moments in transcripts, with links to the pages and to the moment in a recording (`/talks/<id>?t=<seconds>`). No AI and no key. It reads with the visitor's own access, so private and draft events never reach an answer for someone who cannot see them. See "Site assistant" below.
 
 **For the Kleros team** (`/admin`, for accounts with team access, see "Team access" below)
 - Events desk: Upcoming, Past and Drafts tabs, each row with **Run live** (the host console at `/events/<slug>/host`), **Edit** and **View**. Past events with no materials are flagged "Needs materials". A Meeting requests tab holds the "Meet Kleros" inbox.
@@ -55,16 +55,25 @@ Open an event while signed in with a Kleros account and press **Event mode** (or
 
 ## Site assistant
 
-Off until the deployment has an Anthropic key; until then only the team sees the button, with a note on how to switch it on.
+**Ask** is a smart search of the site (`src/lib/ask/find.ts`). It needs no key, uses no AI and costs nothing. The question decides what it looks up:
 
-Visitors, QR guests and accounts outside the team get the button only once `SUPABASE_SERVICE_ROLE_KEY` is set and migration `0014_security.sql` (or `0013_ask.sql`) has been run, so that their question limits are kept in the database and hold across every server instance. Until both are in place only the team can ask, and the team's panel says what is missing. If the database stops answering, questions from outside the team are refused until it is back; the team's questions are then counted on each server instance. Visitors who are not signed in are counted by IP address, so at a venue everyone on the same wifi shares one visitor limit; signed-in accounts are counted one by one.
+- "coming up", "next", "will be", "going to": upcoming events, narrowed by a month or year ("next month", "in December", "2027") and by any place or topic words ("in Asia", "about AI agents");
+- "past", "last", "went", "attended": past events, the same way;
+- on an event or talk page, "this event", "this talk", or a question with no topic words of its own ("What are the main points?"): that page's details, or the talk's stored summary, main points and chapters;
+- "team", "book a meeting": the team list;
+- anything else: a search of event titles, descriptions and recaps, agenda items, talk titles and speakers, and every transcript, keeping matches where the words appear as words (so "AI" does not find "Chiang Mai"), with links to the moment in a recording.
 
-| Variable | What it does |
+A follow-up that finds nothing on its own ("and in Europe?") is tried again with the previous question's words. Each visitor can ask 40 times in 10 minutes per server instance (`ASK_LIMIT_SEARCH`); the team has no limit.
+
+Claude can write answers instead, but only when switched on on purpose, because it is paid: set `ASK_PROVIDER=claude` and an Anthropic key. Adding `ANTHROPIC_API_KEY` for talk summaries alone does not change Ask. With Claude on, the settings below apply; visitors, QR guests and accounts outside the team get Claude answers only once `SUPABASE_SERVICE_ROLE_KEY` is set and migration `0014_security.sql` (or `0013_ask.sql`) has been run, so their question limits hold across every server instance. Until then they get the search. Visitors who are not signed in are counted by IP address, so at a venue everyone on the same wifi shares one visitor limit.
+
+| Variable (Claude answers only) | What it does |
 |---|---|
-| `ANTHROPIC_API_KEY` | Turns the assistant on (and talk summaries). In the Anthropic Console, spend limits are set per workspace, not per key: create the key in a workspace of its own and give that workspace a monthly limit. That workspace limit is the hard cap on what the assistant can spend; the settings below only bound how often people ask and how much one answer may read. |
-| `ASK_ANTHROPIC_API_KEY` | Optional: a key for the assistant alone, from another workspace with its own limit, so the assistant reaching its limit never stops talk summaries. |
-| `SUPABASE_SERVICE_ROLE_KEY` + migration `0014_security.sql` | Required before anyone outside the team can ask: question limits are kept in the database, so they hold across server instances. Without them only the team can ask. |
-| `ASK_PUBLIC=off` | Only signed-in accounts can ask. QR guests count as visitors. |
+| `ASK_PROVIDER=claude` | Switches Ask from the free search to Claude's written answers. |
+| `ANTHROPIC_API_KEY` | The key for Claude answers (and talk summaries). In the Anthropic Console, spend limits are set per workspace, not per key: create the key in a workspace of its own and give that workspace a monthly limit. |
+| `ASK_ANTHROPIC_API_KEY` | Optional: a key for Ask alone, from another workspace with its own limit, so Ask reaching its limit never stops talk summaries. |
+| `SUPABASE_SERVICE_ROLE_KEY` + migration `0014_security.sql` | Required before anyone outside the team gets Claude answers: question limits are kept in the database. |
+| `ASK_PUBLIC=off` | Only signed-in accounts get Claude answers; visitors get the search. |
 | `ASK_MODEL`, `ASK_EFFORT` | Model (default `claude-opus-5-5`; `ANTHROPIC_MODEL` only changes the summaries) and effort (`low`, `medium` default, `high`). |
 | `ASK_LIMIT_VISITOR`, `ASK_LIMIT_VISITOR_DAILY`, `ASK_LIMIT_SIGNED_IN`, `ASK_LIMIT_SIGNED_IN_DAILY`, `ASK_LIMIT_TEAM`, `ASK_LIMIT_DAILY_TOTAL` | Questions per 10 minutes and per day (defaults 8 and 30 for visitors, 20 and 60 for accounts, 60 per 10 minutes for the team, 600 a day in all outside the team). |
 | `ASK_COST_UNITS` | Most one question may use, in input-token units (default 800000); past it the answer is written from what was read. |

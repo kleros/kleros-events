@@ -2,8 +2,10 @@ import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { currentUser, supabaseConfigured, supabaseServer } from "@/lib/supabase/server";
 import { runAsk, type AskEvent } from "@/lib/ask/agent";
-import { take, visitorsOff, type Tier } from "@/lib/ask/limit";
+import { take, takeSearch, visitorsOff, type Tier } from "@/lib/ask/limit";
 import { cleanHistory } from "@/lib/ask/history";
+import { askMode } from "@/lib/ask/mode";
+import { findWithHistory } from "@/lib/ask/find";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,11 +37,11 @@ function expand6(ip: string) {
 
 /**
  * POST /api/ask  { messages: [{ role, content }], page?: "/events/slug" }
- * Answers as newline-delimited JSON events (see AskEvent). Reads only what the caller's own
+ * Answers as newline-delimited JSON events (see AskEvent): a smart search of the site by default,
+ * or Claude's written answer where that is switched on (mode.ts). Reads only what the caller's own
  * session may read, so a visitor never gets an answer drawn from a private or draft event.
  */
 export async function POST(req: Request) {
-  if (!process.env.ASK_ANTHROPIC_API_KEY?.trim() && !process.env.ANTHROPIC_API_KEY?.trim()) return fail("The assistant is not set up yet.", 503);
   if (!supabaseConfigured) return fail("The database is not configured.", 503);
 
   let body: { messages?: unknown; page?: unknown };
@@ -50,11 +52,21 @@ export async function POST(req: Request) {
 
   // currentUser() counts an anonymous session (a QR guest) as signed out: guests ask as visitors
   const { user, profile } = await currentUser();
-  if (!user && visitorsOff()) return fail("Sign in to use the assistant.", 401);
   const tier: Tier = user ? (profile?.is_team || profile?.is_admin ? "team" : "signed-in") : "visitor";
-  // outside the team, only with the counts in the database (503 until then)
-  const refused = await take(user ? `u:${user.id}` : clientKey(req), tier);
-  if (refused) return fail(refused.error, refused.status);
+  const who = user ? `u:${user.id}` : clientKey(req);
+  let mode = askMode();
+  let note = "";
+  if (mode === "claude") {
+    // Claude answers outside the team only with the counts in the database; anyone else, visitors
+    // while ASK_PUBLIC=off, and anyone over a limit gets the search instead
+    const refused = !user && visitorsOff() ? { status: 503 as const, error: "" } : await take(who, tier);
+    if (refused) mode = "search";
+    if (refused?.status === 429) note = "Written answers have reached their limit for now, so this is a plain search of the site.\n\n";
+  }
+  if (mode === "search") {
+    const refused = takeSearch(who, tier);
+    if (refused) return fail(refused.error, refused.status);
+  }
 
   const sb = await supabaseServer();
   const enc = new TextEncoder();
@@ -65,14 +77,21 @@ export async function POST(req: Request) {
         if (!open) return;
         try { controller.enqueue(enc.encode(JSON.stringify(e) + "\n")); } catch { open = false; }
       };
+      const ctx = { sb, today: new Date().toISOString().slice(0, 10), sources: new Map(), links: new Set<string>() };
       try {
-        await runAsk({
-          ctx: { sb, today: new Date().toISOString().slice(0, 10), sources: new Map(), links: new Set() },
-          history, page, visitor: tier, emit, signal: req.signal,
-          ...TIMES,
-        });
-      } catch {
-        emit({ t: "error", text: "The assistant could not answer. Try again in a moment." });
+        if (mode === "search") {
+          emit({ t: "status", text: "Searching the site…" });
+          const found = await findWithHistory(ctx, history.filter((h) => h.role === "user").map((h) => h.content), page);
+          emit({ t: "delta", text: note + found.markdown });
+          // the links are in the answer itself; `links` lets the site's own outside addresses show as links
+          emit({ t: "sources", items: [], links: [...ctx.links].slice(0, 200) });
+          emit({ t: "done" });
+        } else {
+          await runAsk({ ctx, history, page, visitor: tier, emit, signal: req.signal, ...TIMES });
+        }
+      } catch (e) {
+        if (mode === "search") console.warn("ask search failed:", e instanceof Error ? e.message : e);
+        emit({ t: "error", text: mode === "search" ? "The search did not work just now. Try again in a moment." : "The assistant could not answer. Try again in a moment." });
       } finally {
         open = false;
         try { controller.close(); } catch { /* already closed */ }
