@@ -2,10 +2,12 @@
 import { useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { removeFiles, unlinkMaterial, uploadToStorage } from "@/lib/materials-client";
+import { friendlyError } from "@/lib/friendlyError";
 import type { EventRow, Material } from "@/lib/types";
 import MaterialRow from "../MaterialRow";
 import AddMaterials from "./AddMaterials";
 import TalkBuilder from "./TalkBuilder";
+import MaterialEditor, { type MaterialNames } from "./MaterialEditor";
 
 // kept for older imports
 export { uploadToStorage };
@@ -18,6 +20,7 @@ export default function MaterialsManager({ event, initial }: { event: EventRow; 
   const [talkOpen, setTalkOpen] = useState(false);
   const [err, setErr] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [editing, setEditing] = useState("");
 
   async function remove(m: Material) {
     if (confirm !== m.id) { setConfirm(m.id); return; }
@@ -31,18 +34,19 @@ export default function MaterialsManager({ event, initial }: { event: EventRow; 
     if (error && /remove_material_from_event|schema cache|does not exist/i.test(error.message)) {
       // database not updated to 0012 yet
       if (sharedWith(m, event.id)) {
-        try { await unlinkMaterial(m.id, event.id); } catch (e) { setErr((e as Error).message); return; }
+        try { await unlinkMaterial(m.id, event.id); } catch (e) { setErr(friendlyError(e)); return; }
       } else {
         filesGone = await removeFiles([m.file_path, m.pdf_path, m.audio_path]);
         const { error: delErr } = await sb.from("materials").delete().eq("id", m.id);
-        if (delErr) { setErr(delErr.message); return; }
+        if (delErr) { setErr(friendlyError(delErr)); return; }
       }
-    } else if (error) { setErr(error.message); return; }
+    } else if (error) { setErr(friendlyError(error)); return; }
     else filesGone = await removeFiles((paths ?? []) as string[]);
     if (!filesGone) setErr(`"${m.title}" is removed, but its file could not be deleted from storage.`);
     setList(list.filter((x) => x.id !== m.id));
   }
   const added = (m: Material) => setList((l) => [...l, { ...m, event_ids: [event.id] }]);
+  const renamed = (id: string, v: MaterialNames) => setList((l) => l.map((x) => (x.id === id ? { ...x, ...v } : x)));
 
   return (
     <div className="stack">
@@ -50,11 +54,18 @@ export default function MaterialsManager({ event, initial }: { event: EventRow; 
         {list.map((m) => {
           const shared = sharedWith(m, event.id);
           return (
-            <div key={m.id} className="row-flex" style={{ flexWrap: "nowrap", alignItems: "stretch" }}>
-              <div style={{ flex: 1, minWidth: 0 }}><MaterialRow m={m} /></div>
-              <button className="btn sm ghost" onClick={() => remove(m)} title={shared ? `Also linked to ${shared === 1 ? "1 other event" : `${shared} other events`}; it stays there.` : undefined}>
-                {confirm === m.id ? "Confirm" : shared ? "Unlink" : "Remove"}
-              </button>
+            <div key={m.id} className="mm-item">
+              <div className="row-flex" style={{ flexWrap: "nowrap", alignItems: "stretch" }}>
+                <div style={{ flex: 1, minWidth: 0 }}><MaterialRow m={m} /></div>
+                <div className="mm-acts">
+                  <button className="btn sm ghost" type="button" aria-expanded={editing === m.id}
+                    onClick={() => { setConfirm(""); setEditing(editing === m.id ? "" : m.id); }}>Rename</button>
+                  <button className="btn sm ghost" type="button" onClick={() => remove(m)} title={shared ? `Also linked to ${shared === 1 ? "1 other event" : `${shared} other events`}; it stays there.` : undefined}>
+                    {confirm === m.id ? "Confirm" : shared ? "Unlink" : "Remove"}
+                  </button>
+                </div>
+              </div>
+              {editing === m.id && <MaterialEditor m={m} onSaved={(v) => renamed(m.id, v)} onCancel={() => setEditing("")} />}
             </div>
           );
         })}
@@ -63,7 +74,7 @@ export default function MaterialsManager({ event, initial }: { event: EventRow; 
       <AddMaterials eventId={event.id} onAdded={added}
         extra={<button className="btn primary" type="button" onClick={() => setTalkOpen(!talkOpen)}><span className="dot" /> Add a talk (slides + recording)</button>} />
       {err && <div className="note">{err}</div>}
-      {talkOpen && <TalkBuilder eventId={event.id} onSaved={(m) => { added(m); setTalkOpen(false); }} />}
+      {talkOpen && <TalkBuilder eventId={event.id} slug={event.slug} onSaved={(m) => { added(m); setTalkOpen(false); }} />}
     </div>
   );
 }

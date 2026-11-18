@@ -6,6 +6,7 @@ import { addChunk, audioExt, canRecord, dropSession, pickMime, savePdf, saveSess
 import { fmtDur, fmtSize, slugify } from "@/lib/format";
 import type { SlideMark } from "@/lib/types";
 import { uploadToStorage } from "@/lib/materials-client";
+import { friendlyError } from "@/lib/friendlyError";
 import TalkStage from "../TalkStage";
 import { runTranscript } from "@/lib/transcript/client";
 import type { TranscriptState } from "@/lib/transcript/types";
@@ -24,8 +25,27 @@ const WARN_BYTES = 45e6;
 const STOP_BYTES = 48e6;
 const MAX_BYTES = 50e6;
 const MAX_PDF_BYTES = 45e6;
-const CAP_MSG = "Reached the 48 MB upload limit. Saved what was recorded; start a new recording for the rest.";
+// bytes a second at the requested bitrate, and the longest recording that fits under the stop
+const NOMINAL_RATE = BITRATE / 8;
+const MAX_SECS = STOP_BYTES / NOMINAL_RATE;
+const WARN_SECS_LEFT = 600;
+const WARN_MSG = "About 10 minutes left in this recording. Stop at a natural break and start a new one.";
 const LIVE_PING = "kleros-rec-live";
+
+/** "about 3 hours 20 minutes", "about 1 hour", "about 45 minutes". */
+function aboutLength(s: number) {
+  const min = Math.round(s / 60), h = Math.floor(min / 60), m = min % 60;
+  const parts = [h ? `${h} ${h === 1 ? "hour" : "hours"}` : "", m || !h ? `${m} ${m === 1 ? "minute" : "minutes"}` : ""].filter(Boolean);
+  return `about ${parts.join(" ")}`;
+}
+const capMsg = (s: number) =>
+  `This recording reached its maximum length (${aboutLength(s)}) and stopped. What was recorded is ready to save below. Start a new recording for the rest.`;
+
+/**
+ * Bytes a second the browser is actually writing. Browsers do not always keep to the requested
+ * bitrate, so after the first minute the measured rate is used to tell how much time is left.
+ */
+const rateAt = (bytes: number, secs: number) => (secs > 60 && bytes > 0 ? bytes / secs : NOMINAL_RATE);
 
 function micError(e: unknown) {
   const n = (e as Error)?.name;
@@ -90,6 +110,7 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
   const [marks, setMarks] = useState<SlideMark[]>([]);
   const [secs, setSecs] = useState(0);
   const [bytes, setBytes] = useState(0);
+  const [rate, setRate] = useState(NOMINAL_RATE);
   const [blob, setBlob] = useState<Blob | null>(null);
   const [blobUrl, setBlobUrl] = useState("");
   const [err, setErr] = useState("");
@@ -338,7 +359,7 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
     const startPage = pdf ? page : 1;
     marksRef.current = pdf ? [{ p: startPage, t: 0 }] : [];
     setMarks(marksRef.current);
-    chunks.current = []; uploaded.current = {}; setBytes(0); setSecs(0); setSaved(null);
+    chunks.current = []; uploaded.current = {}; setBytes(0); setRate(NOMINAL_RATE); setSecs(0); setSaved(null);
 
     const sess: RecSession = {
       id: crypto.randomUUID(), eventId: recKey, startedAt: Date.now(), mime: mr.mimeType || mime || "audio/webm", seconds: 0,
@@ -360,14 +381,17 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
       chunks.current.push(e.data);
       total += e.data.size;
       setBytes(total);
-      if (total > WARN_BYTES) setWarn("This recording is close to 50 MB, the upload limit, and stops by itself at 48 MB. Stop at a natural break and start a new recording for the next part.");
+      const r = rateAt(total, clockNow(clock.current));
+      setRate(r);
+      // only while recording: the last piece arrives after Stop and must not replace why it stopped
+      if (mr.state === "recording" && (STOP_BYTES - total) / r <= WARN_SECS_LEFT) setWarn((w) => w || WARN_MSG);
       const cur = session.current;
       if (cur) {
         addChunk(cur.id, e.data).catch(() => setBackup(false));
         session.current = { ...cur, seconds: clockNow(clock.current), marks: marksRef.current, bytes: total, updatedAt: Date.now() };
         saveSession(session.current).catch(() => setBackup(false));
       }
-      if (total >= STOP_BYTES && mr.state === "recording") { setWarn(CAP_MSG); stop(); }
+      if (total >= STOP_BYTES && mr.state === "recording") { setWarn(capMsg(clockNow(clock.current) || MAX_SECS)); stop(); }
     };
     mr.onerror = () => setErr("The browser reported a recording error. What was captured so far is kept.");
     mr.onstop = () => {
@@ -376,6 +400,7 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
       s.getTracks().forEach((t) => t.stop());
       closeAudio();
       setSecs(dur);
+      setWarn((w) => (w === WARN_MSG ? "" : w)); // the time-left warning no longer applies once stopped
       const b = new Blob(chunks.current, { type: mr.mimeType || sess.mime });
       if (session.current) {
         session.current = { ...session.current, seconds: dur, marks: marksRef.current, updatedAt: Date.now() };
@@ -481,10 +506,10 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
       if (autoTranscribe) transcribe(id);
       onSaved?.(id, withSlides ? "talk" : "audio");
     } catch (e) {
-      const raw = (e as Error).message || "unknown error";
-      const msg = /failed to fetch|network|load failed/i.test(raw) ? "the server could not be reached (check the wifi)" : raw;
-      const big = blob.size > MAX_BYTES ? " The file is larger than 50 MB, which the storage plan does not accept. Download a copy and share it with an admin instead." : "";
-      setErr(`Saving failed: ${msg}.${big} The recording is still safe on this laptop. Try again, or download a copy.`);
+      const why = blob.size > MAX_BYTES
+        ? "The file is larger than 50 MB, which the storage plan does not accept. Download a copy and share it with an admin instead."
+        : friendlyError(e);
+      setErr(`Saving failed. The recording is still safe on this laptop, and the Download copy button saves it as a file. ${why}`);
       setPhase("review");
     }
     setProgress("");
@@ -642,8 +667,9 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
               <span className="mono rec-time" aria-live="off">{fmtDur(secs)}</span>
               <span className="rec-meter" aria-label="Microphone level"><span ref={meterBar} /></span>
             </div>
-            <span className="muted small mono rec-bytes" title="Each file must stay under 50 MB to upload">
-              {fmtSize(bytes) || "0 KB"}{pdfFile ? ` + ${fmtSize(pdfFile.size)} slides` : ""}
+            <span className="muted small mono rec-bytes"
+              title={`${fmtSize(bytes) || "0 KB"} recorded${pdfFile ? ` + ${fmtSize(pdfFile.size)} slides` : ""}. Each file must stay under 50 MB to upload, so the recording stops by itself before that.`}>
+              About {fmtDur(Math.max(0, STOP_BYTES / rate - secs))} left
             </span>
             <button className={`btn rec-stop ${confirm === "stop" ? "armed" : ""}`} onClick={requestStop} disabled={phase === "stopping"}>
               <span className="sq" aria-hidden="true" /> {phase === "stopping" ? "Finishing…" : confirm === "stop" ? "Stop and review?" : "Stop"}
@@ -672,6 +698,8 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
 
       {(phase === "review" || phase === "saving") && blob && (
         <div className="rec-review">
+          {/* why the recording stopped (the length cap, a lost microphone) reads first, above what it refers to */}
+          {warn && <div className="note" role="status">{warn}</div>}
           {pdf ? (
             <TalkStage pdf={pdf} mode="play" audioUrl={blobUrl} marks={tidy(marks)} notes={{}} knownDuration={secs} />
           ) : (
@@ -723,7 +751,7 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
         </div>
       )}
 
-      {warn && <div className="note" role="status">{warn}</div>}
+      {warn && !((phase === "review" || phase === "saving") && blob) && <div className="note" role="status">{warn}</div>}
       {err && <div className="note" role="alert">{err}</div>}
       {leftoverList}
     </section>

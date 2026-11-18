@@ -38,10 +38,10 @@ export interface Product {
 // Shown on each event page, picked by the event's topics.
 export const PRODUCTS: Product[] = [
   { name: "Kleros Court", pitch: "Decentralized arbitration with randomly drawn, incentivized jurors.", url: "https://court.kleros.io", cta: "Become a juror", topics: ["Arbitration", "Jurors", "Legal tech", "Governance"] },
-  { name: "Arbitration for AI agents", pitch: "When autonomous agents transact, Kleros resolves the disputes they can't.", url: "https://kleros.io", cta: "See how it works", topics: ["AI agents", "Research"] },
+  { name: "Arbitration for AI agents", pitch: "Disputes between AI agents go to independent jurors, with an appeal window where humans can step in.", url: "https://kleros.io", cta: "See how it works", topics: ["AI agents", "Research"] },
   { name: "Reality.eth + Kleros", pitch: "Optimistic oracle answers backed by Kleros arbitration, used by prediction markets.", url: "https://reality.eth.limo", cta: "Explore the oracle", topics: ["Prediction markets", "Oracles", "DeFi"] },
   { name: "Kleros Escrow", pitch: "Pay for work and goods with a court behind the deal.", url: "https://escrow.kleros.io", cta: "Open an escrow", topics: ["DeFi", "Smart contracts"] },
-  { name: "Kleros Curate", pitch: "Community-curated lists and registries with disputes settled by Kleros.", url: "https://curate.kleros.io", cta: "Browse registries", topics: ["Content moderation", "Governance", "Community"] },
+  { name: "Kleros Curate", pitch: "Community-curated lists and registries, with disputes going to Kleros Court.", url: "https://curate.kleros.io", cta: "Browse registries", topics: ["Content moderation", "Governance", "Community"] },
   { name: "Integrate Kleros", pitch: "Add dispute resolution to your protocol with a few contract calls.", url: "https://docs.kleros.io", cta: "Read the docs", topics: ["Smart contracts", "Oracles", "DeFi"] },
 ];
 

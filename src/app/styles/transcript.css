@@ -58,7 +58,7 @@ button.tx-t:hover { background: var(--accent-soft); color: var(--white); }
 .tx-actions { display: flex; gap: var(--s-2); flex-wrap: wrap; }
 .tx-search { display: flex; align-items: center; gap: var(--s-3); margin-bottom: var(--s-3); }
 .tx-search input {
-  flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-sm);
+  flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--field-line); border-radius: var(--r-sm);
   padding: 8px var(--s-3); font-size: 0.95rem;
 }
 .tx-search input:focus { border-color: var(--accent); outline: none; }
@@ -99,6 +99,7 @@ button.tx-t:hover { background: var(--accent-soft); color: var(--white); }
   .tx-sum-grid { grid-template-columns: 1fr; gap: var(--s-2); }
   .tx-chapters { border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: var(--s-4); margin-top: var(--s-2); }
   .tx-line, .tx-chapters li > button, .tx-chapters li > div, .tx-qa-row, .tx-todo-row { grid-template-columns: 3.6em minmax(0, 1fr); gap: var(--s-2); }
-  .tx-lines { max-height: 65vh; }
+  /* on a phone the page itself scrolls: no box that traps the finger inside the transcript */
+  .tx-lines { max-height: none; overflow: visible; overscroll-behavior: auto; }
   .tx-head { align-items: flex-start; }
 }

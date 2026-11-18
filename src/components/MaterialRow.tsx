@@ -137,7 +137,7 @@ export function TalkCard({ m, event, note, showEvent = true }: { m: Material; ev
         {m.duration_seconds ? <span className="dur mono">{fmtDur(m.duration_seconds)}</span> : null}
       </Link>
       <div className="body">
-        <h3 title={aside ? m.title : undefined}><Link href={href}>{main}</Link></h3>
+        <h3 title={aside ? m.title : undefined}><Link className="stretch" href={href}>{main}</Link></h3>
         {m.speaker && <div className="who">{m.speaker}</div>}
         {aside && <div className="sub" title={aside}>{aside}</div>}
         {event && showEvent && !mentions(aside, event.title) && <Link className="sub" href={`/events/${event.slug}`}>{event.title}</Link>}

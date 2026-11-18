@@ -3,8 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Material } from "@/lib/types";
-import { unlinkMaterial, type PickEvent } from "@/lib/materials-client";
+import { supabaseBrowser } from "@/lib/supabase/client";
+import { removeFiles, unlinkMaterial, type PickEvent } from "@/lib/materials-client";
 import { fmtDur, fmtRange, plural } from "@/lib/format";
+import { friendlyError, NO_ACCESS } from "@/lib/friendlyError";
+import MaterialEditor, { type MaterialNames } from "../admin/MaterialEditor";
 import LinkEvents from "./LinkEvents";
 import EventChip from "./EventChip";
 
@@ -25,19 +28,24 @@ export default function RecordingsLibrary({ materials, events, txStatus, linksRe
   const [q, setQ] = useState("");
   const [armed, setArmed] = useState("");
   const [err, setErr] = useState("");
+  const [editing, setEditing] = useState("");
+  // new names and deleted items show at once, before the refreshed list arrives
+  const [names, setNames] = useState<Record<string, MaterialNames>>({});
+  const [gone, setGone] = useState<string[]>([]);
   const byId = useMemo(() => Object.fromEntries(events.map((e) => [e.id, e])), [events]);
 
   // after a refresh (a new event, a link made elsewhere) take the server's view
-  useEffect(() => { setLinks(Object.fromEntries(materials.map((m) => [m.id, m.event_ids ?? []]))); }, [materials]);
+  useEffect(() => { setLinks(Object.fromEntries(materials.map((m) => [m.id, m.event_ids ?? []]))); setNames({}); }, [materials]);
 
   const needle = q.trim().toLowerCase();
   const evsOf = (m: Material) => (links[m.id] ?? []).map((id) => byId[id]).filter(Boolean);
+  const all = materials.filter((m) => !gone.includes(m.id)).map((m) => (names[m.id] ? { ...m, ...names[m.id] } : m));
   const counts = {
-    all: materials.length,
-    unlinked: materials.filter((m) => !(links[m.id] ?? []).length).length,
-    notx: materials.filter((m) => txStatus[m.id] !== "done").length,
+    all: all.length,
+    unlinked: all.filter((m) => !(links[m.id] ?? []).length).length,
+    notx: all.filter((m) => txStatus[m.id] !== "done").length,
   };
-  const list = materials.filter((m) => {
+  const list = all.filter((m) => {
     if (filter === "unlinked" && (links[m.id] ?? []).length) return false;
     if (filter === "notx" && txStatus[m.id] === "done") return false;
     if (needle && ![m.title, m.speaker, ...evsOf(m).map((e) => `${e.title} ${e.city ?? ""}`)].join(" ").toLowerCase().includes(needle)) return false;
@@ -52,7 +60,24 @@ export default function RecordingsLibrary({ materials, events, txStatus, linksRe
       await unlinkMaterial(m.id, eventId);
       setLinks((l) => ({ ...l, [m.id]: (l[m.id] ?? []).filter((x) => x !== eventId) }));
       router.refresh();
-    } catch (e) { setErr((e as Error).message); }
+    } catch (e) { setErr(friendlyError(e)); }
+  }
+
+  // only for items on no event: one on an event is removed from that event's page instead
+  async function del(m: Material) {
+    const key = `del:${m.id}`;
+    if (armed !== key) { setArmed(key); setTimeout(() => setArmed((a) => (a === key ? "" : a)), 4000); return; }
+    setArmed(""); setErr("");
+    // a refused delete comes back as zero rows, not an error
+    const { data, error } = await supabaseBrowser().from("materials").delete().eq("id", m.id).select("id");
+    if (error) { setErr(friendlyError(error)); return; }
+    if (!data?.length) { setErr(NO_ACCESS); return; }
+    // files go after the row, once nothing uses them
+    const filesGone = await removeFiles([m.file_path, m.pdf_path, m.audio_path]);
+    setGone((g) => [...g, m.id]);
+    if (editing === m.id) setEditing("");
+    if (!filesGone) setErr(`"${m.title}" is deleted, but its file could not be removed from storage. Send Wei Wei the title so the file can be cleared by hand.`);
+    router.refresh();
   }
 
   return (
@@ -99,6 +124,10 @@ export default function RecordingsLibrary({ materials, events, txStatus, linksRe
                       </EventChip>
                     )) : <span className="pill ex">Not linked to an event</span>}
                   </div>
+                  {editing === m.id && (
+                    <MaterialEditor m={m} onCancel={() => setEditing("")}
+                      onSaved={(v) => setNames((n) => ({ ...n, [m.id]: v }))} />
+                  )}
                 </div>
                 <div className="recl-side">
                   {tx ? <span className={`pill ${tx[1]}`}>{tx[0]}</span> : <span className="pill plain">No transcript</span>}
@@ -107,6 +136,16 @@ export default function RecordingsLibrary({ materials, events, txStatus, linksRe
                       label="Link to events"
                       onChange={(ids) => setLinks((l) => ({ ...l, [m.id]: ids }))} />
                   )}
+                  <div className="recl-acts">
+                    <button className="btn sm ghost" type="button" aria-expanded={editing === m.id}
+                      onClick={() => setEditing(editing === m.id ? "" : m.id)}>Rename</button>
+                    {!(links[m.id] ?? []).length && (
+                      <button className={`btn sm ghost${armed === `del:${m.id}` ? " danger-armed" : ""}`} type="button" onClick={() => del(m)}
+                        aria-label={armed === `del:${m.id}` ? `Delete ${m.title} for good` : `Delete ${m.title}`}>
+                        {armed === `del:${m.id}` ? "Delete for good?" : "Delete"}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </li>
             );
@@ -114,8 +153,8 @@ export default function RecordingsLibrary({ materials, events, txStatus, linksRe
         </ul>
       ) : (
         <div className="empty">
-          <b>{materials.length ? "Nothing matches" : "No recordings yet"}</b>
-          {materials.length ? "Try another filter or a shorter search." : "Recordings made on an event page, in the host console or on the Record page appear here."}
+          <b>{all.length ? "Nothing matches" : "No recordings yet"}</b>
+          {all.length ? "Try another filter or a shorter search." : "Recordings made on an event page, in the host console or on the Record page appear here."}
         </div>
       )}
       <p className="muted small">{plural(list.length, "recording")} shown</p>

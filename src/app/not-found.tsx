@@ -11,7 +11,7 @@ export default function NotFound() {
       <p className="muted">The link may be old, or the event or talk may have moved. Everything Kleros has been part of is still listed below.</p>
       <div className="row-flex">
         <Link className="btn primary" href="/events">All events</Link>
-        <Link className="btn" href="/talks">Talks and recordings</Link>
+        <Link className="btn" href="/talks">Talks</Link>
         <Link className="btn ghost" href="/">Home</Link>
       </div>
     </div>

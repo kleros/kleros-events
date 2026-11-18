@@ -40,7 +40,8 @@ export default function EventStudio({ event, agenda, recordings, isTeam = true }
 
   const show = useCallback((m: StudioMode) => {
     setOpen(true); setMounted(true); setTab(m); setMsg("");
-    requestAnimationFrame(() => box.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    // no smooth scroll for people who asked their system for less motion
+    requestAnimationFrame(() => box.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }));
   }, []);
 
   useEffect(() => {
@@ -90,13 +91,13 @@ export default function EventStudio({ event, agenda, recordings, isTeam = true }
               {agenda.map((a) => <option key={a.id} value={a.id}>{a.starts_at ? `${a.starts_at.slice(0, 5)} · ` : ""}{a.title}{a.speaker ? `, ${a.speaker}` : ""}</option>)}
             </select>
           </div>
-          <p className="muted small">The saved recording is listed in Talks below{isTeam ? " and gets a transcript automatically" : ""}. For a full live setup with questions and the big screen, use Run this event.</p>
+          <p className="muted small">The saved recording is listed in Talks below{isTeam ? " and gets a transcript automatically" : ""}. For a full live setup with questions and the big screen, use Run live.</p>
         </div>
         <Recorder eventId={event.id} slug={event.slug} eventTitle={event.title} target={target} onPhase={onPhase} onDone={onDone} onSaved={onSaved} autoTranscribe={isTeam} />
       </div>
 
       <div hidden={tab !== "files"} className="studio-pane">
-        <p className="muted small">Slides, audio, video and documents are listed under Slides &amp; links (recordings and videos under Talks). Links can point to YouTube, an X post, Google Drive or any page.</p>
+        <p className="muted small">Recordings and videos are listed under Talks. Slides, photos, documents and links go in the section after Talks. A link can point to YouTube, an X post, Google Drive or any page.</p>
         <AddMaterials eventId={event.id} idPrefix="st" onAdded={() => router.refresh()} />
       </div>
 

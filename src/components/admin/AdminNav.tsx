@@ -5,11 +5,11 @@ import { usePathname } from "next/navigation";
 export default function AdminNav({ isAdmin }: { isAdmin: boolean }) {
   const path = usePathname();
   const links = [
-    { href: "/admin", label: "Events desk", on: path === "/admin" || path.startsWith("/admin/events") },
+    { href: "/admin", label: "Team desk", on: path === "/admin" || path.startsWith("/admin/events") },
     { href: "/admin/recordings", label: "Recordings", on: path.startsWith("/admin/recordings") },
     { href: "/record", label: "Record", on: path === "/record" },
-    { href: "/admin/team", label: "Team roster", on: path.startsWith("/admin/team") },
-    ...(isAdmin ? [{ href: "/admin/access", label: "Access", on: path.startsWith("/admin/access") }] : []),
+    { href: "/admin/team", label: "People on event pages", on: path.startsWith("/admin/team") },
+    ...(isAdmin ? [{ href: "/admin/access", label: "Who can sign in", on: path.startsWith("/admin/access") }] : []),
   ];
   return (
     <nav className="adm-nav" aria-label="Team desk">

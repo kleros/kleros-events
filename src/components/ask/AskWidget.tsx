@@ -50,6 +50,8 @@ export default function AskWidget({ enabled, signedIn, account, note }: {
   const key = `${STORE}:${account}`;
   const current = useRef(key);
   const [loaded, setLoaded] = useState("");
+  // on a phone the panel is a sheet over the whole page
+  const [phone, setPhone] = useState(false);
 
   // keep this account's conversation for the tab, and drop any other account's
   useEffect(() => {
@@ -84,6 +86,21 @@ export default function AskWidget({ enabled, signedIn, account, note }: {
       else document.querySelector<HTMLElement>(".rec-actions button:not(:disabled)")?.focus();
     }
   }, [open]);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 560px)");
+    const on = () => setPhone(mq.matches);
+    on(); mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  // while the sheet is open, the page behind it is out of reach, so focus stays in the sheet
+  const sheet = open && phone && !HIDDEN.test(path);
+  useEffect(() => {
+    if (!sheet) return;
+    const behind = Array.from(document.querySelectorAll<HTMLElement>("body > .skip, header.top, main, footer.site"));
+    const was = behind.map((el) => el.inert);
+    behind.forEach((el) => { el.inert = true; });
+    return () => behind.forEach((el, i) => { el.inert = was[i]; });
+  }, [sheet]);
   // a reopened panel starts at the latest message too
   useEffect(() => { log.current?.scrollTo({ top: log.current.scrollHeight }); }, [turns, draft, status, open]);
   const close = () => { returnFocus.current = true; setOpen(false); };
@@ -162,11 +179,11 @@ export default function AskWidget({ enabled, signedIn, account, note }: {
     <>
       {!open && (
         <button type="button" ref={fab} className="ask-fab" onClick={() => setOpen(true)} aria-label="Ask about Kleros events">
-          <span aria-hidden>✦</span> Ask
+          <span aria-hidden>✦</span> <span className="ask-fab-label">Ask</span>
         </button>
       )}
       {open && (
-        <section className="ask-panel" role="dialog" aria-label="Ask about Kleros events"
+        <section className="ask-panel" role="dialog" aria-label="Ask about Kleros events" aria-modal={sheet || undefined}
           onKeyDown={(e) => {
             // Escape closes the panel only while focus is in it, and not while typing with an IME
             if (e.key !== "Escape" || e.defaultPrevented || e.nativeEvent.isComposing || e.keyCode === 229) return;

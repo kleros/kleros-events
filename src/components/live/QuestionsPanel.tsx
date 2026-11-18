@@ -4,6 +4,7 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import { ago, authorOf, awaitingApproval, byNew, byTop } from "@/lib/useQuestions";
 import type { Question } from "@/lib/types";
 import { nudgeScreen } from "./useScreenMode";
+import { friendlyError } from "@/lib/friendlyError";
 
 type View = "open" | "answered" | "hidden";
 
@@ -46,7 +47,7 @@ export default function QuestionsPanel({ eventId, questions, loaded, live, error
       }
       if (patch.featured) onFeatured();
       nudgeScreen(eventId, { type: "questions" });
-    } catch (e) { setErr(`That change did not go through: ${(e as Error).message}`); }
+    } catch (e) { setErr(`That change did not go through. ${friendlyError(e)}`); }
     setBusy("");
     reload();
   }
@@ -80,7 +81,7 @@ export default function QuestionsPanel({ eventId, questions, loaded, live, error
         </div>
       </div>
 
-      {(err || error) && <div className="note" role="alert">{err || `Questions could not be loaded: ${error}`}</div>}
+      {(err || error) && <div className="note" role="alert">{err || `Questions could not be loaded. ${friendlyError(error)}`}</div>}
       {approval && waiting > 0 && (
         <p className="muted small qp-wait" role="status">{waiting} {waiting === 1 ? "question is" : "questions are"} waiting for approval before the big screen can show {waiting === 1 ? "it" : "them"}.</p>
       )}

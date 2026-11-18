@@ -98,3 +98,26 @@
 /* /record: the private-meeting route */
 .note.rs-private { display: grid; gap: var(--s-2); }
 .note.rs-private b { color: var(--white); }
+
+/* desk search over the event list */
+.desk-tools { display: flex; gap: var(--s-3); align-items: center; flex-wrap: wrap; }
+.desk-tools .search { flex: 0 1 420px; }
+
+/* renaming a saved item in place (MaterialEditor) */
+.mm-item { display: grid; gap: var(--s-2); }
+.mm-acts { display: flex; gap: 6px; align-items: center; }
+.med { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) auto; gap: var(--s-2) var(--s-3); align-items: end; padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--sunk); }
+.med-acts { display: flex; gap: 6px; }
+.med > .note { grid-column: 1 / -1; margin: 0; }
+.talk-edit { margin-top: var(--s-2); }
+.recl-acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+
+/* the invite message for a private event's collaborators */
+.collab-invite { display: flex; gap: var(--s-3); align-items: center; justify-content: space-between; }
+.collab-msg { width: 100%; padding: var(--s-2) 10px; border: 1px solid var(--field-line); border-radius: var(--r-sm); background: var(--bg); resize: vertical; }
+
+@media (max-width: 640px) {
+  .med { grid-template-columns: minmax(0, 1fr); }
+  .mm-acts { flex-direction: column; justify-content: center; gap: 2px; }
+  .collab-invite { flex-direction: column; align-items: flex-start; }
+}

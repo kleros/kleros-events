@@ -2,13 +2,19 @@
 import { useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { openPdf, type PdfDoc } from "@/lib/pdf";
+import { uploadToStorage } from "@/lib/materials-client";
+import { friendlyError, MAX_UPLOAD_BYTES, tooBigFile } from "@/lib/friendlyError";
 import type { Material, SlideMark } from "@/lib/types";
 import TalkStage, { type StageMode } from "../TalkStage";
-import { uploadToStorage } from "./MaterialsManager";
 
 type Step = "setup" | StageMode;
 
-export default function TalkBuilder({ eventId, onSaved }: { eventId: string; onSaved: (m: Material) => void }) {
+/**
+ * Builds a talk from slides and a recording made earlier: play the recording once and mark the
+ * slide changes. Recording a talk as it happens is done by the recorder on the event page
+ * (`slug` links there), which keeps a backup on the laptop while it records.
+ */
+export default function TalkBuilder({ eventId, slug, onSaved }: { eventId: string; slug?: string; onSaved: (m: Material) => void }) {
   const [step, setStep] = useState<Step>("setup");
   const [title, setTitle] = useState("");
   const [speaker, setSpeaker] = useState("");
@@ -24,12 +30,14 @@ export default function TalkBuilder({ eventId, onSaved }: { eventId: string; onS
 
   async function needPdf() {
     if (!pdfFile) { setErr("Choose the slides as a PDF first."); return false; }
+    // checked before the slides are synced, so nobody marks a whole talk that cannot be saved
+    if (pdfFile.size > MAX_UPLOAD_BYTES) { setErr(tooBigFile(pdfFile)); return false; }
     try { setPdf(await openPdf(await pdfFile.arrayBuffer())); return true; }
-    catch (e) { setErr("Couldn't open that PDF: " + (e as Error).message); return false; }
+    catch { setErr(`${pdfFile.name} could not be opened as a PDF. Export the slides to PDF again and choose the new file.`); return false; }
   }
-  async function startLive() { setErr(""); if (await needPdf()) setStep("record"); }
   async function useRecording(f: File | undefined) {
     if (!f) return; setErr("");
+    if (f.size > MAX_UPLOAD_BYTES) { setErr(tooBigFile(f)); return; }
     if (!(await needPdf())) return;
     setAudio(f); setAudioUrl(URL.createObjectURL(f)); setStep("sync");
   }
@@ -56,30 +64,30 @@ export default function TalkBuilder({ eventId, onSaved }: { eventId: string; onS
       }).select("*").single();
       if (error) throw error;
       onSaved(data as Material);
-    } catch (e) { setErr((e as Error).message); }
+    } catch (e) { setErr(`The talk was not saved. ${friendlyError(e)}`); }
     setSaving("");
   }
 
   const stepNo = step === "setup" ? 0 : step === "review" ? 2 : 1;
   return (
     <div className="panel">
-      <div className="mono small muted">{["Slides", "Record or sync", "Check & save"].map((s, i) => <span key={s} style={i === stepNo ? { color: "var(--fg)", fontWeight: 600 } : undefined}>{i ? " · " : ""}{i + 1}. {s}</span>)}</div>
+      <div className="mono small muted">{["Slides", "Sync with the recording", "Check & save"].map((s, i) => <span key={s} style={i === stepNo ? { color: "var(--fg)", fontWeight: 600 } : undefined}>{i ? " · " : ""}{i + 1}. {s}</span>)}</div>
       {step === "setup" && (
         <div className="stack">
           <div className="two">
             <div className="field"><label htmlFor="tk-t">Talk title</label><input id="tk-t" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Paid to be right" /></div>
-            <div className="field"><label htmlFor="tk-s">Speaker</label><input id="tk-s" value={speaker} onChange={(e) => setSpeaker(e.target.value)} /></div>
+            <div className="field"><label htmlFor="tk-s">Speaker</label><input id="tk-s" value={speaker} onChange={(e) => setSpeaker(e.target.value)} placeholder="Full name" /></div>
           </div>
-          <div className="field"><label htmlFor="tk-pdf">Slides (PDF)</label><input id="tk-pdf" type="file" accept=".pdf,application/pdf" onChange={(e) => setPdfFile(e.target.files?.[0] ?? null)} /></div>
+          <div className="field"><label htmlFor="tk-pdf">Slides (PDF)</label><input id="tk-pdf" type="file" accept=".pdf,application/pdf" onChange={(e) => { setPdfFile(e.target.files?.[0] ?? null); setErr(""); }} /></div>
           <div className="row-flex">
-            <button className="btn primary sm" onClick={startLive}><span className="dot" /> Present &amp; record live</button>
-            <label className="btn sm">I already have a recording<input type="file" hidden accept="audio/*,video/webm,video/mp4,.m4a,.mp3" onChange={(e) => { useRecording(e.target.files?.[0]); e.target.value = ""; }} /></label>
+            <label className="btn primary sm">I already have a recording<input type="file" hidden accept="audio/*,video/webm,video/mp4,.m4a,.mp3" onChange={(e) => { useRecording(e.target.files?.[0]); e.target.value = ""; }} /></label>
+            {slug && <a className="btn sm" href={`/events/${slug}#record`} target="_blank" rel="noopener"><span className="dot" /> Record live (opens the recorder on the event page)</a>}
           </div>
-          <div className="muted small">Live: present from this screen and every slide change is timestamped as you go. Already recorded: play it back once and press Next slide (or →) whenever the speaker moves on.</div>
+          <div className="muted small">Already recorded: choose the slides and the recording, play it back once and press Next slide (or →) whenever the speaker moves on. Each file must stay under 50 MB.{slug ? " To record a talk as it happens, use the recorder on the event page: it keeps a copy on the laptop while recording and saves the talk with its slides." : ""}</div>
         </div>
       )}
-      {(step === "record" || step === "sync") && (
-        <TalkStage pdf={pdf} mode={step} audioUrl={step === "sync" ? audioUrl : undefined} marks={[]} notes={{}} onCaptured={captured} />
+      {step === "sync" && (
+        <TalkStage pdf={pdf} mode="sync" audioUrl={audioUrl} marks={[]} notes={{}} onCaptured={captured} />
       )}
       {step === "review" && (
         <>

@@ -8,8 +8,9 @@ import type { EventRow } from "@/lib/types";
 import NotTeam from "@/components/NotTeam";
 import RequestsTable from "@/components/RequestsTable";
 import LumaSync, { type SyncLog } from "@/components/admin/LumaSync";
+import DeskSearch from "@/components/admin/DeskSearch";
 
-export const metadata: Metadata = { title: "Events desk" };
+export const metadata: Metadata = { title: "Team desk" };
 export const dynamic = "force-dynamic";
 
 const TABS = ["upcoming", "past", "drafts", "private", "requests"] as const;
@@ -42,7 +43,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const pub = events.filter((e) => e.visibility !== "private");
   const published = pub.filter((e) => e.status === "published");
   const lists = {
-    upcoming: published.filter((e) => !isPast(e)),
+    // private events are never published, so they join the upcoming list by date alone
+    upcoming: events.filter((e) => !isPast(e) && (e.status === "published" || e.visibility === "private")),
     past: published.filter((e) => isPast(e)).reverse(),
     drafts: pub.filter((e) => e.status === "draft"),
     private: events.filter((e) => e.visibility === "private"),
@@ -63,7 +65,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     <div className="wrap page stack adm-page">
       <header className="adm-head">
         <div>
-          <h1>Events desk</h1>
+          <h1>Team desk</h1>
           <p className="muted">Plan events, run them live, and keep talks and slides together afterwards.</p>
         </div>
         <div className="row-flex">
@@ -102,7 +104,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 }
 
 const EMPTY: Record<Exclude<Tab, "requests">, [string, string]> = {
-  upcoming: ["No upcoming events", "Published events with a future date show up here."],
+  upcoming: ["No upcoming events", "Published events and private events with a future date show up here."],
   past: ["No past events yet", "Events move here the day after they end."],
   drafts: ["No drafts", "Events saved as draft stay hidden from the public site until published."],
   private: ["No private events", "Private events are seen only by their creator and the collaborators they add. Choose Private when adding an event."],
@@ -116,36 +118,45 @@ function EventList({ events, tab, matCount, going }: {
     return <div className="empty"><b>{title}</b>{body}</div>;
   }
   return (
-    <ul className="desk-list">
-      {events.map((e) => {
-        const mats = matCount[e.id] ?? 0;
-        const past = isPast(e);
-        return (
-          <li key={e.id} className="desk-row">
-            <div className="desk-date">{fmtRange(e.starts_on, e.ends_on)}</div>
-            <div className="desk-main">
-              <Link className="desk-title" href={`/admin/events/${e.id}`}>{e.title}</Link>
-              <div className="meta">
-                <span>{ROLE_SHORT[e.kleros_role]}</span><span aria-hidden>·</span><span>{place(e)}</span>
-                {isLive(e) && e.status === "published" && <span className="pill live">Today</span>}
-                {e.is_example && <span className="pill ex">Example</span>}
-                {e.visibility === "private" && <span className="pill draft">Private</span>}
-              </div>
+    <DeskSearch items={events.map((e) => {
+      const mats = matCount[e.id] ?? 0;
+      const past = isPast(e);
+      return { key: e.id, text: searchText(e), row: (
+        <li className="desk-row">
+          <div className="desk-date">{fmtRange(e.starts_on, e.ends_on)}</div>
+          <div className="desk-main">
+            <Link className="desk-title" href={`/admin/events/${e.id}`}>{e.title}</Link>
+            <div className="meta">
+              <span>{ROLE_SHORT[e.kleros_role]}</span><span aria-hidden>·</span><span>{place(e)}</span>
+              {isLive(e) && e.status === "published" && <span className="pill live">Today</span>}
+              {e.is_example && <span className="pill ex">Example</span>}
+              {e.visibility === "private" && <span className="pill draft">Private</span>}
             </div>
-            <div className="desk-stats">
-              {!past && <span><b className="mono">{going[e.id] ?? 0}</b> going</span>}
-              {past && mats === 0 && e.status === "published"
-                ? <span className="pill ex">Needs materials</span>
-                : (past || mats > 0) && <span><b className="mono">{mats}</b> {mats === 1 ? "material" : "materials"}</span>}
-            </div>
-            <div className="desk-acts">
-              <Link className="btn sm" href={`/events/${e.slug}/host`}>Run live</Link>
-              <Link className="btn sm" href={`/admin/events/${e.id}`}>Edit</Link>
-              <Link className="btn sm ghost" href={`/events/${e.slug}`}>View</Link>
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+          </div>
+          <div className="desk-stats">
+            {!past && <span><b className="mono">{going[e.id] ?? 0}</b> going</span>}
+            {past && mats === 0 && e.status === "published"
+              ? <span className="pill ex">Needs materials</span>
+              : (past || mats > 0) && <span><b className="mono">{mats}</b> {mats === 1 ? "material" : "materials"}</span>}
+          </div>
+          <div className="desk-acts">
+            {/* once an event is over, the job left is adding its slides and recordings */}
+            {past
+              ? <Link className="btn sm" href={`/admin/events/${e.id}#materials`}>Add materials</Link>
+              : <Link className="btn sm" href={`/events/${e.slug}/host`}>Run live</Link>}
+            <Link className="btn sm" href={`/admin/events/${e.id}`}>Edit</Link>
+            <Link className="btn sm ghost" href={`/events/${e.slug}`}>View</Link>
+          </div>
+        </li>
+      ) };
+    })} />
   );
+}
+
+const monthYear = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+
+/** What the desk search looks in: title, place, and the date written several ways ("2026-03", "Mar", "March 2026"). */
+function searchText(e: EventRow) {
+  return [e.title, e.city, e.country, place(e), fmtRange(e.starts_on, e.ends_on), e.starts_on, e.ends_on, monthYear(e.starts_on), e.ends_on && monthYear(e.ends_on)]
+    .filter(Boolean).join(" ");
 }

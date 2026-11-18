@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Instrument_Serif, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -25,12 +25,17 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", site: "@kleros_io" },
 };
 
+// the browser bar on phones takes the page's darkest background
+export const viewport: Viewport = { themeColor: "#120F19", colorScheme: "dark" };
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body>
+        {/* first stop for the keyboard: past the header and menu to the page itself */}
+        <a className="skip" href="#main">Skip to content</a>
         <SiteHeader />
-        <main>{children}</main>
+        <main id="main" tabIndex={-1}>{children}</main>
         <SiteFooter />
         {/* checks the question counter (up to 2 s) without holding up the page */}
         <Suspense fallback={null}><AskLauncher /></Suspense>

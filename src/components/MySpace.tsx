@@ -9,6 +9,7 @@ import { scoreEvent } from "@/lib/recommend";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import EventCard from "./EventCard";
 import { TalkCard } from "./MaterialRow";
+import { visitorError } from "@/lib/visitorError";
 
 type Att = { event_id: string; status: string; note: string | null };
 type Prog = { material_id: string; position_seconds: number; finished: boolean };
@@ -31,7 +32,7 @@ export default function MySpace({ profile, email, events, materials, attendance,
     const { error } = await supabaseBrowser().from("profiles").update({
       display_name: next.display_name, visitor_role: next.visitor_role, region: next.region, interests: next.interests, include_online: next.include_online,
     }).eq("id", p.id);
-    setSaved(error ? "Couldn't save: " + error.message : "Saved");
+    setSaved(error ? "Not saved. " + visitorError(error, "Saving") : "Saved");
   }
   async function signOut() {
     await supabaseBrowser().auth.signOut();

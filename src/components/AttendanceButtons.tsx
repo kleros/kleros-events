@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import type { AttendanceStatus } from "@/lib/types";
+import { visitorError } from "@/lib/visitorError";
 
 export default function AttendanceButtons({ eventId, past, signedIn, slug }: { eventId: string; past: boolean; signedIn: boolean; slug: string }) {
   const [status, setStatus] = useState<AttendanceStatus | null>(null);
@@ -26,17 +27,18 @@ export default function AttendanceButtons({ eventId, past, signedIn, slug }: { e
     const res = next
       ? await sb.from("attendance").upsert({ user_id: data.user.id, event_id: eventId, status: next, note: nextNote || null, updated_at: new Date().toISOString() })
       : await sb.from("attendance").delete().eq("user_id", data.user.id).eq("event_id", eventId);
-    if (res.error) { setMsg("Couldn't save: " + res.error.message); return; }
+    if (res.error) { setMsg("Not saved. " + visitorError(res.error, "Saving")); return; }
     setStatus(next);
     setMsg(next ? "Saved to My events" : "Removed");
   }
 
-  const options: [AttendanceStatus, string][] = past ? [["saved", "☆ Save"], ["attended", "I was there"]] : [["saved", "☆ Save"], ["going", "✓ I'm going"]];
+  // [status, glyph, label]: the glyph is decoration, so screen readers hear only the label
+  const options: [AttendanceStatus, string, string][] = past ? [["saved", "☆", "Save"], ["attended", "", "I was there"]] : [["saved", "☆", "Save"], ["going", "✓", "I'm going"]];
   return (
     <div className="stack" style={{ gap: 8 }}>
       <div className="row-flex">
         {signedIn
-          ? options.map(([v, l]) => <button key={v} className={`btn sm ${status === v ? "on" : ""}`} onClick={() => save(status === v ? null : v)}>{l}</button>)
+          ? options.map(([v, g, l]) => <button key={v} className={`btn sm ${status === v ? "on" : ""}`} aria-pressed={status === v} onClick={() => save(status === v ? null : v)}><span>{g && <><span aria-hidden>{g}</span> </>}{l}</span></button>)
           : <Link className="btn sm" href={`/login?next=/events/${slug}`}>Sign in to save this event</Link>}
         {!past && <a className="btn sm" href={`/events/${slug}/calendar.ics`}>Add to calendar</a>}
       </div>

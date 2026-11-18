@@ -46,18 +46,20 @@ export default function EventCard({ e, talks = 0, materials = 0, going = 0, why,
 }) {
   const status = statusLabel(e);
   // say what there is to open: talks to watch first, else slides, photos and posts
-  const count = talks ? `▶ ${plural(talks, "talk")}` : materials ? `${materials} ${materials === 1 ? "link or file" : "links & files"}` : going ? `${going} going` : "";
+  const count = talks ? `▶ ${plural(talks, "talk")}` : materials ? `${materials} ${materials === 1 ? "file or link" : "files and links"}` : going ? `${going} going` : "";
   const text = excerpt(e);
+  // the title is the one link; it stretches over the whole card, so the card stays clickable
+  // and a screen reader hears the event's name instead of the whole card read out as a link
   return (
-    <Link className="card ev" href={`/events/${e.slug}`}>
-      <span className="cover-wrap">
+    <article className="card ev">
+      <div className="cover-wrap">
         <EventCover e={e} />
         <span className="on-cover oc-tl"><DateTile iso={e.starts_on} /></span>
         {status && <span className={`pill ${status.cls} on-cover oc-tr`}>{status.text}</span>}
-      </span>
-      <span className="body">
+      </div>
+      <div className="body">
         <span className="date">{fmtRange(e.starts_on, e.ends_on)}</span>
-        <h3>{e.title}</h3>
+        <h3><Link className="stretch" href={`/events/${e.slug}`}>{e.title}</Link></h3>
         <span className="meta"><RolePill e={e} /><span className="pill plain">{e.event_type}</span></span>
         {text && <span className="desc-clamp">{text}</span>}
         {why && <span className="why">{why}</span>}
@@ -66,8 +68,8 @@ export default function EventCard({ e, talks = 0, materials = 0, going = 0, why,
           <span>{place(e)}</span>
           {count && <span className={talks ? "has-talks" : ""}>{count}</span>}
         </span>
-      </span>
-    </Link>
+      </div>
+    </article>
   );
 }
 

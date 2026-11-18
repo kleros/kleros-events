@@ -7,6 +7,7 @@ import { ROLE_LABEL, productsFor } from "@/lib/kleros";
 import { EventCover, RolePill, statusLabel } from "@/components/EventCard";
 import MaterialRow, { MATERIAL_GROUPS, TalkCard, byTalkRank, isTalkLike, linkUrl, sourceOf } from "@/components/MaterialRow";
 import PromoStrip from "@/components/PromoStrip";
+import Linkify from "@/components/Linkify";
 import AttendanceButtons from "@/components/AttendanceButtons";
 import AskTheSpeaker from "@/components/AskTheSpeaker";
 import MeetingForm from "@/components/MeetingForm";
@@ -20,7 +21,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const data = await getEvent(slug);
   // a signed-out visitor gets a sign-in page here rather than a 404, which search engines must not keep
-  if (!data) return { title: "Event not found", robots: { index: false } };
+  if (!data) return { title: "Event not available", robots: { index: false } };
   const e = data.event;
   return { title: e.title, description: `${ROLE_LABEL[e.kleros_role]} · ${fmtRange(e.starts_on, e.ends_on)} · ${place(e)}. ${excerpt(e)}`.slice(0, 200) };
 }
@@ -34,11 +35,11 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     if (!user) return (
       <div className="wrap page con-gate">
         <div className="eyebrow">Event</div>
-        <h1>Sign in to open this event</h1>
-        <p className="muted">This event was not found. If it is a private event that was shared with you, sign in with the email address it was shared with.</p>
+        <h1>This event is not available</h1>
+        <p className="muted">The link may be old or mistyped. If someone shared a private event with you, sign in with the email address they used and it opens.</p>
         <div className="row-flex">
-          <Link className="btn primary" href={`/login?next=${encodeURIComponent(`/events/${slug}`)}`}>Sign in</Link>
-          <Link className="btn" href="/events">All events</Link>
+          <Link className="btn primary" href="/events">All events</Link>
+          <Link className="btn" href={`/login?next=${encodeURIComponent(`/events/${slug}`)}`}>Sign in</Link>
         </div>
       </div>
     );
@@ -60,7 +61,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   }).filter((g) => g.items.length);
   // name the section after what it holds: no "Slides" heading over a list of posts
   const has = (label: string) => groups.some((g) => g.label === label);
-  const matLabel = has("Slides") ? "Slides & links" : has("Photos") ? "Photos & posts" : has("Audio") || has("Documents") ? "Files & links" : "Links & posts";
+  const matLabel = has("Slides") ? "Slides and links" : has("Photos") ? "Photos and posts" : has("Audio") || has("Documents") ? "Files and links" : "Links and posts";
   // recordings saved without slides, for "Attach slides to a recording"
   const bareRecordings = materials.filter((m) => m.kind === "audio" && !!m.file_path);
   const otherCount = groups.reduce((s, g) => s + g.items.length, 0);
@@ -77,7 +78,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const stats = ([
     past ? [c.attended, "attended"] : [c.going, "going"],
     [talks.length, talks.length === 1 ? "talk" : "talks"],
-    [otherCount, matLabel.toLowerCase().replace("&", "and")],
+    [otherCount, matLabel.toLowerCase()],
     [agenda.length, agenda.length === 1 ? "agenda item" : "agenda items"],
     [team.length, "from Kleros"],
   ] as [number, string][]).filter(([n]) => n > 0).slice(0, 3);
@@ -113,7 +114,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             <div className="row-flex">
               {e.url && !past && <a className="btn cta" href={e.url} target="_blank" rel="noopener">{ticketLabel} ↗</a>}
               {past && talks.length > 0 && <a className="btn cta" href="#talks">▶ Watch {plural(talks.length, "talk")}</a>}
-              {canEdit && <Link className="btn" href={`/events/${e.slug}/host`}>Run this event</Link>}
+              {canEdit && <Link className="btn" href={`/events/${e.slug}/host`}>Run live</Link>}
               {canEdit && <StudioButton mode="record" className="btn"><span className="dot" aria-hidden /> Record a session</StudioButton>}
               {canEdit && <Link className="btn" href={`/admin/events/${e.id}`}>Edit details</Link>}
             </div>
@@ -138,10 +139,10 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               {e.recap && (
                 <div className="recap">
                   <div className="eyebrow">Recap</div>
-                  <p className="desc">{e.recap}</p>
+                  <p className="desc"><Linkify text={e.recap} /></p>
                 </div>
               )}
-              {description && <p className="desc">{description}</p>}
+              {description && <p className="desc"><Linkify text={description} /></p>}
             </section>
           )}
 

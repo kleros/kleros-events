@@ -7,12 +7,14 @@ import { ArchiveRow, MATERIAL_GROUPS, TalkCard, byTalkRank, isWatchable } from "
 import { EventCover } from "./EventCard";
 
 type Tab = "all" | "talks" | "slides" | "posts";
-const TABS: { v: Tab; label: string; kinds: MaterialKind[] | null }[] = [
-  { v: "all", label: "All", kinds: null },
-  { v: "talks", label: "Talks", kinds: ["talk", "video", "audio"] },
-  { v: "slides", label: "Slides", kinds: ["slides", "doc"] },
-  { v: "posts", label: "Photos and posts", kinds: ["image", "social", "link"] },
+// The page is called Talks, so it opens on the talks; "Everything" adds slides, photos and posts.
+const TABS: { v: Tab; label: string; kinds: MaterialKind[] | null; one: string; many: string }[] = [
+  { v: "talks", label: "Talks", kinds: ["talk", "video", "audio"], one: "talk", many: "talks" },
+  { v: "slides", label: "Slides", kinds: ["slides", "doc"], one: "file", many: "files" },
+  { v: "posts", label: "Photos and posts", kinds: ["image", "social", "link"], one: "photo or post", many: "photos and posts" },
+  { v: "all", label: "Everything", kinds: null, one: "talk, file or link", many: "talks, files and links" },
 ];
+const DEFAULT_TAB: Tab = "talks";
 
 type Ev = EventRow;
 
@@ -28,12 +30,13 @@ function filesLabel(items: Material[]) {
 }
 
 export default function TalkArchive({ materials, events }: { materials: Material[]; events: Ev[] }) {
-  const [tab, setTab] = useState<Tab>("all");
+  const [tab, setTab] = useState<Tab>(DEFAULT_TAB);
   const [q, setQ] = useState("");
   const [limit, setLimit] = useState(EVENTS_STEP);
   const [open, setOpen] = useState<Set<string>>(new Set());
   const byId = Object.fromEntries(events.map((e) => [e.id, e]));
-  const kinds = TABS.find((t) => t.v === tab)!.kinds;
+  const current = TABS.find((t) => t.v === tab)!;
+  const kinds = current.kinds;
   const needle = q.trim();
 
   // Start from ?type= and ?q= so a filtered view can be shared, and keep the address in step.
@@ -45,7 +48,7 @@ export default function TalkArchive({ materials, events }: { materials: Material
   }, []);
   useEffect(() => {
     const u = new URL(window.location.href);
-    if (tab === "all") u.searchParams.delete("type"); else u.searchParams.set("type", tab);
+    if (tab === DEFAULT_TAB) u.searchParams.delete("type"); else u.searchParams.set("type", tab);
     if (needle) u.searchParams.set("q", needle); else u.searchParams.delete("q");
     window.history.replaceState(null, "", u.pathname + u.search);
   }, [tab, needle]);
@@ -74,15 +77,15 @@ export default function TalkArchive({ materials, events }: { materials: Material
         <input className="search" type="search" placeholder="Search by title, speaker or event" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search the archive" />
       </div>
       <div className="result-line" role="status">
-        <span>{plural(shown, "item")} from {plural(groups.length, "event")}</span>
+        <span>{plural(shown, current.one, current.many)} from {plural(groups.length, "event")}</span>
         {needle && <button className="link-btn" onClick={() => setQ("")}>Clear search</button>}
       </div>
 
       {visible.map(({ e, items }) => {
         const watch = items.filter(isWatchable).sort(byTalkRank);
         const rest = items.filter((m) => !isWatchable(m));
-        // posts and links fold after a few, unless searching or on the posts tab
-        const full = open.has(e.id) || !!needle || tab !== "all";
+        // posts and links fold after a few, unless searching or on a tab that shows only them
+        const full = open.has(e.id) || !!needle || tab === "slides" || tab === "posts";
         const rows = full ? rest : rest.slice(0, ROWS_FIRST);
         return (
           <section key={e.id} className="arch-event">
@@ -90,7 +93,7 @@ export default function TalkArchive({ materials, events }: { materials: Material
               <Link className="arch-cover" href={`/events/${e.slug}`} tabIndex={-1} aria-hidden><EventCover e={e} /></Link>
               <div className="arch-t">
                 <h2><Link href={`/events/${e.slug}`}>{e.title}</Link></h2>
-                <span className="muted small">{fmtRange(e.starts_on, e.ends_on)} · {place(e)} · {plural(items.length, "item")}</span>
+                <span className="muted small">{fmtRange(e.starts_on, e.ends_on)} · {place(e)} · {plural(items.length, current.one, current.many)}</span>
               </div>
               <Link className="btn sm ghost arch-go" href={`/events/${e.slug}`}>Event page →</Link>
             </header>
@@ -116,7 +119,7 @@ export default function TalkArchive({ materials, events }: { materials: Material
       {!groups.length && (
         <div className="empty">
           <b>{materials.length ? "Nothing matches" : "Nothing in the archive yet"}</b>
-          {materials.length ? "Try another type or a shorter search." : "Talks, slides and recordings appear here after each event."}
+          {materials.length ? (tab !== "all" && !needle ? "Try Everything to see slides, photos and posts too." : "Try another type or a shorter search.") : "Talks, slides and recordings appear here after each event."}
         </div>
       )}
     </div>

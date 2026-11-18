@@ -5,8 +5,9 @@ import { getEvent } from "@/lib/data";
 import { SITE_URL } from "@/lib/kleros";
 import { currentUser, supabaseServer } from "@/lib/supabase/server";
 import HostConsole from "@/components/live/HostConsole";
+import SwitchAccount from "@/components/SwitchAccount";
 
-export const metadata: Metadata = { title: "Host console", robots: { index: false } };
+export const metadata: Metadata = { title: "Run live", description: "Questions, big screen and recording", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
 export default async function HostPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -21,16 +22,23 @@ export default async function HostPage({ params }: { params: Promise<{ slug: str
   if (!user || !data || !canRun) {
     return (
       <div className="wrap page con-gate">
-        <div className="eyebrow">Host console</div>
-        <h1>Event admins only</h1>
+        <div>
+          <div className="eyebrow">Run live</div>
+          <p className="muted small" style={{ marginTop: 6 }}>Questions, big screen and recording</p>
+        </div>
+        <h1>Team or invited people only</h1>
         {user ? (
-          <p className="muted">This account is signed in but is not on the Kleros team, so it cannot run events. Team accounts use an @kleros.io email. If this is a mistake, ask an admin to add the account to the team.</p>
+          <>
+            {/* a private event shows only to its members, so anyone stopped here is signed in without team access */}
+            <p>{user.email ? <>Signed in as <b>{user.email}</b>, which does not have team access.</> : "This account does not have team access."}</p>
+            <p className="muted">This page runs the questions, the big screen and the recording for an event. It opens for the Kleros events team, who use @kleros.io emails, and, on a private event, for the people its creator invited.</p>
+          </>
         ) : (
-          <p className="muted">The host console records sessions and moderates questions. Sign in with a Kleros team account, or, for a private event, with the email address its creator added.</p>
+          <p className="muted">This page runs the questions, the big screen and the recording for an event. Sign in with a Kleros team account, or, for a private event, with the email address its creator invited.</p>
         )}
         <div className="row-flex">
-          {!user && <Link className="btn primary" href={`/login?next=${next}`}>Sign in</Link>}
-          <Link className="btn" href={`/events/${slug}`}>Back to the event</Link>
+          {user ? <SwitchAccount next={`/events/${slug}/host`} /> : <Link className="btn primary" href={`/login?next=${next}`}>Sign in</Link>}
+          <Link className="btn ghost" href={`/events/${slug}`}>Back to the event</Link>
         </div>
       </div>
     );

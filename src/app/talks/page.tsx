@@ -3,7 +3,7 @@ import { listEvents, listMaterials } from "@/lib/data";
 import TalkArchive from "@/components/TalkArchive";
 import SetupNotice from "@/components/SetupNotice";
 
-export const metadata: Metadata = { title: "Talks & archive" };
+export const metadata: Metadata = { title: "Talks" };
 export const revalidate = 60;
 
 export default async function TalksPage() {
@@ -13,9 +13,9 @@ export default async function TalksPage() {
       <div className="page-band"><div className="wrap">
         <SetupNotice />
         <header className="page-head">
-          <div className="eyebrow">Archive</div>
-          <h1>Talks, slides and recordings</h1>
-          <p className="lede">Talks, slides, photos and posts from Kleros events, grouped by event, newest first.</p>
+          <div className="eyebrow">Talks</div>
+          <h1>Talks from Kleros events</h1>
+          <p className="lede">Recordings and clips grouped by event, newest first. Choose Everything to add slides, photos and posts.</p>
         </header>
       </div></div>
       <div className="wrap page">

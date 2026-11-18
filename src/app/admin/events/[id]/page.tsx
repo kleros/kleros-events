@@ -38,7 +38,7 @@ export default async function EditEventPage({ params, searchParams }: { params: 
     { id: "details", label: "Details" },
     ...(isPrivate ? [{ id: "collaborators", label: "Collaborators" }] : []),
     { id: "agenda", label: "Agenda" },
-    { id: "team", label: "Kleros team" },
+    { id: "team", label: "Who is going for Kleros" },
     { id: "materials", label: "Materials" },
   ];
 
@@ -48,7 +48,7 @@ export default async function EditEventPage({ params, searchParams }: { params: 
         <div className="wrap">
           <div className="ed-top">
             <div className="ed-title">
-              <Link href={isTeam ? "/admin" : "/me"} className="small muted ed-back">← {isTeam ? "Events desk" : "My events"}</Link>
+              <Link href={isTeam ? "/admin" : "/me"} className="small muted ed-back">← {isTeam ? "Team desk" : "My events"}</Link>
               <h1>{e.title}</h1>
               <div className="meta">
                 <span>{fmtRange(e.starts_on, e.ends_on)}</span><span aria-hidden>·</span><span>{place(e)}</span>
@@ -80,7 +80,7 @@ export default async function EditEventPage({ params, searchParams }: { params: 
         {isPrivate && (
           <section id="collaborators" className="ed-sec">
             <div className="ed-sec-h"><h2>Collaborators</h2><p className="muted small">Who besides the creator can see and edit this private event.</p></div>
-            <CollaboratorsEditor eventId={id} creatorEmail={(creator.data as string | null) ?? null} initial={(collabs.data ?? []) as { email: string; created_at: string }[]} />
+            <CollaboratorsEditor eventId={id} slug={e.slug} title={e.title} creatorEmail={(creator.data as string | null) ?? null} initial={(collabs.data ?? []) as { email: string; created_at: string }[]} />
           </section>
         )}
         <section id="agenda" className="ed-sec">
@@ -88,7 +88,7 @@ export default async function EditEventPage({ params, searchParams }: { params: 
           <AgendaEditor eventId={id} initial={(agenda.data ?? []) as AgendaItem[]} />
         </section>
         <section id="team" className="ed-sec">
-          <div className="ed-sec-h"><h2>Kleros team</h2><p className="muted small">Who attends for Kleros. Visitors can ask to meet them.</p></div>
+          <div className="ed-sec-h"><h2>Who is going for Kleros</h2><p className="muted small">Who attends for Kleros. Visitors can ask to meet them.</p></div>
           <TeamPicker eventId={id} roster={(roster.data ?? []) as TeamMember[]} initial={team.data ?? []} />
         </section>
         <section id="materials" className="ed-sec">

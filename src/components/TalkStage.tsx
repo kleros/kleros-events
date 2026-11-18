@@ -153,10 +153,12 @@ export default function TalkStage({ pdf, mode, audioUrl, marks, notes, onNotes, 
 
   const ms = sorted();
   const total = dur || knownDuration || 0;
+  // m:ss for screen readers, without the leading zero the display shows
+  const spoken = (s: number) => fmtDur(s).replace(/^0(\d:)/, "$1");
   return (
     <div className="player" data-player>
       <div className="stack" style={{ gap: 10, minWidth: 0 }}>
-        <div className="slide" ref={box}>{!pdf && <div className="ph">Loading slides…</div>}<canvas ref={canvas} hidden={!pdf} /></div>
+        <div className="slide" ref={box}>{!pdf && <div className="ph">Loading slides…</div>}<canvas ref={canvas} hidden={!pdf} role="img" aria-label={`Slide ${page} of ${pages}`} /></div>
         <div className="row-flex">
           {mode !== "sync" && <button className="btn sm" onClick={() => go(page - 1)} aria-label="Previous slide">‹</button>}
           <span className="mono small">{page} / {pages}</span>
@@ -177,9 +179,14 @@ export default function TalkStage({ pdf, mode, audioUrl, marks, notes, onNotes, 
           <div className="row-flex">
             <button className="btn sm" onClick={() => (audio.current!.paused ? audio.current!.play() : audio.current!.pause())} aria-label={playing ? "Pause" : "Play"}>{playing ? "❚❚" : "▶"}</button>
             <span className="mono small" style={{ whiteSpace: "nowrap" }}>{fmtDur(time)} / {fmtDur(total)}</span>
-            <div className="tl" onClick={(e) => { if (mode === "sync" || !total) return; const r = e.currentTarget.getBoundingClientRect(); audio.current!.currentTime = ((e.clientX - r.left) / r.width) * total; }}>
+            {/* a tap on the slider below has already seeked: its click is ignored here */}
+            <div className="tl" onClick={(e) => { if (mode === "sync" || !total || e.target instanceof HTMLInputElement) return; const r = e.currentTarget.getBoundingClientRect(); audio.current!.currentTime = ((e.clientX - r.left) / r.width) * total; }}>
               {total && ms.length ? ms.map((m, i) => { const end = i + 1 < ms.length ? ms[i + 1].t : total; return <span key={i} className={m.p === page ? "cur" : ""} title={`Slide ${m.p} · ${fmtDur(m.t)}`} style={{ flex: Math.max(0.5, end - m.t) }} />; }) : <span style={{ flex: 1 }} />}
               <i className="head" style={{ left: total ? `${Math.min(100, (time / total) * 100)}%` : 0 }} />
+              {/* invisible native slider over the strip: arrow keys and a finger can seek too */}
+              <input type="range" className="tl-seek" min={0} max={total || 1} step={1} value={Math.min(time, total || 1)} disabled={mode === "sync" || !total}
+                aria-label="Position in the recording" aria-valuetext={`${spoken(time)} of ${spoken(total)}`}
+                onChange={(e) => { const a = audio.current; if (!a) return; a.currentTime = Number(e.currentTarget.value); setTime(a.currentTime); }} />
             </div>
             <button className="btn sm ghost" onClick={() => { const r = [1, 1.25, 1.5, 2, 0.75]; const n = r[(r.indexOf(rate) + 1) % r.length]; audio.current!.playbackRate = n; setRate(n); }}>{rate}×</button>
             <audio ref={(n) => { audio.current = n; if (n) trackPlaying(n); }} src={audioUrl} preload="metadata" hidden

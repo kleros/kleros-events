@@ -14,7 +14,7 @@ export default function RequestsTable({ rows }: { rows: Req[] }) {
     if (error) setErr("Could not save: " + error.message);
     else setList(list.map((x) => (x.id === r.id ? { ...x, handled: !x.handled } : x)));
   }
-  if (!list.length) return <div className="empty"><b>No requests yet</b>Requests from the “Meet Kleros” box on event pages land here.</div>;
+  if (!list.length) return <div className="empty"><b>No requests yet</b>Requests from the “Meet Kleros” box on event pages and from the Invite Kleros page land here.</div>;
   const open = list.filter((r) => !r.handled);
   const done = list.filter((r) => r.handled);
   const row = (r: Req) => (

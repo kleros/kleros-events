@@ -14,9 +14,16 @@ export default function AskTheSpeaker({ eventId, signedIn, isTeam, displayName, 
   const [guestName, setGuestName] = useState("");
   const [sort, setSort] = useState<"top" | "new">("top");
   const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
 
   async function ask(e: React.FormEvent) {
-    e.preventDefault(); setErr("");
+    e.preventDefault();
+    if (busy) return;
+    setErr(""); setSent(false); setBusy(true);
+    try { await send(); } finally { setBusy(false); }
+  }
+  async function send() {
     const sb = supabaseBrowser();
     let me: string;
     try { me = (await ensureUser()).id; } catch (x) { setErr(qaError(x)); return; }
@@ -31,6 +38,9 @@ export default function AskTheSpeaker({ eventId, signedIn, isTeam, displayName, 
       return;
     }
     setBody(""); reload();
+    // say it went, as the phone page does; the box emptying alone looks like nothing happened
+    setSent(true);
+    window.setTimeout(() => setSent(false), 5000);
   }
   async function vote(q: Question) {
     let me = uid;
@@ -47,30 +57,35 @@ export default function AskTheSpeaker({ eventId, signedIn, isTeam, displayName, 
   return (
     <div className="stack">
       <form className="row-flex" onSubmit={ask}>
-        <input className="search" value={body} onChange={(e) => setBody(e.target.value)} placeholder={past ? "Leave a question for the speakers" : "Ask the Kleros speakers a question"} maxLength={280} minLength={3} required aria-label="Your question" />
+        <input className="search" value={body} onChange={(e) => setBody(e.target.value)} placeholder={past ? "Leave a question for the speakers" : "Ask the Kleros speakers a question"} maxLength={280} minLength={3} required aria-label="Your question" enterKeyHint="send" />
         {signedIn
           ? <label className="muted small"><input type="checkbox" checked={anon} onChange={(e) => setAnon(e.target.checked)} /> Ask anonymously</label>
           : <input className="search" style={{ flex: "0 1 160px" }} value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Your name (optional)" maxLength={40} aria-label="Your name" />}
-        <button className="btn primary sm" type="submit">Ask</button>
+        <button className="btn primary sm" type="submit" disabled={busy}>{busy ? "Sending…" : "Send question"}</button>
       </form>
-      {err && <div className="note">{err}</div>}
+      {err && <div className="note" role="alert">{err}</div>}
+      {sent && !err && <div className="ok" role="status">Sent. It is in the list below.</div>}
       <div className="row-flex">
-        <div className="seg" role="group" aria-label="Sort"><button aria-pressed={sort === "top"} onClick={() => setSort("top")}>Top</button><button aria-pressed={sort === "new"} onClick={() => setSort("new")}>Newest</button></div>
+        <div className="seg" role="group" aria-label="Sort"><button aria-pressed={sort === "top"} onClick={() => setSort("top")}>Top</button><button aria-pressed={sort === "new"} onClick={() => setSort("new")}>New</button></div>
         {/* the phone page is for the room during the talk */}
         {!past && <Link className="btn sm ghost" href={`/q/${slug}`}>Ask from your phone</Link>}
-        {isTeam && <Link className="btn sm" href={`/events/${slug}/host`} style={{ marginLeft: "auto" }}>Moderate in host console</Link>}
+        {isTeam && <Link className="btn sm" href={`/events/${slug}/host`} style={{ marginLeft: "auto" }}>Moderate (Run live)</Link>}
       </div>
-      {list.map((q) => (
-        <div key={q.id} className={`q ${q.featured ? "feat" : ""} ${q.status === "answered" ? "done" : ""}`}>
-          <button className={`vote ${myVotes.has(q.id) ? "on" : ""}`} onClick={() => vote(q)} aria-label="Upvote">▲<span>{q.votes}</span></button>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ overflowWrap: "anywhere" }}>{q.body}</div>
-            <div className="by">{authorOf(q)}{q.featured ? " · on screen" : ""}{q.status === "answered" ? " · answered" : ""}</div>
+      {list.map((q) => {
+        const on = myVotes.has(q.id);
+        const count = `${q.votes} ${q.votes === 1 ? "vote" : "votes"}`;
+        return (
+          <div key={q.id} className={`q ${q.featured ? "feat" : ""} ${q.status === "answered" ? "done" : ""}`}>
+            <button className={`vote ${on ? "on" : ""}`} onClick={() => vote(q)} aria-pressed={on} aria-label={on ? `Remove upvote, ${count}` : `Upvote, ${count}`}><span aria-hidden>▲</span><span>{q.votes}</span></button>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ overflowWrap: "anywhere" }}>{q.body}</div>
+              <div className="by">{authorOf(q)}{q.featured ? " · on screen" : ""}{q.status === "answered" ? " · answered" : ""}</div>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
       {!list.length && <p className="quiet-empty">{past
-        ? "No questions yet. The speakers see every question and may reply later."
+        ? "No questions yet. The Kleros team reads every question left here. Answers are not posted on this page, so to hear back by email, use Request a meeting."
         : "No questions yet. Questions work during the talk and after it, and the speakers see them all."}</p>}
     </div>
   );

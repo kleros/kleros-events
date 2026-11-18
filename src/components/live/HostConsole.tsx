@@ -59,7 +59,7 @@ export default function HostConsole({ event, agenda, joinUrl, isTeam = true }: {
       <header className="con-top">
         <a className="con-back" href={`/events/${event.slug}`} aria-label="Back to the event page">‹</a>
         <div className="con-heading">
-          <div className="eyebrow">Host console</div>
+          <div className="eyebrow">Run live</div>
           <h1 className="con-h1">{event.title}</h1>
           <div className="muted small">{[when, event.venue, event.city].filter(Boolean).join(" · ")}</div>
           {event.visibility === "private" ? (

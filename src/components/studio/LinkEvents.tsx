@@ -5,7 +5,10 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import { linkMaterial, loadPickEvents, unlinkMaterial, type PickEvent } from "@/lib/materials-client";
 import { EVENT_TYPES, ROLE_LABEL } from "@/lib/kleros";
 import { fmtRange, place, slugify, todayIso } from "@/lib/format";
+import { friendlyError, NO_ACCESS } from "@/lib/friendlyError";
 import type { KlerosRole } from "@/lib/types";
+
+const PRIVATE_ONLY = "Private events take only recordings made for them. Record from the private event's page next time.";
 
 /**
  * "Link to events": a dialog to pick any number of events (drafts included) for a recording,
@@ -27,14 +30,15 @@ export default function LinkEvents({ materialId, title, linked, onChange, label 
   const [err, setErr] = useState("");
   // 0010: a private event only takes items that are on private events alone (all editable by the caller)
   const [privOk, setPrivOk] = useState<boolean | null>(null);
+  const [privUnknown, setPrivUnknown] = useState(false);
 
   useEffect(() => { if (preloaded) setEvents(preloaded); }, [preloaded]);
 
   // until the answer is in, private events that are not picked yet stay locked
   function checkPrivOk() {
-    setPrivOk(null);
+    setPrivOk(null); setPrivUnknown(false);
     supabaseBrowser().rpc("material_private_only", { p_material: materialId })
-      .then(({ data, error }) => setPrivOk(error ? null : !!data));
+      .then(({ data, error }) => { setPrivOk(error ? null : !!data); setPrivUnknown(!!error); }, () => setPrivUnknown(true));
   }
 
   async function open() {
@@ -42,7 +46,7 @@ export default function LinkEvents({ materialId, title, linked, onChange, label 
     dlg.current?.showModal();
     checkPrivOk();
     if (!events) {
-      try { setEvents(await loadPickEvents()); } catch (e) { setErr(`The events could not be loaded: ${(e as Error).message}`); }
+      try { setEvents(await loadPickEvents()); } catch (e) { setErr(`The events could not be loaded. ${friendlyError(e)}`); }
     }
   }
   const close = () => dlg.current?.close();
@@ -66,13 +70,24 @@ export default function LinkEvents({ materialId, title, linked, onChange, label 
     let now = [...linked];
     const report = () => onChange?.(now, (events ?? []).filter((e) => now.includes(e.id)));
     try {
-      for (const id of [...add].sort((a, b) => Number(isPrivate(b)) - Number(isPrivate(a)))) { await linkMaterial(materialId, [id]); now = [...now, id]; }
+      for (const id of [...add].sort((a, b) => Number(isPrivate(b)) - Number(isPrivate(a)))) {
+        try { await linkMaterial(materialId, [id]); }
+        catch (e) {
+          // linkMaterial words every refusal as a private-event one; say which event, and what works instead
+          if (/can't be added|row-level security/i.test((e as Error).message ?? "")) {
+            const name = (events ?? []).find((x) => x.id === id)?.title ?? "that event";
+            throw new Error(isPrivate(id) ? `This recording cannot go into ${name}. ${PRIVATE_ONLY}` : `This recording cannot be added to ${name}. ${NO_ACCESS}`);
+          }
+          throw e;
+        }
+        now = [...now, id];
+      }
       for (const id of drop) { await unlinkMaterial(materialId, id); now = now.filter((x) => x !== id); }
       report();
       close();
       router.refresh();
     } catch (e) {
-      setErr((e as Error).message);
+      setErr(friendlyError(e));
       if (now.length !== linked.length || now.some((id) => !linked.includes(id))) { report(); router.refresh(); }
       checkPrivOk();
     }
@@ -96,7 +111,7 @@ export default function LinkEvents({ materialId, title, linked, onChange, label 
       res = await sb.from("events").insert({ ...row, slug: `${base}-${crypto.randomUUID().slice(0, 4)}` }).select("id, slug, title, starts_on, ends_on, city, country, status, visibility, event_type").single();
     }
     setBusy("");
-    if (res.error) { setErr(res.error.message); return; }
+    if (res.error) { setErr(`The event was not created. ${friendlyError(res.error)}`); return; }
     const made = res.data as PickEvent;
     setEvents((list) => [made, ...(list ?? [])]);
     setPicked((p) => [...p, made.id]);
@@ -148,24 +163,26 @@ export default function LinkEvents({ materialId, title, linked, onChange, label 
                 {shown.map((e) => {
                   const on = picked.includes(e.id);
                   const locked = !on && e.visibility === "private" && privOk !== true && !linked.includes(e.id);
+                  // shown under the row, not only on hover: a greyed-out box alone does not say why
+                  // (nothing while the check is still running, which takes a moment)
+                  const why = !locked ? "" : privOk === false ? PRIVATE_ONLY
+                    : privUnknown ? "It could not be checked whether this recording can go into a private event. Close this window and open it again." : "";
+                  const whyId = `le-why-${materialId}-${e.id}`;
                   return (
                     <li key={e.id}>
-                      <label className={`le-row${on ? " is-on" : ""}`} aria-disabled={locked || undefined}
-                        title={locked ? "Only items that belong to private events can go into a private event. Add it there as a new link or upload instead." : undefined}>
-                        <input type="checkbox" checked={on} disabled={locked} onChange={() => toggle(e.id)} />
+                      <label className={`le-row${on ? " is-on" : ""}`} aria-disabled={locked || undefined}>
+                        <input type="checkbox" checked={on} disabled={locked} onChange={() => toggle(e.id)} aria-describedby={why ? whyId : undefined} />
                         <span className="le-main">
                           <b>{e.title}</b>
                           <span className="muted small">{fmtRange(e.starts_on, e.ends_on)} · {place(e)} · {e.event_type}</span>
                         </span>
                         {e.visibility === "private" ? <span className="pill draft">Private</span> : e.status === "draft" && <span className="pill draft">Draft</span>}
                       </label>
+                      {why && <p id={whyId} className="muted small" style={{ margin: "0 0 var(--s-2)", padding: "0 10px 0 calc(28px + var(--s-3))" }}>{why}</p>}
                     </li>
                   );
                 })}
               </ul>
-              {privOk === false && shown.some((e) => e.visibility === "private" && !linked.includes(e.id)) && (
-                <p className="muted small">Private events only take items that belong to private events. To show this one in a private event, add it there as a new link or upload.</p>
-              )}
             </>
           )}
 

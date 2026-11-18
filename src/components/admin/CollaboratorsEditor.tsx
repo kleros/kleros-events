@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { friendlyError } from "@/lib/friendlyError";
 import { parseEmails } from "./EventForm";
 
 type Row = { email: string; created_at: string };
@@ -8,15 +9,31 @@ type Row = { email: string; created_at: string };
 /**
  * People who can see and edit a private event besides its creator (0010 event_collaborators).
  * Anyone on the list can add or remove others. Access follows the email: it works once that
- * person signs in with it, Kleros account or not.
+ * person signs in with it, Kleros account or not. Nobody is emailed, so the invite message is
+ * copied here and sent by hand.
  */
-export default function CollaboratorsEditor({ eventId, creatorEmail, initial }: {
-  eventId: string; creatorEmail: string | null; initial: Row[];
+export default function CollaboratorsEditor({ eventId, slug, title, creatorEmail, initial }: {
+  eventId: string; slug: string; title: string; creatorEmail: string | null; initial: Row[];
 }) {
   const [list, setList] = useState(initial);
   const [text, setText] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  // shown to copy by hand when the browser does not allow copying
+  const [manual, setManual] = useState("");
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  async function copyInvite() {
+    const msg = `You have been added to ${title} on Kleros Events. Open ${window.location.origin}/events/${slug} and sign in with this email address.`;
+    try {
+      await navigator.clipboard.writeText(msg);
+      setManual(""); setCopied(true);
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => setCopied(false), 2000);
+    } catch { setManual(msg); }
+  }
 
   async function add(ev: React.FormEvent) {
     ev.preventDefault(); setErr("");
@@ -28,7 +45,7 @@ export default function CollaboratorsEditor({ eventId, creatorEmail, initial }: 
     const { data, error } = await supabaseBrowser().from("event_collaborators")
       .insert(fresh.map((email) => ({ event_id: eventId, email }))).select("email, created_at");
     setBusy(false);
-    if (error) { setErr(error.message); return; }
+    if (error) { setErr(friendlyError(error)); return; }
     setList([...list, ...((data ?? []) as Row[])]);
     setText("");
   }
@@ -36,7 +53,7 @@ export default function CollaboratorsEditor({ eventId, creatorEmail, initial }: 
   async function remove(email: string) {
     setErr("");
     const { error } = await supabaseBrowser().from("event_collaborators").delete().eq("event_id", eventId).eq("email", email);
-    if (error) { setErr(error.message); return; }
+    if (error) { setErr(friendlyError(error)); return; }
     setList(list.filter((r) => r.email !== email));
   }
 
@@ -57,7 +74,16 @@ export default function CollaboratorsEditor({ eventId, creatorEmail, initial }: 
         <button className="btn" type="submit" disabled={busy || !text.trim()}>{busy ? "Adding…" : "Add"}</button>
       </form>
       {err && <div className="note">{err}</div>}
-      <p className="muted small" style={{ margin: 0 }}>Collaborators see the event, its materials and questions, and can edit it, once they sign in with the email listed here. Nobody is notified automatically, so send them the link.</p>
+      <div className="collab-invite">
+        <p className="muted small" style={{ margin: 0 }}>Collaborators see the event, its materials and questions, and can edit it, once they sign in with the email listed here. Nobody is notified automatically: copy the invite message and paste it into an email or chat to each person.</p>
+        <button className="btn sm" type="button" onClick={copyInvite} aria-live="polite">{copied ? "Copied" : "Copy invite message"}</button>
+      </div>
+      {manual && (
+        <div className="stack">
+          <span className="muted small">This browser did not allow copying. Select the message below and copy it.</span>
+          <textarea className="collab-msg" readOnly value={manual} rows={3} onFocus={(e) => e.currentTarget.select()} aria-label="Invite message" />
+        </div>
+      )}
     </div>
   );
 }

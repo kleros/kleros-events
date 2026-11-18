@@ -16,6 +16,7 @@ import { getTranscript, transcriptSetup } from "@/lib/transcript/data";
 import TranscriptArea from "@/components/transcript/TranscriptArea";
 import { MediaPlayer, YouTubePlayer } from "@/components/transcript/MediaPlayers";
 import StartAt from "@/components/transcript/StartAt";
+import { MaterialEditButton } from "@/components/admin/MaterialEditor";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -57,6 +58,9 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
   // editors of the item (the team, or a private event's members) manage the slides of a recording
   const canEdit = !!user && (m.kind === "talk" || m.kind === "audio")
     && !!(await (await supabaseServer()).rpc("material_editable", { p_material: m.id })).data;
+  // the same editors rename the item; videos and slides have no slide editor, so they are asked here
+  const canRename = canEdit || (!!user && (m.kind === "video" || m.kind === "slides")
+    && !!(await (await supabaseServer()).rpc("material_editable", { p_material: m.id })).data);
 
   let player: React.ReactNode;
   let canSeek = false;
@@ -103,6 +107,7 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
           : <Link href="/admin/recordings" className="back">← Recordings library</Link>}
         <h1 className="talk-title">{main}</h1>
         <div className="muted small">{detail}</div>
+        {canRename && <div className="talk-edit"><MaterialEditButton m={{ id: m.id, title: m.title, speaker: m.speaker }} label="Edit title or speaker" /></div>}
         {m.linkedEvents.length > 1 && (
           <div className="talk-events">
             <span className="muted small">Presented at</span>

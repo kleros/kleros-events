@@ -96,7 +96,7 @@ function jump(t: number) {
   const p = document.querySelector("[data-player]");
   if (!p) return;
   const r = p.getBoundingClientRect();
-  if (r.bottom < 60 || r.top > window.innerHeight - 60) p.scrollIntoView({ behavior: "smooth", block: "center" });
+  if (r.bottom < 60 || r.top > window.innerHeight - 60) p.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
 }
 
 function SummaryCard({ s, title, timed, seekable }: { s: Summary; title: string; timed: boolean; seekable: boolean }) {
@@ -218,7 +218,7 @@ function TranscriptBody({ segs, title, speaker, timed, seekable, language }: { s
     const b = box.current; const el = b?.querySelector<HTMLElement>(`[data-i="${cur}"]`);
     if (!b || !el) return;
     const top = el.offsetTop - b.offsetTop, bottom = top + el.offsetHeight;
-    if (top < b.scrollTop + 24 || bottom > b.scrollTop + b.clientHeight - 24) b.scrollTo({ top: Math.max(0, top - b.clientHeight / 3), behavior: "smooth" });
+    if (top < b.scrollTop + 24 || bottom > b.scrollTop + b.clientHeight - 24) b.scrollTo({ top: Math.max(0, top - b.clientHeight / 3), behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   }, [cur, follow, playing, q]);
 
   const needle = q.trim().toLowerCase();
