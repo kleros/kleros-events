@@ -46,12 +46,14 @@ Copy follows the Kleros writing rules:
 
 ## Where the feed is read from
 
-`sync_feed()` reads the file from the first of these addresses that answers with a feed (migration `0014_security.sql`):
+`sync_feed()` reads the file from these addresses (migration `0015_feed_kleros_repo.sql`, which replaces the list from `0014_security.sql`):
 
-1. `https://raw.githubusercontent.com/weiwei-ooi/kleros-events/main/public/updates/feed.json`, the file on the main branch on GitHub. GitHub keeps a copy for up to five minutes, so a change pushed just before minute 17 can wait for the next hourly run.
-2. `https://events.kleros.io/updates/feed.json`, the copy the site publishes, used only when GitHub does not answer. It can lag behind main when the host builds from a fork that is synced by hand.
+1. `https://raw.githubusercontent.com/kleros/kleros-events/main/public/updates/feed.json` and `https://raw.githubusercontent.com/weiwei-ooi/kleros-events/main/public/updates/feed.json`, the file on the main branch of both GitHub copies. Their items are joined, so an item pushed to either copy is picked up before the copies are synced. An item in both is taken from the Kleros copy. GitHub keeps a copy for up to five minutes, so a change pushed just before minute 17 can wait for the next hourly run.
+2. `https://events.kleros.io/updates/feed.json`, the copy the site publishes, used only when neither GitHub copy answers.
 
-`kleros-events.vercel.app` is not read: once that Vercel project is switched off, someone else could take the name and serve a feed of their own. For the same reason, before the `weiwei-ooi` GitHub account is renamed or deleted, or the repository is moved or renamed, the GitHub address in `feed_get()` needs to change first, with a new migration.
+Until 0015 is run in Supabase, only the `weiwei-ooi` copy and events.kleros.io are read (0014), so feed items must reach `weiwei-ooi/kleros-events` to be applied.
+
+`kleros-events.vercel.app` is not read: once that Vercel project is switched off, someone else could take the name and serve a feed of their own. For the same reason, before the `weiwei-ooi` GitHub account is renamed or deleted, its address in `feed_get()` needs to be removed first, with a new migration.
 
 ## Feed format
 

@@ -6,13 +6,22 @@ The Vercel deployment can keep running alongside. Both read the same Supabase da
 
 ## 1. Create the site
 
-1. Log in to Netlify (the repository owner, `weiwei-ooi`, can log in with Google or GitHub).
-2. Go to **Add new project → Import an existing project → GitHub**. GitHub asks once to let Netlify read the repository: choose `weiwei-ooi`, then **Only select repositories**, then `kleros-events`, and approve.
-3. Pick `weiwei-ooi/kleros-events`, branch `main`, and deploy. Leave the build settings empty: they come from `netlify.toml` (`npm run build`, publish `.next`, Node 22).
+The code lives in the Kleros GitHub organization, at `kleros/kleros-events`. It is a fork of `weiwei-ooi/kleros-events`, the first copy, which still feeds the Vercel site (see below).
+
+1. Log in to Netlify.
+2. Go to **Add new project → Import an existing project → GitHub**. GitHub asks once to let Netlify read the repository: choose the `kleros` organization, then `kleros-events`, and approve. Installing the Netlify app on the organization may need an owner of the `kleros` organization to approve it.
+3. Pick `kleros/kleros-events`, branch `main`, and deploy. Leave the build settings empty: they come from `netlify.toml` (`npm run build`, publish `.next`, Node 22).
+
+An existing site can be moved to another repository under **Project configuration → Build & deploy → Repository → Manage repository → Link to a different repository**. Make sure the new repository's `main` already holds the latest code first, or the next deploy rolls the site back.
 
 From then on every commit to `main` deploys on its own. Events, talks and materials need no deploy at all: they live in the database, so the site shows them as soon as they are added.
 
-Importing a fork instead (for example into the Kleros GitHub organization) also works, but then new changes only reach the site when someone presses **Sync fork** on GitHub. The site at events.kleros.io was built that way on 29 Oct 2026 and stayed on that copy, so prefer importing the original.
+**Keeping the two copies in step.** Wei Wei's Netlify site (`kleros-events-site.netlify.app`) builds from `kleros/kleros-events` since 18 November 2026. The Vercel site (`kleros-events.vercel.app`) still builds from `weiwei-ooi/kleros-events`, and is the address Supabase sends people back to after sign-in when no other address applies. Until Vercel is moved or switched off, a change pushed to one copy should also reach the other:
+
+- pushed to `weiwei-ooi/kleros-events`: on `github.com/kleros/kleros-events`, press **Sync fork → Update branch**;
+- pushed to `kleros/kleros-events`: push the same commit to `weiwei-ooi/kleros-events` as well.
+
+The site at events.kleros.io is still a separate Netlify site, built on 29 Oct 2026 from an older fork and an empty database. Section 3 says how to move the domain to the current site.
 
 ## 2. Environment variables
 
@@ -49,7 +58,7 @@ Supabase only sends people back to addresses on its allow list.
 
 ## What else to know
 
-- **Hourly jobs.** Luma and the socials feed run inside Supabase (pg_cron). They do not depend on the host. The feed is read from the file on the main branch of `weiwei-ooi/kleros-events` on GitHub, and from `https://events.kleros.io/updates/feed.json` only when GitHub does not answer (migration 0014, details in `docs/social-feed.md`). The Vercel address is no longer read. If Netlify builds from a fork, the fork's copy is read only in that fallback, and it can lag behind main until the fork is synced.
+- **Hourly jobs.** Luma and the socials feed run inside Supabase (pg_cron). They do not depend on the host. The feed is read from the file on the main branch of both GitHub copies, `kleros/kleros-events` and `weiwei-ooi/kleros-events`, and from `https://events.kleros.io/updates/feed.json` only when GitHub does not answer (migrations 0014 and 0015, details in `docs/social-feed.md`). The Vercel address is not read.
 - **Time limit.** Netlify ends every server request after 60 seconds, where Vercel allowed this app 300. The transcript route detects Netlify at build time and splits its work so that each step fits: the transcript in one request, the summary in the next. A very long summary on a slow model can still run past 60 seconds. If that happens, set `ANTHROPIC_MODEL` to a faster model.
 - **Middleware** (session refresh for Supabase) runs as a Netlify Edge Function. It needs no settings.
 - **Images** go through Netlify Image CDN. Supabase storage is already allowed in `next.config.ts`.
