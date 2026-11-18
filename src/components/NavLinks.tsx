@@ -2,10 +2,12 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { KICKBACK_SITE } from "@/lib/kleros";
+import Ext from "./Ext";
 import ThemeToggle, { ThemeChoice } from "./ThemeToggle";
 
-/** Header navigation. Desktop: Events and Talks, then account, theme and Proof of Presence (the kickback page) on the right.
- *  Phones: Proof of Presence and a Menu sheet that holds the rest. */
+/** Header navigation. Desktop: Events and Talks, then account, theme and Kickback on the right.
+ *  Phones: Kickback and a Menu sheet that holds the rest. */
 export default function NavLinks({ signedIn, isTeam }: { signedIn: boolean; isTeam: boolean }) {
   const path = usePathname();
   const on = (href: string) => (path === href || path.startsWith(href + "/") ? "page" : undefined);
@@ -66,7 +68,7 @@ export default function NavLinks({ signedIn, isTeam }: { signedIn: boolean; isTe
           <Link className="nav-link wide" href={account.href} aria-current={on(account.href)}>{account.label}</Link>
         )}
         <ThemeToggle className="wide" />
-        <Link className="btn sm nav-kickback" href="/kickback" aria-current={on("/kickback")}>Proof of Presence</Link>
+        <a className="btn sm nav-kickback" href={KICKBACK_SITE} target="_blank" rel="noopener">Kickback<Ext /></a>
         <details className="menu end nav-sheet" ref={sheet}>
           <summary className="icon-btn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
