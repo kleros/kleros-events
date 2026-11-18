@@ -98,7 +98,7 @@ export default function AttachSlides({ eventId, recordings, onSaved }: {
             <div className="field">
               <span className="lbl">Slides (PDF)</span>
               <div className="row-flex">
-                <label className="btn sm">{file ? "Choose another PDF" : "Choose PDF"}<input type="file" hidden accept=".pdf,application/pdf" onChange={(e) => { choose(e.target.files?.[0]); e.target.value = ""; }} /></label>
+                <label className="btn sm">{file ? "Choose another PDF" : "Choose PDF"}<input type="file" className="sr-only" accept=".pdf,application/pdf" onChange={(e) => { choose(e.target.files?.[0]); e.target.value = ""; }} /></label>
                 {file && pdf && <span className="muted small as-file">{file.name} · {pdf.numPages} slides</span>}
               </div>
             </div>

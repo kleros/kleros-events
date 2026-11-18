@@ -7,7 +7,7 @@ import type { EventRow, Material } from "@/lib/types";
 import MaterialRow from "../MaterialRow";
 import AddMaterials from "./AddMaterials";
 import TalkBuilder from "./TalkBuilder";
-import MaterialEditor, { type MaterialNames } from "./MaterialEditor";
+import MaterialEditor, { editLabel, type MaterialNames } from "./MaterialEditor";
 
 // kept for older imports
 export { uploadToStorage };
@@ -23,8 +23,9 @@ export default function MaterialsManager({ event, initial }: { event: EventRow; 
   const [editing, setEditing] = useState("");
 
   async function remove(m: Material) {
-    if (confirm !== m.id) { setConfirm(m.id); return; }
-    setErr("");
+    // the first click arms the button; it disarms itself after 4 seconds
+    if (confirm !== m.id) { setConfirm(m.id); setTimeout(() => setConfirm((c) => (c === m.id ? "" : c)), 4000); return; }
+    setConfirm(""); setErr("");
     const sb = supabaseBrowser();
     // The database decides (0012): it takes the item off this event when it is on other events too,
     // including ones this editor cannot see, and deletes it when this was its last event. Files go
@@ -59,9 +60,10 @@ export default function MaterialsManager({ event, initial }: { event: EventRow; 
                 <div style={{ flex: 1, minWidth: 0 }}><MaterialRow m={m} /></div>
                 <div className="mm-acts">
                   <button className="btn sm ghost" type="button" aria-expanded={editing === m.id}
-                    onClick={() => { setConfirm(""); setEditing(editing === m.id ? "" : m.id); }}>Rename</button>
-                  <button className="btn sm ghost" type="button" onClick={() => remove(m)} title={shared ? `Also linked to ${shared === 1 ? "1 other event" : `${shared} other events`}; it stays there.` : undefined}>
-                    {confirm === m.id ? "Confirm" : shared ? "Unlink" : "Remove"}
+                    onClick={() => { setConfirm(""); setEditing(editing === m.id ? "" : m.id); }}>{editLabel(m)}</button>
+                  <button className={`btn sm ghost${confirm === m.id ? " danger-armed" : ""}`} type="button" onClick={() => remove(m)}
+                    title={shared ? `Also linked to ${shared === 1 ? "1 other event" : `${shared} other events`}. It stays there.` : undefined}>
+                    {confirm === m.id ? (shared ? "Unlink from this event?" : "Remove for good?") : shared ? "Unlink" : "Remove"}
                   </button>
                 </div>
               </div>
@@ -72,7 +74,11 @@ export default function MaterialsManager({ event, initial }: { event: EventRow; 
         {!list.length && <div className="muted small">Nothing yet. After the event, add the deck and the recording as a talk.</div>}
       </div>
       <AddMaterials eventId={event.id} onAdded={added}
-        extra={<button className="btn primary" type="button" onClick={() => setTalkOpen(!talkOpen)}><span className="dot" /> Add a talk (slides + recording)</button>} />
+        extra={<>
+          {/* opens the recorder on the event page */}
+          <a className="btn primary" href={`/events/${event.slug}#record`}><span className="dot" aria-hidden /> Record a session</a>
+          <button className="btn" type="button" aria-expanded={talkOpen} onClick={() => setTalkOpen(!talkOpen)}>Add a recorded talk (slides + audio file)</button>
+        </>} />
       {err && <div className="note">{err}</div>}
       {talkOpen && <TalkBuilder eventId={event.id} slug={event.slug} onSaved={(m) => { added(m); setTalkOpen(false); }} />}
     </div>

@@ -1,12 +1,23 @@
 import { currentUser } from "@/lib/supabase/server";
 import { sharedLimits, visitorsOff, type Shared } from "@/lib/ask/limit";
-import AskWidget from "./AskWidget";
+import AskWidget, { type TeamNote } from "./AskWidget";
 
-// what the team reads in the panel while only the team can ask
-const TEAM_ONLY: Record<Exclude<Shared, "ok">, string> = {
-  "no-key": "Only the team sees this button for now. To open it to everyone, an admin adds SUPABASE_SERVICE_ROLE_KEY to the site's environment variables (on Vercel or Netlify), runs migration 0014_security.sql in Supabase if it has not been run, and redeploys.",
-  "not-set-up": "Only the team sees this button for now: the database has no question counter or refused the key. An admin checks that migration 0014_security.sql has been run in Supabase and that SUPABASE_SERVICE_ROLE_KEY holds the service role key.",
-  down: "Only the team sees this button for now: the database that keeps the question counts did not answer. Once it answers, everyone else gets the button on their next page load.",
+// what the team reads in the panel while only the team can ask: one plain line, and the
+// technical steps folded away for a developer
+const SETUP_STEP = "Only the team can use the assistant for now. Opening it to visitors needs one setup step from a developer.";
+const TEAM_ONLY: Record<Exclude<Shared, "ok">, TeamNote> = {
+  "no-key": {
+    text: SETUP_STEP,
+    dev: "Add SUPABASE_SERVICE_ROLE_KEY to the site's environment variables (on Vercel or Netlify), run migration 0014_security.sql in Supabase if it has not been run, and redeploy.",
+  },
+  "not-set-up": {
+    text: SETUP_STEP,
+    dev: "The database has no question counter or refused the key. Check that migration 0014_security.sql has been run in Supabase and that SUPABASE_SERVICE_ROLE_KEY holds the service role key.",
+  },
+  down: {
+    text: "Only the team can use the assistant right now, because the question counter did not answer. Visitors get the button back once it does.",
+    dev: "The database that keeps the question counts (ask_take) did not answer. Once it answers, everyone else gets the button on their next page load.",
+  },
 };
 
 /**

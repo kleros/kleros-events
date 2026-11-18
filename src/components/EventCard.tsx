@@ -46,7 +46,7 @@ export default function EventCard({ e, talks = 0, materials = 0, going = 0, why,
 }) {
   const status = statusLabel(e);
   // say what there is to open: talks to watch first, else slides, photos and posts
-  const count = talks ? `▶ ${plural(talks, "talk")}` : materials ? `${materials} ${materials === 1 ? "file or link" : "files and links"}` : going ? `${going} going` : "";
+  const count = talks ? <><span aria-hidden="true">▶</span> {plural(talks, "talk")}</> : materials ? `${materials} ${materials === 1 ? "file or link" : "files and links"}` : going ? `${going} going` : "";
   const text = excerpt(e);
   // the title is the one link; it stretches over the whole card, so the card stays clickable
   // and a screen reader hears the event's name instead of the whole card read out as a link

@@ -57,7 +57,7 @@ function linkError(msg: string) {
     return "Linking to several events needs the database update in supabase/migrations/0006_material_links.sql.";
   // 0010: a private event only takes items that already belong to private events alone
   if (/row-level security/i.test(msg) && /material_events/.test(msg))
-    return "This item can't be added to that event. Items from the recordings library or from a public event stay with the team: to show one in a private event, add it there as a new link or upload.";
+    return "This item can't be added to that event. Items from the recordings library or from a public event stay with the team, so they cannot be shown in a private event.";
   return msg;
 }
 

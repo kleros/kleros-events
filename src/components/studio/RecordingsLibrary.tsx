@@ -7,7 +7,7 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import { removeFiles, unlinkMaterial, type PickEvent } from "@/lib/materials-client";
 import { fmtDur, fmtRange, plural } from "@/lib/format";
 import { friendlyError, NO_ACCESS } from "@/lib/friendlyError";
-import MaterialEditor, { type MaterialNames } from "../admin/MaterialEditor";
+import MaterialEditor, { editLabel, type MaterialNames } from "../admin/MaterialEditor";
 import LinkEvents from "./LinkEvents";
 import EventChip from "./EventChip";
 
@@ -84,13 +84,21 @@ export default function RecordingsLibrary({ materials, events, txStatus, linksRe
     <div className="wrap page stack adm-page">
       <header className="adm-head">
         <div>
-          <h1>Recordings</h1>
+          <h1>Recordings library</h1>
           <p className="muted">Every talk, recording and video, with the events it belongs to. A recording can be linked to several events. One with no published event is visible to the team only, and one that belongs only to private events is visible only to their creators and collaborators.</p>
         </div>
-        <Link className="btn primary" href="/record"><span className="dot" aria-hidden /> Record new</Link>
+        <Link className="btn primary" href="/record"><span className="dot" aria-hidden /> Record a session</Link>
       </header>
 
-      {!linksReady && <p className="note" style={{ margin: 0 }}>Linking to several events needs the database update in supabase/migrations/0006_material_links.sql. Until it runs, each recording shows its one event.</p>}
+      {!linksReady && (
+        <div className="note dev-note">
+          <span>Linking one recording to several events is not switched on yet. Until then, each recording shows its one event.</span>
+          <details className="small muted">
+            <summary>Details for a developer</summary>
+            It needs the database update in supabase/migrations/0006_material_links.sql (the material_events table). Once it has run, the Link to events buttons and the unlink buttons on each event appear here.
+          </details>
+        </div>
+      )}
 
       <div className="recl-tools">
         <div className="seg" role="group" aria-label="Show">
@@ -138,7 +146,7 @@ export default function RecordingsLibrary({ materials, events, txStatus, linksRe
                   )}
                   <div className="recl-acts">
                     <button className="btn sm ghost" type="button" aria-expanded={editing === m.id}
-                      onClick={() => setEditing(editing === m.id ? "" : m.id)}>Rename</button>
+                      onClick={() => setEditing(editing === m.id ? "" : m.id)}>{editLabel(m)}</button>
                     {!(links[m.id] ?? []).length && (
                       <button className={`btn sm ghost${armed === `del:${m.id}` ? " danger-armed" : ""}`} type="button" onClick={() => del(m)}
                         aria-label={armed === `del:${m.id}` ? `Delete ${m.title} for good` : `Delete ${m.title}`}>
@@ -154,7 +162,7 @@ export default function RecordingsLibrary({ materials, events, txStatus, linksRe
       ) : (
         <div className="empty">
           <b>{all.length ? "Nothing matches" : "No recordings yet"}</b>
-          {all.length ? "Try another filter or a shorter search." : "Recordings made on an event page, in the host console or on the Record page appear here."}
+          {all.length ? "Try another filter or a shorter search." : "Recordings made on an event page, in Run live or on the Record a session page appear here."}
         </div>
       )}
       <p className="muted small">{plural(list.length, "recording")} shown</p>

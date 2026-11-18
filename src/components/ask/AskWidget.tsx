@@ -15,13 +15,35 @@ const HIDDEN = /^\/(q\/|events\/[^/]+\/(screen|host|live)(\/|$))/;
 const STORE = "kleros-ask";
 
 function suggestions(path: string) {
-  if (/^\/talks\/[0-9a-f-]{36}/i.test(path)) return ["Summarize this recording", "List the action items from this recording", "What questions came up?"];
-  if (/^\/events\/[^/]+$/.test(path)) return ["What happened at this event?", "Which talks were given here?", "Who from Kleros is going?"];
+  // worded so they fit a talk or event whether it is past or still to come
+  if (/^\/talks\/[0-9a-f-]{36}/i.test(path)) return ["Summarize this talk", "What are the main points?", "What questions came up?"];
+  if (/^\/events\/[^/]+$/.test(path)) return ["What is this event about?", "Which talks are from this event?", "Who from Kleros takes part?"];
   return ["Which events are coming up?", "Which talks covered AI agents?", "Where will Kleros be next month?"];
 }
 
+/** A note for the team: one plain sentence, and the technical steps for a developer. */
+export interface TeamNote { text: string; dev: string }
+
+/** The plain sentence, with the technical text folded away under it. */
+function DevNote({ note }: { note: TeamNote }) {
+  return (
+    <div className="note small ask-note">
+      <p>{note.text}</p>
+      <details className="small muted">
+        <summary>Details for a developer</summary>
+        <p>{note.dev}</p>
+      </details>
+    </div>
+  );
+}
+
+const SWITCHED_OFF: TeamNote = {
+  text: "The assistant is not switched on yet. Until a developer turns it on, only the team sees this button.",
+  dev: "Add an Anthropic key as ANTHROPIC_API_KEY to the site's environment variables (on Vercel or Netlify) and redeploy. To open it to everyone else, the site also needs SUPABASE_SERVICE_ROLE_KEY and migration 0014_security.sql (see the README, under Site assistant).",
+};
+
 /**
- * The floating "Ask" button and its chat panel, on every page. Answers stream from /api/ask,
+ * The floating "Ask AI" button and its chat panel, on every page. Answers stream from /api/ask,
  * which looks things up with the visitor's own access. The conversation survives moving between
  * pages (and a reload, within the tab), and belongs to one account: signing out or switching
  * accounts starts a new one, so nobody sees answers drawn from someone else's access.
@@ -29,7 +51,7 @@ function suggestions(path: string) {
 export default function AskWidget({ enabled, signedIn, account, note }: {
   enabled: boolean; signedIn: boolean; account: string;
   /** for the team, while only the team can ask: what is missing */
-  note?: string;
+  note?: TeamNote;
 }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
@@ -179,7 +201,7 @@ export default function AskWidget({ enabled, signedIn, account, note }: {
     <>
       {!open && (
         <button type="button" ref={fab} className="ask-fab" onClick={() => setOpen(true)} aria-label="Ask about Kleros events">
-          <span aria-hidden>✦</span> <span className="ask-fab-label">Ask</span>
+          <span aria-hidden>✦</span> <span className="ask-fab-label">Ask AI</span>
         </button>
       )}
       {open && (
@@ -206,13 +228,12 @@ export default function AskWidget({ enabled, signedIn, account, note }: {
             if (e.defaultPrevented && (e.target as Element).closest("a") && window.matchMedia("(max-width: 560px)").matches) close();
           }}>
             {!enabled ? (
-              <div className="note small">
-                The assistant is not switched on yet. An admin adds an Anthropic key as ANTHROPIC_API_KEY to the site&apos;s environment variables (on Vercel or Netlify) and redeploys. Only the team sees this button until then. To open it to everyone else, the site also needs SUPABASE_SERVICE_ROLE_KEY and migration 0014_security.sql (see the README, under Site assistant).
-              </div>
+              <DevNote note={SWITCHED_OFF} />
             ) : turns.length === 0 && !busy ? (
               <div className="ask-empty">
-                {note && <div className="note small">{note}</div>}
+                {note && <DevNote note={note} />}
                 <p className="muted small">Ask about Kleros events, talks and recordings. {signedIn ? "Answers include everything your account can see." : "Answers cover what is public on this site."}</p>
+                <p className="muted small">This assistant answers from the site. It does not pass questions to speakers. Use the Questions section of an event page for that.</p>
                 <div className="ask-chips">
                   {suggestions(path).map((s) => <button key={s} type="button" className="ask-chip" onClick={(e) => {
                     // keep keyboard focus in the panel, but don't pop up a phone's keyboard over the answer

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { removeFiles } from "@/lib/materials-client";
+import { friendlyError } from "@/lib/friendlyError";
 import { EVENT_TYPES, REGIONS, ROLE_LABEL, TOPICS } from "@/lib/kleros";
 import { slugify } from "@/lib/format";
 import type { EventRow, KlerosRole } from "@/lib/types";
@@ -62,12 +63,12 @@ export default function EventForm({ event, me, initialVisibility, then, copyOf }
     setBusy(true);
     const sb = supabaseBrowser();
     const res = event ? await sb.from("events").update(row).eq("id", event.id).select("id, slug").single() : await sb.from("events").insert(row).select("id, slug").single();
-    if (res.error) { setBusy(false); setErr(saveError(res.error.message, visibility)); return; }
+    if (res.error) { setBusy(false); setErr(saveError(res.error, visibility)); return; }
     // made public: the collaborator list goes (the database does this too from 0012)
     if (event?.visibility === "private" && visibility === "public") await sb.from("event_collaborators").delete().eq("event_id", event.id);
     if (!event && visibility === "private" && emails.ok.length) {
       const { error } = await sb.from("event_collaborators").insert(emails.ok.map((email) => ({ event_id: res.data.id, email })));
-      if (error) { setBusy(false); setErr(`The event was created, but the collaborators were not added: ${error.message}`); router.push(`/admin/events/${res.data.id}#collaborators`); return; }
+      if (error) { setBusy(false); setErr(`The event was created, but the collaborators were not added. ${friendlyError(error)}`); router.push(`/admin/events/${res.data.id}#collaborators`); return; }
     }
     setBusy(false);
     if (!event) router.push(then === "record" ? `/events/${res.data.slug}#record` : `/admin/events/${res.data.id}`);
@@ -84,14 +85,14 @@ export default function EventForm({ event, me, initialVisibility, then, copyOf }
     // event stays until its files are gone.
     if (event.visibility === "private") {
       const { data: files, error: fErr } = await sb.rpc("private_event_files", { p_event: event.id });
-      if (fErr) { setErr(fErr.message); return; }
+      if (fErr) { setErr(friendlyError(fErr)); return; }
       if (!(await removeFiles((files ?? []) as string[]))) {
         setErr("Some of the event's files could not be deleted from storage, so the event is still here. Try again in a minute.");
         setConfirmDel(false); return;
       }
     }
     const { data, error } = await sb.from("events").delete().eq("id", event.id).select("id");
-    if (error) { setErr(error.message); return; }
+    if (error) { setErr(friendlyError(error)); return; }
     if (!data?.length) { setErr("Only the person who created this private event can delete it."); setConfirmDel(false); return; }
     router.push("/admin");
   }
@@ -134,10 +135,10 @@ export default function EventForm({ event, me, initialVisibility, then, copyOf }
         </div>
       )}
       {visibility === "private" && event?.visibility === "public" && (
-        <p className="note" style={{ margin: 0 }}>Saving makes this event private: it leaves the public site, and other team members lose access to it, its materials and its questions. {!event.created_by && "You become its creator."}</p>
+        <p className="note" style={{ margin: 0 }}>Saving makes this event private: it leaves the public site, and other team members lose access to it, its talks and files, and its questions. {!event.created_by && "You become its creator."}</p>
       )}
       {visibility === "public" && event?.visibility === "private" && (
-        <p className="note" style={{ margin: 0 }}>Saving makes this event public: the whole Kleros team can see and edit it, its materials and its questions. It stays off the public site until its status is set to Published. The collaborator list is cleared.</p>
+        <p className="note" style={{ margin: 0 }}>Saving makes this event public: the whole Kleros team can see and edit it, its talks and files, and its questions. It stays off the public site until its status is set to Published. The collaborator list is cleared.</p>
       )}
       <div className="two">
         <div className="field"><label htmlFor="kleros_role">Kleros&apos; role</label><select id="kleros_role" name="kleros_role" defaultValue={v?.kleros_role ?? "host"}>{Object.entries(ROLE_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></div>
@@ -177,14 +178,15 @@ export default function EventForm({ event, me, initialVisibility, then, copyOf }
       {err && <div className="note">{err}</div>}
       <div className="row-flex">
         <button className="btn primary" type="submit" disabled={busy}>{busy ? "Saving…" : event ? "Save changes" : then === "record" ? "Create and start recording" : visibility === "private" ? "Create private event" : "Create event"}</button>
-        {event && canDelete && <button className="btn ghost" type="button" onClick={remove}>{confirmDel ? (event.visibility === "private" ? "Click again to delete this event and its materials" : "Click again to delete this event") : "Delete event"}</button>}
+        {event && canDelete && <button className={`btn ghost${confirmDel ? " danger-armed" : ""}`} type="button" onClick={remove}>{confirmDel ? (event.visibility === "private" ? "Delete the event and its files for good?" : "Delete for good?") : "Delete event"}</button>}
       </div>
     </form>
   );
 }
 
-/** Plain-language reasons for the database refusals a save can hit. */
-function saveError(msg: string, visibility: "public" | "private") {
+/** Plain-language reasons for the database refusals a save can hit; anything else goes through friendlyError. */
+function saveError(error: { message: string }, visibility: "public" | "private") {
+  const msg = error.message;
   if (msg.includes("events_slug_key")) return "Another event already uses this web address. Change the name or the web address.";
   if (/Only the person who created this event|needs a Kleros team account/.test(msg)) return msg;
   if (/row-level security/i.test(msg)) {
@@ -193,5 +195,5 @@ function saveError(msg: string, visibility: "public" | "private") {
       : "Only Kleros team members can create or edit public events.";
   }
   if (/0 rows|no rows|multiple \(or no\) rows/i.test(msg)) return "This account cannot edit this event.";
-  return msg;
+  return friendlyError(error);
 }

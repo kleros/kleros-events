@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { friendlyError } from "@/lib/friendlyError";
 
 type Req = { id: string; name: string; email: string; company: string | null; interest: string | null; message: string | null; handled: boolean; created_at: string; events: { title: string; slug: string } | null };
 
@@ -11,7 +12,7 @@ export default function RequestsTable({ rows }: { rows: Req[] }) {
   async function toggle(r: Req) {
     setErr("");
     const { error } = await supabaseBrowser().from("meeting_requests").update({ handled: !r.handled }).eq("id", r.id);
-    if (error) setErr("Could not save: " + error.message);
+    if (error) setErr(`Not saved. ${friendlyError(error)}`);
     else setList(list.map((x) => (x.id === r.id ? { ...x, handled: !x.handled } : x)));
   }
   if (!list.length) return <div className="empty"><b>No requests yet</b>Requests from the “Meet Kleros” box on event pages and from the Invite Kleros page land here.</div>;

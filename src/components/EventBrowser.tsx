@@ -77,7 +77,7 @@ export default function EventBrowser({ events, counts, initialWhen = "all", init
         <select className="f" value={type} onChange={(e) => setType(e.target.value)} aria-label="Event type">
           <option value="">All formats</option>{types.map((t) => <option key={t}>{t}</option>)}
         </select>
-        <button className="chip rec-chip" aria-pressed={rec} onClick={() => setRec(!rec)}>▶ With recorded talks</button>
+        <button className="chip rec-chip" aria-pressed={rec} onClick={() => setRec(!rec)}><span aria-hidden="true">▶</span> With recorded talks</button>
       </div>
       <div className="result-line" role="status">
         <span>{plural(shownCount, "event")}{filtered ? " match" : ""}</span>
@@ -172,7 +172,7 @@ function MonthGrid({ month, setMonth, events }: { month: Date; setMonth: (d: Dat
     <div className="month">
       <div className="month-nav">
         <button className="btn sm ghost" onClick={() => setMonth(new Date(y, mo - 1, 1, 12))} aria-label="Previous month">‹</button>
-        <h3>{month.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</h3>
+        <h2>{month.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</h2>
         <button className="btn sm ghost" onClick={() => setMonth(new Date(y, mo + 1, 1, 12))} aria-label="Next month">›</button>
       </div>
       <div className="cal">

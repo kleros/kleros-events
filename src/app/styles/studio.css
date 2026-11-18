@@ -8,7 +8,9 @@
 
 /* the studio panel (inside Talks) */
 .studio { display: grid; gap: var(--s-4); padding: var(--s-4); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line)); border-radius: var(--r);
-  background: linear-gradient(160deg, rgb(124 92 230 / 0.10), transparent 60%), var(--surface); scroll-margin-top: 120px; min-width: 0; }
+  background: linear-gradient(160deg, rgb(124 92 230 / 0.10), transparent 60%), var(--surface); min-width: 0;
+  /* html's scroll-padding (globals.css, 113px) already clears the header and the event page's jump bar (about 102px) */
+  scroll-margin-top: var(--s-2); }
 .studio-h { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-3); }
 .studio-t { display: grid; gap: var(--s-2); min-width: 0; }
 .studio-tabs { justify-self: start; }

@@ -7,7 +7,14 @@ import { currentUser, supabaseServer } from "@/lib/supabase/server";
 import HostConsole from "@/components/live/HostConsole";
 import SwitchAccount from "@/components/SwitchAccount";
 
-export const metadata: Metadata = { title: "Run live", description: "Questions, big screen and recording", robots: { index: false } };
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  // getEvent reads with the visitor's own sign-in, so a draft or private event's name shows only to those who may see it
+  const data = await getEvent(slug).catch(() => null);
+  return data
+    ? { title: `Run live: ${data.event.title}`, description: "Questions, big screen and recording", robots: { index: false } }
+    : { title: "Run live", robots: { index: false } };
+}
 export const dynamic = "force-dynamic";
 
 export default async function HostPage({ params }: { params: Promise<{ slug: string }> }) {

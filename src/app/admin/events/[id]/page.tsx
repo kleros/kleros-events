@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireTeam } from "@/lib/admin";
@@ -13,6 +14,18 @@ import MaterialsManager from "@/components/admin/MaterialsManager";
 import type { AgendaItem, EventRow, TeamMember } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+
+/** The tab says which event is open. The same signed-in client as the page, so the database rules hide what this account cannot see. */
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  try {
+    const { data } = await (await supabaseServer()).from("events").select("title").eq("id", id).maybeSingle();
+    const title = (data as { title?: string } | null)?.title?.trim();
+    return { title: title ? `Edit: ${title}` : "Edit event" };
+  } catch {
+    return { title: "Edit event" };
+  }
+}
 
 export default async function EditEventPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string }> }) {
   const { id } = await params;
@@ -39,7 +52,7 @@ export default async function EditEventPage({ params, searchParams }: { params: 
     ...(isPrivate ? [{ id: "collaborators", label: "Collaborators" }] : []),
     { id: "agenda", label: "Agenda" },
     { id: "team", label: "Who is going for Kleros" },
-    { id: "materials", label: "Materials" },
+    { id: "materials", label: "Talks, files and links" },
   ];
 
   return (
@@ -92,7 +105,7 @@ export default async function EditEventPage({ params, searchParams }: { params: 
           <TeamPicker eventId={id} roster={(roster.data ?? []) as TeamMember[]} initial={team.data ?? []} />
         </section>
         <section id="materials" className="ed-sec">
-          <div className="ed-sec-h"><h2>Materials</h2><p className="muted small">Talks, slides, recordings and links, listed on the event page and in the archive.</p></div>
+          <div className="ed-sec-h"><h2>Talks, files and links</h2><p className="muted small">Talks, slides, recordings and links, listed on the event page and in the archive.</p></div>
           <MaterialsManager event={e} initial={materials} />
         </section>
       </div>

@@ -15,7 +15,7 @@ export default async function AccessPage() {
     <header className="adm-head">
       <div>
         <h1>Access</h1>
-        <p className="muted">Anyone signing in with a confirmed @kleros.io email gets team access: they can create events and run them from the host console. Admins can give access to other people by email or remove it. Wei Wei is the master admin.</p>
+        <p className="muted">Anyone signing in with a confirmed @kleros.io email gets team access: they can create events and run them with Run live. Admins can give access to other people by email or remove it. Wei Wei is the master admin.</p>
       </div>
     </header>
   );
@@ -35,7 +35,15 @@ export default async function AccessPage() {
     <div className="wrap page stack adm-page adm-narrow">
       {head}
       {error
-        ? <div className="note">The access list could not load ({error.message}). The 0003_access migration may not be applied yet.</div>
+        ? (
+          <div className="note" style={{ display: "grid", gap: "var(--s-2)" }}>
+            <p>The access list could not load. Try again in a minute. If it keeps failing, ask a developer to check the database setup.</p>
+            <details className="small muted">
+              <summary style={{ cursor: "pointer", width: "fit-content" }}>Details for a developer</summary>
+              <p style={{ marginTop: "var(--s-1)", overflowWrap: "anywhere" }}>team_directory failed: {error.message}{error.code ? ` (${error.code})` : ""}. Migration 0003_access.sql may not be applied yet.</p>
+            </details>
+          </div>
+        )
         : <AccessManager rows={(data ?? []) as AccessRow[]} myId={user.id} />}
     </div>
   );

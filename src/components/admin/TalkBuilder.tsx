@@ -80,7 +80,7 @@ export default function TalkBuilder({ eventId, slug, onSaved }: { eventId: strin
           </div>
           <div className="field"><label htmlFor="tk-pdf">Slides (PDF)</label><input id="tk-pdf" type="file" accept=".pdf,application/pdf" onChange={(e) => { setPdfFile(e.target.files?.[0] ?? null); setErr(""); }} /></div>
           <div className="row-flex">
-            <label className="btn primary sm">I already have a recording<input type="file" hidden accept="audio/*,video/webm,video/mp4,.m4a,.mp3" onChange={(e) => { useRecording(e.target.files?.[0]); e.target.value = ""; }} /></label>
+            <label className="btn primary sm">I already have a recording<input type="file" className="sr-only" accept="audio/*,video/webm,video/mp4,.m4a,.mp3" onChange={(e) => { useRecording(e.target.files?.[0]); e.target.value = ""; }} /></label>
             {slug && <a className="btn sm" href={`/events/${slug}#record`} target="_blank" rel="noopener"><span className="dot" /> Record live (opens the recorder on the event page)</a>}
           </div>
           <div className="muted small">Already recorded: choose the slides and the recording, play it back once and press Next slide (or →) whenever the speaker moves on. Each file must stay under 50 MB.{slug ? " To record a talk as it happens, use the recorder on the event page: it keeps a copy on the laptop while recording and saves the talk with its slides." : ""}</div>

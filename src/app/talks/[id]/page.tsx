@@ -9,6 +9,7 @@ import TalkPlayer from "@/components/TalkPlayer";
 import GenCover from "@/components/Cover";
 import { TalkCard, byTalkRank, driveId, fileUrl, isClip, isWatchable, linkUrl, sourceOf, splitTitle, videoThumb, watchLabel, youtubeId } from "@/components/MaterialRow";
 import PromoStrip from "@/components/PromoStrip";
+import Ext from "@/components/Ext";
 import EventChip from "@/components/studio/EventChip";
 import { currentUser, supabaseServer } from "@/lib/supabase/server";
 import RecordingSlides from "@/components/studio/RecordingSlides";
@@ -22,7 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const [m, t] = await Promise.all([getMaterial(id), getTranscript(id)]);
   // a signed-out visitor gets a sign-in page here rather than a 404, which search engines must not keep
-  if (!m) return { title: "Talk not found", robots: { index: false } };
+  if (!m) return { title: "Talk not available", robots: { index: false } };
   // say what the link holds ("Video on YouTube", "Clip on X", "12 slides with audio"), not a fixed phrase
   const what = m.kind === "slides" ? "Slides" : watchLabel(m);
   const fallback = `${m.speaker ? m.speaker + (m.events ? " at " : "") : ""}${m.events?.title ?? ""}. ${what}.`.replace(/^\. /, "");
@@ -42,11 +43,11 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
   if (!m && !user) return (
     <div className="wrap page con-gate">
       <div className="eyebrow">Talk</div>
-      <h1>Sign in to open this talk</h1>
-      <p className="muted">This talk was not found. If it belongs to a private event that was shared with you, sign in with the email address it was shared with.</p>
+      <h1>This talk is not available</h1>
+      <p className="muted">The link may be old or mistyped. If someone shared a private event&apos;s talk with you, sign in with the email address they used and it opens.</p>
       <div className="row-flex">
-        <Link className="btn primary" href={`/login?next=${encodeURIComponent(`/talks/${id}`)}`}>Sign in</Link>
-        <Link className="btn" href="/events">All events</Link>
+        <Link className="btn primary" href="/talks">All talks</Link>
+        <Link className="btn" href={`/login?next=${encodeURIComponent(`/talks/${id}`)}`}>Sign in</Link>
       </div>
     </div>
   );
@@ -72,9 +73,9 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
     else if (m.url) player = (
       <a className="video ext" href={linkUrl(m.url)} target="_blank" rel="noopener">
         <GenCover seed={m.event_id ?? m.id} className="talk-gen" big={m.speaker ?? undefined} small={watchLabel(m)}>
-          <span className="play">▶</span>
+          <span className="play" aria-hidden="true">▶</span>
         </GenCover>
-        <span className="ext-go">Watch on {sourceOf(m.url) || "the original site"} ↗</span>
+        <span className="ext-go">Watch on {sourceOf(m.url) || "the original site"}<Ext /></span>
       </a>
     );
   } else if (m.kind === "audio") {

@@ -131,7 +131,7 @@ export function TalkCard({ m, event, note, showEvent = true }: { m: Material; ev
       <Link className="cover" href={href} aria-label={`${verb}: ${m.title}`} tabIndex={-1}>
         <Thumb src={videoThumb(m)} fallback={
           <GenCover seed={event?.slug ?? m.event_id ?? m.id} className="talk-gen" big={m.speaker ?? undefined} small={coverLabel}>
-            <span className="play">▶</span>
+            <span className="play" aria-hidden="true">▶</span>
           </GenCover>
         } />
         {m.duration_seconds ? <span className="dur mono">{fmtDur(m.duration_seconds)}</span> : null}
@@ -143,7 +143,7 @@ export function TalkCard({ m, event, note, showEvent = true }: { m: Material; ev
         {event && showEvent && !mentions(aside, event.title) && <Link className="sub" href={`/events/${event.slug}`}>{event.title}</Link>}
         {note && <div className="sub">{note}</div>}
         <div className="foot">
-          <Link className="btn sm primary" href={href}>▶ {verb}</Link>
+          <Link className="btn sm primary" href={href}><span aria-hidden="true">▶</span> {verb}</Link>
           <span>{watchLabel(m)}</span>
         </div>
       </div>
@@ -164,7 +164,7 @@ export function ArchiveRow({ m, eventSlug }: { m: Material; eventSlug: string })
   const sub = [m.speaker, ...detail].filter(Boolean).join(" · ");
   const thumb = videoThumb(m);
   let action: React.ReactNode;
-  if (isWatchable(m)) action = <Link className="btn sm primary" href={`/talks/${m.id}`}>▶ Watch</Link>;
+  if (isWatchable(m)) action = <Link className="btn sm primary" href={`/talks/${m.id}`}><span aria-hidden="true">▶</span> Watch</Link>;
   else if (m.kind === "slides" && m.file_path) action = <Link className="btn sm" href={`/talks/${m.id}`}>Slides</Link>;
   else if (m.kind === "slides" && m.url) action = <a className="btn sm" href={linkUrl(m.url)} target="_blank" rel="noopener">Slides ↗</a>;
   else if (file) action = <a className="btn sm" href={file} target="_blank" rel="noopener">Open ↗</a>;
@@ -212,7 +212,7 @@ export default function MaterialRow({ m, eventTitle, eventSlug }: { m: Material;
         {m.kind === "audio" && m.file_path && <audio controls preload="none" src={fileUrl(m.file_path)} />}
       </div>
       <div className="acts">
-        {isWatchable(m) && <Link className="btn sm primary" href={`/talks/${m.id}`}>▶ Watch</Link>}
+        {isWatchable(m) && <Link className="btn sm primary" href={`/talks/${m.id}`}><span aria-hidden="true">▶</span> Watch</Link>}
         {m.kind === "audio" && m.file_path && <Link className="btn sm" href={`/talks/${m.id}`}>Transcript</Link>}
         {m.kind === "slides" && m.file_path && <Link className="btn sm" href={`/talks/${m.id}`}>View slides</Link>}
         {m.kind === "slides" && !m.file_path && m.url && <a className="btn sm" href={linkUrl(m.url)} target="_blank" rel="noopener">View slides ↗</a>}

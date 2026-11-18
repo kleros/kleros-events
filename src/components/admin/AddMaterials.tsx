@@ -83,7 +83,7 @@ export default function AddMaterials({ eventId, onAdded, extra, idPrefix = "am" 
     <div className="stack">
       <div className="row-flex">
         {extra}
-        <label className="btn">Upload files<input type="file" multiple hidden accept=".pdf,image/*,video/*,audio/*,.m4a,.mp3,.doc,.docx,.txt,.md" onChange={(e) => { upload([...(e.target.files ?? [])]); e.target.value = ""; }} /></label>
+        <label className="btn">Upload files<input type="file" multiple className="sr-only" accept=".pdf,image/*,video/*,audio/*,.m4a,.mp3,.doc,.docx,.txt,.md" onChange={(e) => { upload([...(e.target.files ?? [])]); e.target.value = ""; }} /></label>
         <button className="btn" type="button" onClick={() => (linkOpen ? closeLink() : setLinkOpen(true))} aria-expanded={linkOpen}>Add a link or post</button>
       </div>
       <div className={`am-drop${over ? " is-over" : ""}`}

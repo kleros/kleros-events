@@ -17,7 +17,7 @@ export default function RecordStudio() {
     <div className="wrap page rs-page">
       <header className="adm-head rs-head">
         <div>
-          <h1>Record</h1>
+          <h1>Record a session</h1>
           <p className="muted">Record a talk, a panel or an interview without opening an event first. After saving, link it to one or more events, or to a new one. Every recording is also in the recordings library.</p>
         </div>
         <Link className="btn" href="/admin/recordings">Recordings library</Link>

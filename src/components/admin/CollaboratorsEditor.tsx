@@ -75,7 +75,7 @@ export default function CollaboratorsEditor({ eventId, slug, title, creatorEmail
       </form>
       {err && <div className="note">{err}</div>}
       <div className="collab-invite">
-        <p className="muted small" style={{ margin: 0 }}>Collaborators see the event, its materials and questions, and can edit it, once they sign in with the email listed here. Nobody is notified automatically: copy the invite message and paste it into an email or chat to each person.</p>
+        <p className="muted small" style={{ margin: 0 }}>Collaborators see the event, its talks, files and questions, and can edit it, once they sign in with the email listed here. Nobody is notified automatically: copy the invite message and paste it into an email or chat to each person.</p>
         <button className="btn sm" type="button" onClick={copyInvite} aria-live="polite">{copied ? "Copied" : "Copy invite message"}</button>
       </div>
       {manual && (

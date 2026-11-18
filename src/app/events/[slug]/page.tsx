@@ -7,6 +7,7 @@ import { ROLE_LABEL, productsFor } from "@/lib/kleros";
 import { EventCover, RolePill, statusLabel } from "@/components/EventCard";
 import MaterialRow, { MATERIAL_GROUPS, TalkCard, byTalkRank, isTalkLike, linkUrl, sourceOf } from "@/components/MaterialRow";
 import PromoStrip from "@/components/PromoStrip";
+import Ext from "@/components/Ext";
 import Linkify from "@/components/Linkify";
 import AttendanceButtons from "@/components/AttendanceButtons";
 import AskTheSpeaker from "@/components/AskTheSpeaker";
@@ -112,8 +113,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           </div>
           {(e.url && !past) || (past && talks.length > 0) || canEdit ? (
             <div className="row-flex">
-              {e.url && !past && <a className="btn cta" href={e.url} target="_blank" rel="noopener">{ticketLabel} ↗</a>}
-              {past && talks.length > 0 && <a className="btn cta" href="#talks">▶ Watch {plural(talks.length, "talk")}</a>}
+              {e.url && !past && <a className="btn cta" href={e.url} target="_blank" rel="noopener">{ticketLabel}<Ext /></a>}
+              {past && talks.length > 0 && <a className="btn cta" href="#talks"><span aria-hidden="true">▶</span> Watch {plural(talks.length, "talk")}</a>}
               {canEdit && <Link className="btn" href={`/events/${e.slug}/host`}>Run live</Link>}
               {canEdit && <StudioButton mode="record" className="btn"><span className="dot" aria-hidden /> Record a session</StudioButton>}
               {canEdit && <Link className="btn" href={`/admin/events/${e.id}`}>Edit details</Link>}
@@ -228,7 +229,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 ? "Missed the team at this one? Send a request anyway. The team follows up on every one."
                 : "Book time with the team to talk about integrating Kleros, becoming a juror, or partnering."}</p>
               <div className="row-flex">
-                {booker?.calendar_url && <a className="btn sm primary" href={booker.calendar_url} target="_blank" rel="noopener">Pick a time with {booker.name.split(" ")[0]} ↗</a>}
+                {booker?.calendar_url && <a className="btn sm primary" href={booker.calendar_url} target="_blank" rel="noopener">Pick a time with {booker.name.split(" ")[0]}<Ext /></a>}
               </div>
               {/* requests are read by the whole team; this section is not shown on a private event's page */}
               <MeetingForm eventId={e.id} />
@@ -238,7 +239,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 <a key={p.name} className="prod" href={p.url} target="_blank" rel="noopener">
                   <b>{p.name}</b>
                   <span className="muted small">{p.pitch}</span>
-                  <span className="small">{p.cta} ↗</span>
+                  <span className="small">{p.cta}<Ext /></span>
                 </a>
               ))}
             </div>
@@ -257,7 +258,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               {e.organizer && <><dt>Organiser</dt><dd>{e.organizer}</dd></>}
               <dt>Format</dt><dd>{e.event_type}</dd>
               {e.topics.length > 0 && <><dt>Topics</dt><dd>{e.topics.join(", ")}</dd></>}
-              {past && e.url && <><dt>Official site</dt><dd><a href={e.url} target="_blank" rel="noopener">{sourceOf(e.url) || "Open"} ↗</a></dd></>}
+              {past && e.url && <><dt>Official site</dt><dd><a href={e.url} target="_blank" rel="noopener">{sourceOf(e.url) || "Open"}<Ext /></a></dd></>}
             </dl>
           </div>
         </aside>

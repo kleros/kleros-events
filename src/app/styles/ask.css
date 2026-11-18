@@ -19,6 +19,10 @@
 
 .ask-log { overflow-y: auto; padding: var(--s-4); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-3); align-content: start; overscroll-behavior: contain; }
 .ask-empty { display: grid; gap: var(--s-3); }
+/* a note for the team: one plain line, with the technical steps folded away under it */
+.ask-note { display: grid; gap: var(--s-2); }
+.ask-note summary { cursor: pointer; width: fit-content; }
+.ask-note details p { margin-top: var(--s-1); overflow-wrap: anywhere; }
 .ask-chips { display: flex; flex-wrap: wrap; gap: var(--s-2); }
 .ask-chip { border: 1px solid var(--line); background: var(--sunk); color: var(--fg); border-radius: 999px; padding: 6px 12px; font-size: 0.875rem; cursor: pointer; text-align: left; }
 .ask-chip:hover { border-color: var(--accent); }

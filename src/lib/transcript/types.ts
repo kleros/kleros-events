@@ -52,5 +52,12 @@ export const BUSY: TranscriptStatus[] = ["queued", "transcribing", "summarising"
 /** Uploaded plain text without timestamps: times are estimates, so the UI does not offer seeking. */
 export const isUntimed = (provider: string | null | undefined) => !!provider && provider.includes("untimed");
 
-export const NOT_SET_UP =
-  "Transcripts are not switched on yet. An admin adds GROQ_API_KEY (speech to text) and ANTHROPIC_API_KEY (summaries) to the site's environment variables (Netlify: Project configuration, Environment variables; Vercel: Settings, Environment Variables), then redeploys.";
+/** What the team reads while transcripts are off. NOT_SET_UP_DEV is folded away under it for a developer. */
+export const NOT_SET_UP = "Transcripts are not switched on yet. A developer can turn them on.";
+export const NOT_SET_UP_DEV =
+  "Add GROQ_API_KEY (speech to text) and ANTHROPIC_API_KEY (summaries) to the site's environment variables (Netlify: Project configuration, Environment variables; Vercel: Settings, Environment Variables), then redeploy.";
+
+/** The same while transcripts work but summaries are off. */
+export const NO_SUMMARY = "Summaries are not switched on yet. A developer can turn them on.";
+export const NO_SUMMARY_DEV =
+  "Add ANTHROPIC_API_KEY to the site's environment variables (Netlify: Project configuration, Environment variables; Vercel: Settings, Environment Variables), then redeploy.";

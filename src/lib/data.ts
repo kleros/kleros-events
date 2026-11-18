@@ -11,7 +11,12 @@ import type { AgendaItem, EventRow, EventTeamRow, Material } from "./types";
 export async function listEvents(): Promise<EventRow[]> {
   if (!supabaseConfigured) return [];
   const sb = await supabaseServer();
-  const { data } = await sb.from("events").select("*").eq("status", "published").eq("visibility", "public").order("starts_on", { ascending: true });
+  const { data, error } = await sb.from("events").select("*").eq("status", "published").eq("visibility", "public").order("starts_on", { ascending: true });
+  // an outage must not read as "No events on record yet": app/error.tsx says it plainly instead
+  if (error) {
+    console.error("listEvents", error.message);
+    throw new Error("The events could not be loaded.");
+  }
   return (data ?? []) as EventRow[];
 }
 
@@ -43,10 +48,14 @@ export const eventIdsOf = (m: Pick<Material, "event_id" | "event_ids">) => m.eve
 export async function listMaterials(): Promise<Material[]> {
   if (!supabaseConfigured) return [];
   const sb = await supabaseServer();
-  const [{ data }, links] = await Promise.all([
+  const [{ data, error }, links] = await Promise.all([
     sb.from("materials").select("*").order("created_at", { ascending: false }),
     listLinks(sb),
   ]);
+  if (error) {
+    console.error("listMaterials", error.message);
+    throw new Error("The talks and files could not be loaded.");
+  }
   return withEventIds((data ?? []) as Material[], links);
 }
 
@@ -66,7 +75,11 @@ export function materialCounts(materials: Material[], isTalk: (m: Material) => b
 export async function eventCounts(): Promise<Record<string, { going: number; attended: number }>> {
   if (!supabaseConfigured) return {};
   const sb = await supabaseServer();
-  const { data } = await sb.from("event_counts").select("*");
+  const { data, error } = await sb.from("event_counts").select("*");
+  if (error) {
+    console.error("eventCounts", error.message);
+    throw new Error("The events could not be loaded.");
+  }
   return Object.fromEntries((data ?? []).map((r: { event_id: string; going: number; attended: number }) => [r.event_id, { going: r.going, attended: r.attended }]));
 }
 
@@ -89,7 +102,9 @@ export async function eventMaterials(sb: SupabaseClient, eventId: string): Promi
 export async function getEvent(slug: string) {
   if (!supabaseConfigured) return null;
   const sb = await supabaseServer();
-  const { data: event } = await sb.from("events").select("*").eq("slug", slug).maybeSingle();
+  const { data: event, error } = await sb.from("events").select("*").eq("slug", slug).maybeSingle();
+  // a database failure must not read as "this event does not exist"
+  if (error) { console.error("getEvent", error.message); throw new Error("The event could not be loaded."); }
   if (!event) return null;
   const [agenda, team, materials] = await Promise.all([
     sb.from("agenda_items").select("*").eq("event_id", event.id).order("starts_at"),
@@ -129,7 +144,9 @@ export async function getMaterial(id: string) {
   if (!supabaseConfigured) return null;
   const sb = await supabaseServer();
   // materials and events are related twice (event_id, and material_events), so name the key
-  const { data } = await sb.from("materials").select("*, events!materials_event_id_fkey(id, slug, title, starts_on, ends_on, city, status, visibility)").eq("id", id).maybeSingle();
+  const { data, error } = await sb.from("materials").select("*, events!materials_event_id_fkey(id, slug, title, starts_on, ends_on, city, status, visibility)").eq("id", id).maybeSingle();
+  // a mistyped address (not a valid id, 22P02) is simply not found; anything else is a failure
+  if (error && error.code !== "22P02") { console.error("getMaterial", error.message); throw new Error("The talk could not be loaded."); }
   if (!data) return null;
   const m = data as Material & { events: EventRef | null };
   const linked = await sb.from("material_events").select("event_id, events(id, slug, title, starts_on, ends_on, city, status, visibility)").eq("material_id", id).order("created_at");

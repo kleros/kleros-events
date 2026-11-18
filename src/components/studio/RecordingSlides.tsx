@@ -5,6 +5,7 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import type { Material } from "@/lib/types";
 import { fileUrl, linkUrl } from "../MaterialRow";
 import { removeFiles } from "@/lib/materials-client";
+import { friendlyError } from "@/lib/friendlyError";
 
 type Rec = Pick<Material, "id" | "kind" | "url" | "pdf_path" | "audio_path" | "file_path" | "pages">;
 
@@ -40,7 +41,7 @@ export default function RecordingSlides({ m, canEdit }: { m: Rec; canEdit: boole
     setBusy("Saving…");
     const { error } = await supabaseBrowser().from("materials").update({ url: next || null }).eq("id", m.id).select("id").single();
     setBusy("");
-    if (error) { setErr(`The link was not saved: ${error.message}`); return; }
+    if (error) { setErr(`The link was not saved. ${friendlyError(error)}`); return; }
     setMsg(next ? "Slides linked." : "Slides link removed.");
     router.refresh();
   }
@@ -57,7 +58,7 @@ export default function RecordingSlides({ m, canEdit }: { m: Rec; canEdit: boole
     const { error } = await sb.from("materials")
       .update({ kind: "audio", file_path: m.audio_path, audio_path: null, pdf_path: null, pages: null, marks: [], ...(size ? { size_bytes: size } : {}) })
       .eq("id", m.id).select("id").single();
-    if (error) { setBusy(""); setErr(`Nothing changed: ${error.message}`); return; }
+    if (error) { setBusy(""); setErr(`Nothing changed. ${friendlyError(error)}`); return; }
     // the file goes too, unless another item uses it
     let fileGone = true;
     if (old && !/^https?:\/\//.test(old)) {
@@ -102,7 +103,7 @@ export default function RecordingSlides({ m, canEdit }: { m: Rec; canEdit: boole
             <div className="stack rec-slides-pdf">
               <p className="muted small">This recording plays with a PDF{m.pages ? ` of ${m.pages} slide${m.pages === 1 ? "" : "s"}` : ""}. Taking it off keeps the audio and deletes the PDF file.</p>
               <div className="row-flex">
-                <button type="button" className={`btn sm${armed ? " danger-armed" : ""}`} onClick={dropPdf} disabled={!!busy}>{armed ? "Confirm: take the PDF off" : "Take the PDF off"}</button>
+                <button type="button" className={`btn sm${armed ? " danger-armed" : ""}`} onClick={dropPdf} disabled={!!busy}>{armed ? "Take the PDF off for good?" : "Take the PDF off"}</button>
               </div>
             </div>
           )}

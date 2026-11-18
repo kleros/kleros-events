@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireTeam } from "@/lib/admin";
 import { supabaseServer } from "@/lib/supabase/server";
-import { fmtRange, isLive, isPast, place } from "@/lib/format";
+import { fmtRange, isLive, isPast, place, plural } from "@/lib/format";
 import { ROLE_SHORT } from "@/lib/kleros";
 import type { EventRow } from "@/lib/types";
 import NotTeam from "@/components/NotTeam";
@@ -93,7 +93,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <section className="stack" aria-label={tab}>
           {tab === "past" && needsMaterials.length > 0 && (
             <p className="note" style={{ margin: 0 }}>
-              {needsMaterials.length === 1 ? "1 past event has" : `${needsMaterials.length} past events have`} no slides or recordings yet.
+              {needsMaterials.length === 1 ? "1 past event has" : `${needsMaterials.length} past events have`} no talks or files yet.
             </p>
           )}
           <EventList events={lists[tab]} tab={tab} matCount={matCount} going={going} />
@@ -131,18 +131,19 @@ function EventList({ events, tab, matCount, going }: {
               {isLive(e) && e.status === "published" && <span className="pill live">Today</span>}
               {e.is_example && <span className="pill ex">Example</span>}
               {e.visibility === "private" && <span className="pill draft">Private</span>}
+              {e.status === "published" && looksLikeTest(e.title) && <span className="pill ex">Looks like a test</span>}
             </div>
           </div>
           <div className="desk-stats">
             {!past && <span><b className="mono">{going[e.id] ?? 0}</b> going</span>}
             {past && mats === 0 && e.status === "published"
-              ? <span className="pill ex">Needs materials</span>
-              : (past || mats > 0) && <span><b className="mono">{mats}</b> {mats === 1 ? "material" : "materials"}</span>}
+              ? <span className="pill ex">No talks or files yet</span>
+              : (past || mats > 0) && <Count text={plural(mats, "talk or file", "talks and files")} />}
           </div>
           <div className="desk-acts">
-            {/* once an event is over, the job left is adding its slides and recordings */}
+            {/* once an event is over, the job left is adding its talks, slides and recordings */}
             {past
-              ? <Link className="btn sm" href={`/admin/events/${e.id}#materials`}>Add materials</Link>
+              ? <Link className="btn sm" href={`/admin/events/${e.id}#materials`}>Add talks or files</Link>
               : <Link className="btn sm" href={`/events/${e.slug}/host`}>Run live</Link>}
             <Link className="btn sm" href={`/admin/events/${e.id}`}>Edit</Link>
             <Link className="btn sm ghost" href={`/events/${e.slug}`}>View</Link>
@@ -151,6 +152,15 @@ function EventList({ events, tab, matCount, going }: {
       ) };
     })} />
   );
+}
+
+/** A published event that still has a placeholder name ("Test", "Untitled", "asdf"). */
+const looksLikeTest = (title: string) => /^(test|untitled|asdf)\b/i.test(title.trim());
+
+/** "3 talks and files" with the number in bold, like the other counts on the row. */
+function Count({ text }: { text: string }) {
+  const i = text.indexOf(" ");
+  return <span><b className="mono">{text.slice(0, i)}</b>{text.slice(i)}</span>;
 }
 
 const monthYear = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-GB", { month: "long", year: "numeric" });

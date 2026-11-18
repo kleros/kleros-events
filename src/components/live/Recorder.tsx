@@ -632,7 +632,7 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
               ) : (
                 <label className={`btn sm ${pdfBusy ? "is-busy" : ""}`}>
                   {pdfBusy ? "Opening…" : "Choose PDF"}
-                  <input type="file" hidden accept=".pdf,application/pdf" disabled={pdfBusy} onChange={(e) => { choosePdf(e.target.files?.[0]); e.target.value = ""; }} />
+                  <input type="file" className="sr-only" accept=".pdf,application/pdf" disabled={pdfBusy} onChange={(e) => { choosePdf(e.target.files?.[0]); e.target.value = ""; }} />
                 </label>
               )}
             </div>

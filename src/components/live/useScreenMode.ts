@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { friendlyError } from "@/lib/friendlyError";
 
 export type ScreenMode = "questions" | "join" | "blank";
 export const SCREEN_MODES: { id: ScreenMode; label: string }[] = [
@@ -25,6 +26,27 @@ export function nudgeScreen(eventId: string, msg: Msg) {
 }
 
 type LiveRow = { screen_mode?: ScreenMode; screen_needs_approval?: boolean };
+type DbError = { message: string; code?: string };
+
+// what the host console shows; the technical cause goes to the browser console for a developer
+const NO_LIVE_STATE = "Other devices cannot follow the big screen yet. The screen on this laptop still follows.";
+const NO_APPROVAL = "The approval setting is not switched on yet.";
+
+/** The live_state table itself is missing (migration 0004_live.sql has not run). */
+const noTable = (e: DbError) => e.code === "42P01" || e.code === "PGRST205" || (/live_state/.test(e.message) && /exist|schema cache/i.test(e.message));
+
+// the 15 s poll would repeat the same warning: say each one once per page load
+const warned = new Set<string>();
+function warnOnce(text: string, e: DbError) {
+  if (warned.has(text)) return;
+  warned.add(text);
+  console.warn(text, e.code ? `(${e.code})` : "", e.message);
+}
+
+function missingTable(e: DbError) {
+  warnOnce("The database is missing the live_state table (migration 0004_live.sql). The screen on this laptop still follows the toggle; other devices will not.", e);
+  return NO_LIVE_STATE;
+}
 
 /**
  * The big screen mode for one event, stored in live_state and kept in sync over realtime,
@@ -56,7 +78,7 @@ export function useScreenMode(eventId: string, onQuestionsNudge?: () => void) {
       supported = false;
       res = await sb.from("live_state").select("screen_mode").eq("event_id", eventId).maybeSingle();
     }
-    if (res.error) { setError(res.error.message); return; }
+    if (res.error) { setError(noTable(res.error) ? missingTable(res.error) : friendlyError(res.error)); return; }
     setError("");
     const row = res.data as LiveRow | null;
     if (pending.current) return;
@@ -99,9 +121,7 @@ export function useScreenMode(eventId: string, onQuestionsNudge?: () => void) {
       .upsert({ event_id: eventId, screen_mode: m, updated_at: new Date().toISOString() }, { onConflict: "event_id" });
     pending.current = false;
     if (e) {
-      setError(/live_state/.test(e.message) && /exist|schema cache/i.test(e.message)
-        ? "The database is missing the live_state table (migration 0004_live.sql). The screen on this laptop still follows the toggle; other devices will not."
-        : `Could not save the screen mode: ${e.message}`);
+      setError(noTable(e) ? missingTable(e) : `The screen mode was not saved. ${friendlyError(e)}`);
     } else setError("");
   }, [eventId]);
 
@@ -113,9 +133,10 @@ export function useScreenMode(eventId: string, onQuestionsNudge?: () => void) {
     pending.current = false;
     if (e) {
       setApprovalLocal(!on);
-      setError(/screen_needs_approval/.test(e.message)
-        ? "The database is missing the approval setting (migration 0014_security.sql)."
-        : `Could not save the approval setting: ${e.message}`);
+      if (/screen_needs_approval/.test(e.message)) {
+        warnOnce("The database is missing the approval setting, live_state.screen_needs_approval (migration 0014_security.sql).", e);
+        setError(NO_APPROVAL);
+      } else setError(noTable(e) ? missingTable(e) : `The approval setting was not saved. ${friendlyError(e)}`);
       return;
     }
     setError("");

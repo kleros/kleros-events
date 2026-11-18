@@ -22,7 +22,7 @@
 
 /* events list */
 .desk-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); overflow: hidden; }
-.desk-row { display: grid; grid-template-columns: 170px minmax(0, 1fr) 130px auto; gap: 16px; align-items: center; padding: 14px 16px; }
+.desk-row { display: grid; grid-template-columns: 170px minmax(0, 1fr) 160px auto; gap: 16px; align-items: center; padding: 14px 16px; }
 .desk-row + .desk-row { border-top: 1px solid var(--line); }
 .desk-date { font-size: 0.875rem; color: var(--muted); white-space: nowrap; min-width: 150px; font-variant-numeric: tabular-nums; }
 .desk-main { display: grid; gap: 4px; min-width: 0; }
@@ -67,7 +67,12 @@
 .ed-anchors a { padding: 8px 12px; color: var(--muted); text-decoration: none; font-weight: 500; font-size: 0.92rem; white-space: nowrap; border-bottom: 2px solid transparent; }
 .ed-anchors a:hover { color: var(--fg); border-bottom-color: var(--accent); }
 .ed-body { display: grid; gap: 40px; padding-block: 28px 8px; max-width: 980px; }
-.ed-sec { display: grid; gap: 14px; scroll-margin-top: 200px; }
+.ed-sec { display: grid; gap: 14px; }
+/* A jump to a section clears the site header and the sticky editor bar once. html's scroll-padding
+   (globals.css) already keeps var(--header-h) + 56px = 113px clear; the editor bar (.ed-head, pinned
+   at 57px) is about 164px tall with a one-line title, so it ends near 221px. 124px more lands the
+   heading about 16px below it. The selector outranks globals.css's section[id] rule. */
+.ed-body > .ed-sec { scroll-margin-top: 124px; }
 .ed-sec-h { display: grid; gap: 2px; }
 .ed-sec-h p { margin: 0; }
 
@@ -83,7 +88,8 @@
   .acc-form .btn { justify-self: start; }
   /* the site header wraps on small screens, so the editor header scrolls with the page */
   .ed-head { position: static; }
-  .ed-sec { scroll-margin-top: 16px; }
+  /* nothing is pinned here, and html's scroll-padding (16px) is room enough */
+  .ed-body > .ed-sec { scroll-margin-top: 0; }
 }
 @media (max-width: 520px) {
   .acc-row { grid-template-columns: minmax(0, 1fr) 120px; }
@@ -108,16 +114,21 @@
 .mm-acts { display: flex; gap: 6px; align-items: center; }
 .med { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) auto; gap: var(--s-2) var(--s-3); align-items: end; padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--sunk); }
 .med-acts { display: flex; gap: 6px; }
-.med > .note { grid-column: 1 / -1; margin: 0; }
+.med > .note, .med > .med-hint { grid-column: 1 / -1; margin: 0; }
+/* a link or post also has a Type select */
+.med.has-kind { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) minmax(0, 2fr) auto; }
 .talk-edit { margin-top: var(--s-2); }
 .recl-acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+/* a plain note with the technical part folded away (recordings library) */
+.note.dev-note { display: grid; gap: var(--s-2); margin: 0; }
+.note.dev-note summary { cursor: pointer; }
 
 /* the invite message for a private event's collaborators */
 .collab-invite { display: flex; gap: var(--s-3); align-items: center; justify-content: space-between; }
 .collab-msg { width: 100%; padding: var(--s-2) 10px; border: 1px solid var(--field-line); border-radius: var(--r-sm); background: var(--bg); resize: vertical; }
 
 @media (max-width: 640px) {
-  .med { grid-template-columns: minmax(0, 1fr); }
+  .med, .med.has-kind { grid-template-columns: minmax(0, 1fr); }
   .mm-acts { flex-direction: column; justify-content: center; gap: 2px; }
   .collab-invite { flex-direction: column; align-items: flex-start; }
 }

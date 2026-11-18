@@ -69,7 +69,7 @@ export default function AskTheSpeaker({ eventId, signedIn, isTeam, displayName, 
         <div className="seg" role="group" aria-label="Sort"><button aria-pressed={sort === "top"} onClick={() => setSort("top")}>Top</button><button aria-pressed={sort === "new"} onClick={() => setSort("new")}>New</button></div>
         {/* the phone page is for the room during the talk */}
         {!past && <Link className="btn sm ghost" href={`/q/${slug}`}>Ask from your phone</Link>}
-        {isTeam && <Link className="btn sm" href={`/events/${slug}/host`} style={{ marginLeft: "auto" }}>Moderate (Run live)</Link>}
+        {isTeam && <Link className="btn sm" href={`/events/${slug}/host`} style={{ marginLeft: "auto" }}>Moderate questions</Link>}
       </div>
       {list.map((q) => {
         const on = myVotes.has(q.id);

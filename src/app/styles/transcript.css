@@ -77,6 +77,10 @@ button.tx-t:hover { background: var(--accent-soft); color: var(--white); }
 .tx-line.cur p { color: var(--white); }
 .tx-line mark { background: rgb(240 192 138 / 0.28); color: var(--white); border-radius: 3px; padding: 0 1px; }
 .tx-none { padding: var(--s-4) 0; }
+.tx-line:focus { outline: none; }
+.tx-line:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+/* the button that opens a folded transcript is for phones only (see the 760px block) */
+.tx-body .tx-unfold { display: none; }
 
 /* team tools */
 .tx-team { padding: var(--s-3) var(--s-4); display: grid; gap: var(--s-2); border-style: dashed; background: color-mix(in srgb, var(--surface) 60%, transparent); }
@@ -87,6 +91,10 @@ button.tx-t:hover { background: var(--accent-soft); color: var(--white); }
 .tx-status.s-done { color: var(--good); }
 .tx-status.s-error { color: var(--warn); }
 .tx-note { font-size: 0.875rem; padding: 8px var(--s-3); border-radius: var(--r-sm); background: var(--warn-soft); color: var(--warn); }
+/* a plain line for the team, with the technical text folded away under it */
+div.tx-note { display: grid; gap: var(--s-2); }
+.tx-note summary { cursor: pointer; width: fit-content; }
+.tx-note details p { margin-top: var(--s-1); overflow-wrap: anywhere; }
 
 /* host console: transcript status after saving */
 .rec-tx { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; font-size: 0.9rem; color: var(--muted); }
@@ -101,5 +109,8 @@ button.tx-t:hover { background: var(--accent-soft); color: var(--white); }
   .tx-line, .tx-chapters li > button, .tx-chapters li > div, .tx-qa-row, .tx-todo-row { grid-template-columns: 3.6em minmax(0, 1fr); gap: var(--s-2); }
   /* on a phone the page itself scrolls: no box that traps the finger inside the transcript */
   .tx-lines { max-height: none; overflow: visible; overscroll-behavior: auto; }
+  /* a long transcript shows its first paragraphs, then a button for the rest */
+  .tx-line.tx-later { display: none; }
+  .tx-body .tx-unfold { display: inline-flex; margin-top: var(--s-3); max-width: 100%; white-space: normal; text-align: left; }
   .tx-head { align-items: flex-start; }
 }

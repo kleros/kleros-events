@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { ago } from "@/lib/useQuestions";
+import { friendlyError } from "@/lib/friendlyError";
 
 export type SyncLog = { ran_at: string; checked: number; updated: number; added: number; errors: string[] };
 
@@ -18,7 +19,7 @@ export default function LumaSync({ last }: { last: SyncLog | null }) {
     const sb = supabaseBrowser();
     const [luma, feed] = await Promise.all([sb.rpc("sync_luma"), sb.rpc("sync_feed")]);
     setBusy(false);
-    if (luma.error || feed.error) return setMsg((luma.error ?? feed.error)!.message);
+    if (luma.error || feed.error) return setMsg(friendlyError(luma.error ?? feed.error));
     const r = luma.data as { checked: number; updated: number; added: number };
     const f = feed.data as { applied: number; failed?: number; errors?: string[]; busy?: boolean };
     const socials = f.busy

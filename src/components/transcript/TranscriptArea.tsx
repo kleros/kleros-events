@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { BUSY, NOT_SET_UP, isUntimed, type Segment, type Summary, type TranscriptRow, type TranscriptState } from "@/lib/transcript/types";
+import { BUSY, NOT_SET_UP, NOT_SET_UP_DEV, NO_SUMMARY, NO_SUMMARY_DEV, isUntimed, type Segment, type Summary, type TranscriptRow, type TranscriptState } from "@/lib/transcript/types";
 import { WHO, clock, indexAt, paragraphs, parseTranscriptFile, toSrt, toTxt } from "@/lib/transcript/parse";
 import { summaryText } from "@/lib/transcript/summary";
 import { fetchTranscript, runTranscript, saveText, seekTo, useMediaTime } from "@/lib/transcript/client";
@@ -90,13 +90,18 @@ function Stamp({ t, seekable, timed }: { t: number; seekable: boolean; timed: bo
   return <button type="button" className="tx-t mono" onClick={() => jump(t)} aria-label={`Play from ${clock(t)}`}>{label}</button>;
 }
 
+// a chapter, timestamp or line asked for a moment: the folded transcript opens if it is further down
+const JUMP = "kleros:tx-jump";
+const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 /** Seek the player and bring it into view if it is off screen. */
 function jump(t: number) {
   seekTo(t);
+  window.dispatchEvent(new CustomEvent<number>(JUMP, { detail: t }));
   const p = document.querySelector("[data-player]");
   if (!p) return;
   const r = p.getBoundingClientRect();
-  if (r.bottom < 60 || r.top > window.innerHeight - 60) p.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+  if (r.bottom < 60 || r.top > window.innerHeight - 60) p.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "center" });
 }
 
 function SummaryCard({ s, title, timed, seekable }: { s: Summary; title: string; timed: boolean; seekable: boolean }) {
@@ -185,6 +190,22 @@ function SummaryCard({ s, title, timed, seekable }: { s: Summary; title: string;
 // ---------------------------------------------------------------- transcript
 
 const FOLLOW_KEY = "kleros-tx-follow";
+/** On a phone a long transcript shows this many paragraphs, then a button for the rest. */
+const FOLD = 12;
+
+/** The box keeps no scroll of its own (a phone, or a short transcript): the page scrolls instead. */
+const boxStill = (b: HTMLElement) => b.scrollHeight <= b.clientHeight + 1;
+
+/**
+ * The reader has scrolled past the player above the transcript (or there is none above it), and
+ * is still in the transcript. Only then may following move the page.
+ */
+function pastPlayer(b: HTMLElement) {
+  const above = Array.from(document.querySelectorAll<HTMLElement>("[data-player]"))
+    .filter((p) => p.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+  const p = above[above.length - 1];
+  return (!p || p.getBoundingClientRect().bottom < 80) && b.getBoundingClientRect().bottom > 80;
+}
 
 function Highlight({ text, q }: { text: string; q: string }) {
   if (!q) return <>{text}</>;
@@ -208,18 +229,52 @@ function TranscriptBody({ segs, title, speaker, timed, seekable, language }: { s
   const [follow, setFollow] = useState(true);
   const box = useRef<HTMLDivElement>(null);
   const userScrolled = useRef(0);
+  // until when page scroll events come from following itself, not from the reader
+  const selfScroll = useRef(0);
+  const [unfolded, setUnfolded] = useState(false);
 
   useEffect(() => { try { if (localStorage.getItem(FOLLOW_KEY) === "0") setFollow(false); } catch { /* storage blocked */ } }, []);
   const toggleFollow = () => { const v = !follow; setFollow(v); try { localStorage.setItem(FOLLOW_KEY, v ? "1" : "0"); } catch { /* storage blocked */ } };
 
-  // keep the playing paragraph in view inside the transcript box, unless the reader scrolled in the last 6 s
+  // where the box has no scroll of its own, the reader scrolling the page counts like scrolling the box
+  useEffect(() => {
+    const on = () => {
+      const b = box.current;
+      if (!b || !boxStill(b) || Date.now() < selfScroll.current) return;
+      userScrolled.current = Date.now();
+    };
+    window.addEventListener("scroll", on, { passive: true });
+    return () => window.removeEventListener("scroll", on);
+  }, []);
+
+  // keep the playing paragraph in view, unless the reader scrolled in the last 6 s: inside the
+  // transcript box, or on a phone (no box) by scrolling the page once the reader is past the player
   useEffect(() => {
     if (!follow || !playing || cur < 0 || q || Date.now() - userScrolled.current < 6000) return;
     const b = box.current; const el = b?.querySelector<HTMLElement>(`[data-i="${cur}"]`);
     if (!b || !el) return;
+    const behavior: ScrollBehavior = reduced() ? "auto" : "smooth";
+    if (boxStill(b)) {
+      if (!el.getClientRects().length || !pastPlayer(b)) return;
+      const r = el.getBoundingClientRect();
+      if (r.top < 80 || r.bottom > innerHeight - 80) {
+        selfScroll.current = Date.now() + (behavior === "smooth" ? 1200 : 200);
+        el.scrollIntoView({ block: "center", behavior });
+      }
+      return;
+    }
     const top = el.offsetTop - b.offsetTop, bottom = top + el.offsetHeight;
-    if (top < b.scrollTop + 24 || bottom > b.scrollTop + b.clientHeight - 24) b.scrollTo({ top: Math.max(0, top - b.clientHeight / 3), behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    if (top < b.scrollTop + 24 || bottom > b.scrollTop + b.clientHeight - 24) b.scrollTo({ top: Math.max(0, top - b.clientHeight / 3), behavior });
   }, [cur, follow, playing, q]);
+
+  // the folded transcript opens for good once the recording reaches a later paragraph, or a
+  // chapter or timestamp asks for one
+  useEffect(() => { if (cur >= FOLD) setUnfolded(true); }, [cur]);
+  useEffect(() => {
+    const on = (e: Event) => { if (indexAt(paras, (e as CustomEvent<number>).detail) >= FOLD) setUnfolded(true); };
+    window.addEventListener(JUMP, on);
+    return () => window.removeEventListener(JUMP, on);
+  }, [paras]);
 
   const needle = q.trim().toLowerCase();
   const shown = needle ? paras.map((p, i) => ({ p, i })).filter(({ p }) => p.text.toLowerCase().includes(needle)) : paras.map((p, i) => ({ p, i }));
@@ -227,6 +282,13 @@ function TranscriptBody({ segs, title, speaker, timed, seekable, language }: { s
   const words = useMemo(() => segs.reduce((n, s) => n + s.text.split(/\s+/).filter(Boolean).length, 0), [segs]);
   const base = slugify(title) || "transcript";
   const header = [title, speaker].filter(Boolean).join(" · ");
+  // folded only on a phone (the CSS hides .tx-later there); a search shows every match
+  const folded = !needle && !unfolded && cur < FOLD && paras.length > FOLD + 3;
+  const unfold = () => {
+    setUnfolded(true);
+    // the button goes away: keyboard focus moves to the first paragraph it showed
+    requestAnimationFrame(() => box.current?.querySelector<HTMLElement>(`[data-i="${FOLD}"]`)?.focus({ preventScroll: true }));
+  };
 
   return (
     <section className="tx-body" aria-labelledby="tx-h">
@@ -248,7 +310,7 @@ function TranscriptBody({ segs, title, speaker, timed, seekable, language }: { s
       <div className="tx-lines" ref={box} onWheel={() => (userScrolled.current = Date.now())} onTouchMove={() => (userScrolled.current = Date.now())}>
         {shown.length === 0 && <p className="muted tx-none">No matches for “{q.trim()}”.</p>}
         {shown.map(({ p, i }) => (
-          <div key={i} data-i={i} className={`tx-line ${i === cur ? "cur" : ""}`}>
+          <div key={i} data-i={i} className={`tx-line ${i === cur ? "cur" : ""}${folded && i >= FOLD ? " tx-later" : ""}`} tabIndex={i === FOLD ? -1 : undefined}>
             {seekable
               ? <button type="button" className="tx-t mono" onClick={() => jump(p.start)} aria-label={`Play from ${clock(p.start)}`}>{clock(p.start)}</button>
               : <span className="tx-t mono">{timed ? clock(p.start) : ""}</span>}
@@ -256,11 +318,33 @@ function TranscriptBody({ segs, title, speaker, timed, seekable, language }: { s
           </div>
         ))}
       </div>
+      {folded && <button type="button" className="btn tx-unfold" onClick={unfold}>Show the full transcript ({words.toLocaleString("en-GB")} words)</button>}
     </section>
   );
 }
 
 // ---------------------------------------------------------------- team tools
+
+/** A note in the team's tools: the plain line, with any technical text folded away for a developer. */
+function TeamNote({ text, dev, alert }: { text: string; dev?: string; alert?: boolean }) {
+  if (!dev) return <p className="tx-note" role={alert ? "alert" : undefined}>{text}</p>;
+  return (
+    <div className="tx-note" role={alert ? "alert" : undefined}>
+      <p>{text}</p>
+      <details className="small muted">
+        <summary>Details for a developer</summary>
+        <p>{dev}</p>
+      </details>
+    </div>
+  );
+}
+
+/** A message from the server that names a setting or a database step gets a plain line for the team. */
+function forTeam(m: string): { text: string; dev?: string } {
+  if (!/\b[A-Z][A-Z0-9]*_[A-Z0-9_]*KEY\b|\.sql\b/.test(m)) return { text: m };
+  if (/^Transcript saved/.test(m)) return { text: `Transcript saved. ${NO_SUMMARY}`, dev: m };
+  return { text: "This did not work because of a site setting. A developer can fix it.", dev: m };
+}
 
 function TeamTools({ state, row, setup, canTranscribe, busy, msg, onGenerate, onSummary, onUpload }: {
   state: TranscriptState; row: TranscriptRow | null; setup: TranscriptSetup; canTranscribe: boolean; busy: boolean; msg: string;
@@ -287,11 +371,11 @@ function TeamTools({ state, row, setup, canTranscribe, busy, msg, onGenerate, on
           <input type="file" hidden accept=".srt,.vtt,.txt,text/plain,text/vtt,application/x-subrip" disabled={busy} onChange={(e) => { onUpload(e.target.files?.[0]); e.target.value = ""; }} />
         </label>
       </div>
-      {notSetUp && <p className="tx-note">{NOT_SET_UP}</p>}
-      {!notSetUp && !setup.summary && has && <p className="tx-note">Summaries are not switched on yet. An admin adds ANTHROPIC_API_KEY to the site&apos;s environment variables (Netlify: Project configuration, Environment variables; Vercel: Settings, Environment Variables), then redeploys.</p>}
+      {notSetUp && <TeamNote text={NOT_SET_UP} dev={NOT_SET_UP_DEV} />}
+      {!notSetUp && !setup.summary && has && <TeamNote text={NO_SUMMARY} dev={NO_SUMMARY_DEV} />}
       {!canTranscribe && !has && <p className="muted small">This item has no recording stored on the site, so a transcript cannot be made automatically. Upload one instead: YouTube offers one under “Show transcript”, and most meeting tools export .vtt files.</p>}
-      {state.status === "error" && state.error && !state.setup && <p className="tx-note" role="alert">{state.error}</p>}
-      {msg && <p className="tx-note">{msg}</p>}
+      {state.status === "error" && state.error && !state.setup && <TeamNote {...forTeam(state.error)} alert />}
+      {msg && <TeamNote {...forTeam(msg)} />}
     </section>
   );
 }

@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LUMA_URL } from "@/lib/kleros";
+import Ext from "./Ext";
 
 export default function NavLinks({ signedIn, isTeam }: { signedIn: boolean; isTeam: boolean }) {
   const path = usePathname();
@@ -10,7 +11,7 @@ export default function NavLinks({ signedIn, isTeam }: { signedIn: boolean; isTe
     <nav className="nav" aria-label="Main">
       <Link href="/events" aria-current={on("/events")}>Events</Link>
       <Link href="/talks" aria-current={on("/talks")}>Talks</Link>
-      <a href={LUMA_URL} target="_blank" rel="noopener">Luma ↗</a>
+      <a href={LUMA_URL} target="_blank" rel="noopener">Luma<Ext /></a>
       {isTeam && <Link href="/admin" aria-current={on("/admin")}>Team desk</Link>}
       <Link className="nav-me" href={signedIn ? "/me" : "/login"} aria-current={on("/me") ?? on("/login")}>{signedIn ? "My events" : "Sign in"}</Link>
     </nav>
