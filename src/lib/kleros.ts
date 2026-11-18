@@ -54,6 +54,10 @@ export function productsFor(topics: string[], n = 2): Product[] {
 // The Kleros | Events profile on Luma, where every Kleros-run event takes RSVPs.
 export const LUMA_URL = "https://luma.com/user/kleros_io";
 
+// Proof of Presence, the Kleros kickback app: refundable event deposits with Kleros as the referee.
+// Points at the review copy until kickback.kleros.io serves the new site; then change it to "https://kickback.kleros.io".
+export const KICKBACK_URL = "https://weiwei-ooi.github.io/devcon-side-event-kickback/kickback";
+
 export const SOCIALS = [
   { label: "Luma", url: LUMA_URL },
   { label: "X", url: "https://x.com/kleros_io" },

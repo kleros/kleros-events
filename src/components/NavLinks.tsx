@@ -11,6 +11,7 @@ export default function NavLinks({ signedIn, isTeam }: { signedIn: boolean; isTe
     <nav className="nav" aria-label="Main">
       <Link href="/events" aria-current={on("/events")}>Events</Link>
       <Link href="/talks" aria-current={on("/talks")}>Talks</Link>
+      <Link href="/kickback" aria-current={on("/kickback")}>Kickback</Link>
       <a href={LUMA_URL} target="_blank" rel="noopener">Luma<Ext /></a>
       {isTeam && <Link href="/admin" aria-current={on("/admin")}>Team desk</Link>}
       <Link className="nav-me" href={signedIn ? "/me" : "/login"} aria-current={on("/me") ?? on("/login")}>{signedIn ? "My events" : "Sign in"}</Link>

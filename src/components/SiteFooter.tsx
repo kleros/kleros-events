@@ -15,6 +15,7 @@ export default function SiteFooter() {
           <Link href="/events?when=upcoming">Upcoming</Link>
           <Link href="/events?when=past">Past</Link>
           <Link href="/talks">Talks</Link>
+          <Link href="/kickback">Kickback</Link>
           <Link href="/me">My events</Link>
         </div>
         <div>
