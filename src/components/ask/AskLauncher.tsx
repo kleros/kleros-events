@@ -3,16 +3,16 @@ import { sharedLimits, visitorsOff, type Shared } from "@/lib/ask/limit";
 import AskWidget, { type TeamNote } from "./AskWidget";
 
 // what the team reads in the panel while only the team can ask: one plain line, and the
-// technical steps folded away for a developer
-const SETUP_STEP = "Only the team can use the assistant for now. Opening it to visitors needs one setup step from a developer.";
+// steps to finish the setup folded under it
+const SETUP_STEP = "Only the team can use the assistant for now. One more key opens it to visitors.";
 const TEAM_ONLY: Record<Exclude<Shared, "ok">, TeamNote> = {
   "no-key": {
     text: SETUP_STEP,
-    dev: "Add SUPABASE_SERVICE_ROLE_KEY to the site's environment variables (on Vercel or Netlify), run migration 0014_security.sql in Supabase if it has not been run, and redeploy.",
+    dev: "In Supabase, open Project Settings, then API Keys, and copy the secret key. On Netlify (Project configuration, Environment variables) and on Vercel (Settings, Environment Variables), add it as SUPABASE_SERVICE_ROLE_KEY, then redeploy. Visitors get the button once the new deploy is live.",
   },
   "not-set-up": {
     text: SETUP_STEP,
-    dev: "The database has no question counter or refused the key. Check that migration 0014_security.sql has been run in Supabase and that SUPABASE_SERVICE_ROLE_KEY holds the service role key.",
+    dev: "The database turned the key down. Check that SUPABASE_SERVICE_ROLE_KEY holds the secret key from Supabase (Project Settings, API Keys), not the publishable one, and that 0014_security.sql has been run in the Supabase SQL editor.",
   },
   down: {
     text: "Only the team can use the assistant right now, because the question counter did not answer. Visitors get the button back once it does.",

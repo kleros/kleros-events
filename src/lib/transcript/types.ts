@@ -52,12 +52,12 @@ export const BUSY: TranscriptStatus[] = ["queued", "transcribing", "summarising"
 /** Uploaded plain text without timestamps: times are estimates, so the UI does not offer seeking. */
 export const isUntimed = (provider: string | null | undefined) => !!provider && provider.includes("untimed");
 
-/** What the team reads while transcripts are off. NOT_SET_UP_DEV is folded away under it for a developer. */
-export const NOT_SET_UP = "Transcripts are not switched on yet. A developer can turn them on.";
+/** What the team reads while transcripts are off. NOT_SET_UP_DEV is folded under it: the steps to switch them on. */
+export const NOT_SET_UP = "Transcripts are off until the site has its keys.";
 export const NOT_SET_UP_DEV =
-  "Add GROQ_API_KEY (speech to text) and ANTHROPIC_API_KEY (summaries) to the site's environment variables (Netlify: Project configuration, Environment variables; Vercel: Settings, Environment Variables), then redeploy.";
+  "Create a key at console.groq.com (speech to text) and an API key in the Claude Console at platform.claude.com (summaries). On Netlify (Project configuration, Environment variables) and on Vercel (Settings, Environment Variables), add them as GROQ_API_KEY and ANTHROPIC_API_KEY, then redeploy.";
 
 /** The same while transcripts work but summaries are off. */
-export const NO_SUMMARY = "Summaries are not switched on yet. A developer can turn them on.";
+export const NO_SUMMARY = "Summaries are off until the site has an Anthropic API key.";
 export const NO_SUMMARY_DEV =
-  "Add ANTHROPIC_API_KEY to the site's environment variables (Netlify: Project configuration, Environment variables; Vercel: Settings, Environment Variables), then redeploy.";
+  "Create an API key in the Claude Console at platform.claude.com. On Netlify (Project configuration, Environment variables) and on Vercel (Settings, Environment Variables), add it as ANTHROPIC_API_KEY, then redeploy.";

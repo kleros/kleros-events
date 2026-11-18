@@ -21,7 +21,7 @@ function suggestions(path: string) {
   return ["Which events are coming up?", "Which talks covered AI agents?", "Where will Kleros be next month?"];
 }
 
-/** A note for the team: one plain sentence, and the technical steps for a developer. */
+/** A note for the team: one plain sentence, and the steps to switch it on. */
 export interface TeamNote { text: string; dev: string }
 
 /** The plain sentence, with the technical text folded away under it. */
@@ -30,7 +30,7 @@ function DevNote({ note }: { note: TeamNote }) {
     <div className="note small ask-note">
       <p>{note.text}</p>
       <details className="small muted">
-        <summary>Details for a developer</summary>
+        <summary>How to switch it on</summary>
         <p>{note.dev}</p>
       </details>
     </div>
@@ -38,8 +38,8 @@ function DevNote({ note }: { note: TeamNote }) {
 }
 
 const SWITCHED_OFF: TeamNote = {
-  text: "The assistant is not switched on yet. Until a developer turns it on, only the team sees this button.",
-  dev: "Add an Anthropic key as ANTHROPIC_API_KEY to the site's environment variables (on Vercel or Netlify) and redeploy. To open it to everyone else, the site also needs SUPABASE_SERVICE_ROLE_KEY and migration 0014_security.sql (see the README, under Site assistant).",
+  text: "The assistant is off until the site has an Anthropic API key. Until then, only the team sees this button.",
+  dev: "In the Claude Console (platform.claude.com), create an API key, ideally in a workspace with a monthly spend limit. On Netlify (Project configuration, Environment variables) and on Vercel (Settings, Environment Variables), add it as ANTHROPIC_API_KEY, then redeploy. To open it to visitors too, also add the secret key from Supabase (Project Settings, API Keys) as SUPABASE_SERVICE_ROLE_KEY.",
 };
 
 /**

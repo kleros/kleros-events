@@ -325,14 +325,14 @@ function TranscriptBody({ segs, title, speaker, timed, seekable, language }: { s
 
 // ---------------------------------------------------------------- team tools
 
-/** A note in the team's tools: the plain line, with any technical text folded away for a developer. */
-function TeamNote({ text, dev, alert }: { text: string; dev?: string; alert?: boolean }) {
+/** A note in the team's tools: the plain line, with the setup steps (how) or the technical text folded under it. */
+function TeamNote({ text, dev, alert, how }: { text: string; dev?: string; alert?: boolean; how?: boolean }) {
   if (!dev) return <p className="tx-note" role={alert ? "alert" : undefined}>{text}</p>;
   return (
     <div className="tx-note" role={alert ? "alert" : undefined}>
       <p>{text}</p>
       <details className="small muted">
-        <summary>Details for a developer</summary>
+        <summary>{how ? "How to switch it on" : "Details for a developer"}</summary>
         <p>{dev}</p>
       </details>
     </div>
@@ -371,8 +371,8 @@ function TeamTools({ state, row, setup, canTranscribe, busy, msg, onGenerate, on
           <input type="file" hidden accept=".srt,.vtt,.txt,text/plain,text/vtt,application/x-subrip" disabled={busy} onChange={(e) => { onUpload(e.target.files?.[0]); e.target.value = ""; }} />
         </label>
       </div>
-      {notSetUp && <TeamNote text={NOT_SET_UP} dev={NOT_SET_UP_DEV} />}
-      {!notSetUp && !setup.summary && has && <TeamNote text={NO_SUMMARY} dev={NO_SUMMARY_DEV} />}
+      {notSetUp && <TeamNote text={NOT_SET_UP} dev={NOT_SET_UP_DEV} how />}
+      {!notSetUp && !setup.summary && has && <TeamNote text={NO_SUMMARY} dev={NO_SUMMARY_DEV} how />}
       {!canTranscribe && !has && <p className="muted small">This item has no recording stored on the site, so a transcript cannot be made automatically. Upload one instead: YouTube offers one under “Show transcript”, and most meeting tools export .vtt files.</p>}
       {state.status === "error" && state.error && !state.setup && <TeamNote {...forTeam(state.error)} alert />}
       {msg && <TeamNote {...forTeam(msg)} />}
