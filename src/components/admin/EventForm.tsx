@@ -168,7 +168,8 @@ export default function EventForm({ event, me, initialVisibility, then, copyOf }
       </div>
       <div className="two">
         <div className="field"><label htmlFor="url">Event page (Luma, Eventbrite…)</label><input id="url" name="url" type="url" defaultValue={v?.url ?? ""} placeholder="https://" /></div>
-        <div className="field"><label htmlFor="cover_path">Cover image URL</label><input id="cover_path" name="cover_path" type="url" defaultValue={v?.cover_path ?? ""} placeholder="Right-click the Luma cover → Copy image address" /></div>
+        <div className="field"><label htmlFor="cover_path">Cover image URL</label><input id="cover_path" name="cover_path" type="url" defaultValue={v?.cover_path ?? ""} placeholder="https://" aria-describedby="cover_path_hint" />
+          <span id="cover_path_hint" className="small muted">The event&apos;s own poster or banner, from its website or Luma. Leave it empty and the site makes a Kleros cover. Pictures from X, YouTube or LinkedIn posts are not used.</span></div>
       </div>
       <div className="field"><span className="lbl">Topics (drive recommendations and the product promos shown)</span>
         <div className="chips" style={{ margin: 0 }}>{TOPICS.map((t) => <button type="button" key={t} className="chip" aria-pressed={topics.includes(t)} onClick={() => setTopics(topics.includes(t) ? topics.filter((x) => x !== t) : [...topics, t])}>{t}</button>)}</div></div>

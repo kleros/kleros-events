@@ -40,7 +40,6 @@
 .ev-title > .note { justify-self: start; max-width: 60ch; }
 
 .cover.ev-cover { width: 100%; aspect-ratio: 4 / 3; border-radius: var(--r-lg); }
-.ev-cover .gen-big { font-size: clamp(1.8rem, 13cqi, 3.6rem); }
 
 /* the Manage menu (team tools); ManageMenu opens it leftwards near the right edge of the screen */
 .menu.manage > summary { gap: 6px; }

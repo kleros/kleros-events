@@ -42,11 +42,21 @@
 .thumb-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 /* a Luma cover is shown whole on the frame, never cropped or blurred */
 .thumb-img.contain { object-fit: contain; }
-.cover > img, .cover > .gen { transition: filter 0.15s; }
-.card:hover .cover > img, .card:hover .cover > .gen,
-.feature:hover .cover > img, .feature:hover .cover > .gen { filter: brightness(1.06); }
+.cover > img, .cover > .gen, .cover > .kcover { transition: filter 0.15s; }
+.card:hover .cover > img, .card:hover .cover > .gen, .card:hover .cover > .kcover,
+.feature:hover .cover > img, .feature:hover .cover > .gen, .feature:hover .cover > .kcover { filter: brightness(1.06); }
 
-/* generated cover: Kleros-purple gradient, varied per seed by inline custom properties.
+/* designed event cover (src/lib/cover/tree.ts): the place over the Kleros polyhedron. A picture, so it keeps
+   its own dark colours in both themes. The frame is a size container and every length below is in cqw, so one
+   render fills a 250px card and the 510px hero alike; the place's size is fitted per event and set inline. */
+.kcover { position: absolute; inset: 0; display: block; overflow: hidden; background: #120D1A; container-type: inline-size; }
+.kcover > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.kcover-text { position: absolute; left: 7.5cqw; right: 7.5cqw; bottom: 6.375cqw; display: flex; flex-direction: column; }
+.kcover-lead { font: italic 400 5.4cqw/1.2 var(--font-display), Georgia, serif; color: #C4B5FD; margin-bottom: 0.6cqw; white-space: nowrap; }
+.kcover-place { display: flex; flex-direction: column; font: 400 13.5cqw/1.02 var(--font-display), Georgia, serif; letter-spacing: -0.005em; color: #FBF8FF; }
+.kcover-place > span { display: block; white-space: nowrap; }
+
+/* generated cover for talks: Kleros-purple gradient, varied per seed by inline custom properties.
    It is a picture, so it keeps its dark colours and light text in both themes. */
 .gen { position: absolute; inset: 0; display: block; overflow: hidden; container-type: inline-size;
   background: radial-gradient(90% 120% at var(--gx) var(--gy), hsl(var(--h) 70% 52% / 0.55), transparent 62%),

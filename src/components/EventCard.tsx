@@ -4,7 +4,9 @@ import { KLEROS_HOSTED, ROLE_LABEL } from "@/lib/kleros";
 import { excerpt, fmtRange, isLive, plural, place } from "@/lib/format";
 import { fileUrl } from "./MaterialRow";
 import Thumb from "./Thumb";
-import GenCover from "./Cover";
+import { coverPick } from "@/lib/cover/pick";
+import { coverTree } from "@/lib/cover/tree";
+import { toReact } from "@/lib/cover/react";
 
 /** One quiet status label at most: private beats draft beats live beats example. */
 export function statusLabel(e: Pick<EventRow, "status" | "starts_on" | "ends_on" | "is_example"> & { visibility?: EventRow["visibility"] }) {
@@ -20,12 +22,16 @@ export function RolePill({ e }: { e: Pick<EventRow, "kleros_role"> }) {
   return <span className={`pill ${KLEROS_HOSTED.includes(e.kleros_role) ? "host" : "part"}`}>{ROLE_LABEL[e.kleros_role]}</span>;
 }
 
-/** The visual top of an event: its Luma cover shown whole, or a generated one with the city. */
+/**
+ * The visual top of an event: its official poster shown whole (see lib/cover/pick.ts), else the designed Kleros
+ * cover, which also stands in quietly when the poster's link is broken.
+ */
 export function EventCover({ e, className = "" }: { e: EventRow; className?: string }) {
-  const gen = <GenCover seed={e.slug} big={e.city || "Online"} />;
+  const designed = toReact(coverTree(e, { variant: "card" }));
+  const pick = coverPick(e);
   return (
-    <span className={`cover ${className}`}>
-      {e.cover_path ? <Thumb src={fileUrl(e.cover_path)} contain fallback={gen} /> : gen}
+    <span className={`cover ${className}`} style={pick?.bg ? { background: pick.bg } : undefined}>
+      {pick ? <Thumb src={fileUrl(pick.src)} contain={pick.fit !== "cover"} position={pick.position} fallback={designed} /> : designed}
     </span>
   );
 }

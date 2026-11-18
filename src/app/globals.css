@@ -269,7 +269,8 @@ select.f { flex: 0 1 180px; }
 .field input, .field select, .field textarea { padding: var(--s-2) 10px; border: 1px solid var(--field-line); border-radius: var(--r-sm); background: var(--bg); width: 100%; min-width: 0; }
 .field textarea { min-height: 84px; resize: vertical; }
 .form-tight { gap: var(--s-2); max-width: 480px; }
-.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+/* start: a field with a hint under it must not stretch the input beside it */
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
 /* Who can see an event: two radio cards (EventForm) */
 .vis-choice { border: 0; padding: 0; margin: 0; min-width: 0; grid-template-columns: 1fr 1fr; }
 .vis-choice legend { padding: 0; margin-bottom: 6px; }

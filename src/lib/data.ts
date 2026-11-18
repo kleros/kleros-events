@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { supabaseServer, supabaseConfigured } from "./supabase/server";
 import type { AgendaItem, EventRow, EventTeamRow, Material } from "./types";
 
@@ -97,6 +97,20 @@ export async function eventMaterials(sb: SupabaseClient, eventId: string): Promi
   if (!list.length || linked.error) return list.map((m) => ({ ...m, event_ids: m.event_id ? [m.event_id] : [] }));
   const { data: links } = await sb.from("material_events").select("material_id, event_id").in("material_id", list.map((m) => m.id)).order("created_at");
   return withEventIds(list, (links ?? []) as Link[]);
+}
+
+/**
+ * A published public event by its slug, read with the anon key and no session, so every visitor and every crawler
+ * gets the same answer (the share image). Null alike for a draft, a private event and an unknown slug.
+ */
+export async function getPublicEvent(slug: string): Promise<EventRow | null> {
+  if (!supabaseConfigured) return null;
+  const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data, error } = await sb.from("events").select("*").eq("slug", slug).eq("status", "published").eq("visibility", "public").maybeSingle();
+  if (error) { console.error("getPublicEvent", error.message); throw new Error("The event could not be loaded."); }
+  return (data as EventRow | null) ?? null;
 }
 
 export async function getEvent(slug: string) {

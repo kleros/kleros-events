@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
  * A cover or video thumbnail that quietly falls back to its placeholder if the image fails to load.
  * `contain` shows the whole picture on the cover's flat frame, with no blurred copy behind it.
  */
-export default function Thumb({ src, fallback, contain = false }: { src?: string | null; fallback: React.ReactNode; contain?: boolean }) {
+export default function Thumb({ src, fallback, contain = false, position }: { src?: string | null; fallback: React.ReactNode; contain?: boolean; position?: string }) {
   const [failed, setFailed] = useState(false);
   const ref = useRef<HTMLImageElement>(null);
   // The image may have failed before hydration attached onError; check once on mount.
@@ -16,6 +16,6 @@ export default function Thumb({ src, fallback, contain = false }: { src?: string
   if (!src || failed) return <>{fallback}</>;
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img ref={ref} className={contain ? "thumb-img contain" : "thumb-img"} src={src} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />
+    <img ref={ref} className={contain ? "thumb-img contain" : "thumb-img"} src={src} alt="" loading="lazy" referrerPolicy="no-referrer" style={position ? { objectPosition: position } : undefined} onError={() => setFailed(true)} />
   );
 }

@@ -29,7 +29,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   // a signed-out visitor gets a sign-in page here rather than a 404, which search engines must not keep
   if (!data) return { title: "Event not available", robots: { index: false } };
   const e = data.event;
-  return { title: e.title, description: `${ROLE_LABEL[e.kleros_role]} · ${fmtRange(e.starts_on, e.ends_on)} · ${place(e)}. ${excerpt(e)}`.slice(0, 200) };
+  const description = `${ROLE_LABEL[e.kleros_role]} · ${fmtRange(e.starts_on, e.ends_on)} · ${place(e)}. ${excerpt(e)}`.slice(0, 200);
+  // og:image is ./opengraph-image.tsx, which Next adds by itself and copies to twitter:image; the layout's twitter
+  // card is summary_large_image. This openGraph replaces the layout's, so it repeats the site name.
+  return {
+    title: e.title,
+    description,
+    openGraph: { title: e.title, description, type: "website", siteName: "Kleros Events", url: `/events/${e.slug}` },
+  };
 }
 
 export default async function EventPage({ params }: { params: Promise<{ slug: string }> }) {

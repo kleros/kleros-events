@@ -4,7 +4,16 @@ export const todayIso = () => new Date().toISOString().slice(0, 10);
 export const endOf = (e: Pick<EventRow, "starts_on" | "ends_on">) => e.ends_on ?? e.starts_on;
 export const isPast = (e: Pick<EventRow, "starts_on" | "ends_on">) => endOf(e) < todayIso();
 export const isLive = (e: Pick<EventRow, "starts_on" | "ends_on">) => e.starts_on <= todayIso() && endOf(e) >= todayIso();
-export const place = (e: Pick<EventRow, "city" | "country">) => (e.city ? [e.city, e.country].filter(Boolean).join(", ") : "Online");
+type Where = Pick<EventRow, "city" | "country"> & { region?: EventRow["region"] };
+/** Online when the city says so, or when there is no city and the region is Online or nothing is set. */
+export function isOnline(e: Where): boolean {
+  const city = (e.city ?? "").trim();
+  if (city) return /^online$/i.test(city);
+  return e.region === "Online" || (!(e.country ?? "").trim() && !(e.region ?? "").trim());
+}
+/** "City, Country"; the country or the region when there is no city; "Online" by the rule above (the designed cover agrees). */
+export const place = (e: Where) =>
+  isOnline(e) ? "Online" : e.city?.trim() ? [e.city, e.country].filter(Boolean).join(", ") : (e.country?.trim() || e.region?.trim() || "Online");
 
 // Fixed English names, so the server and the browser print the same text whatever their locale data.
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

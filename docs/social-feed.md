@@ -74,7 +74,7 @@ Copy follows the Kleros writing rules:
         "country": "Portugal",
         "region": "Europe",
         "url": "https://example.org/agenda",
-        "cover_path": "https://pbs.twimg.com/media/XXXX?format=jpg&name=large",
+        "cover_path": "https://images.lumacdn.com/event-covers/xx/XXXX.png",
         "description": "Federico Ast speaks on decentralized justice for cross-border e-commerce disputes.",
         "topics": ["Decentralized justice", "Access to justice"]
       }
@@ -95,6 +95,7 @@ Copy follows the Kleros writing rules:
 
 - `id` is unique and never reused: the date found, plus the source type, plus the post or video id. Items are applied once. Later edits made on the site are kept, because an applied id is not applied again.
 - **For an existing event,** `event` carries `slug` plus only the fields to fill in or correct, for example a newer `cover_path` or a `recap`. The feed cannot set or change the `title` or the `url` of an event it did not add itself (one added on the site, from Luma or by a content script), even when the event has no `url` yet. It may repeat them unchanged. An item that tries is not applied; change those on the site.
+- **`cover_path` is the event's own poster or key art only:** the image on the organiser's website (its `og:image` or hero banner) or the event's Luma cover, checked by eye. Never a picture from an X, YouTube, LinkedIn, Instagram, Telegram or Substack post, never a screenshot, a speaker-lineup card, a "Kleros is sponsoring" announcement or a photo from the room. The site ignores pictures on those hosts anyway (`src/lib/cover/pick.ts`). When the event has no poster, leave `cover_path` out and the site shows its designed Kleros cover. Covers picked by hand for past events live in `OFFICIAL` in that file and win over `cover_path`.
 - **For a new event,** `slug` follows the existing pattern `name-city-year` (lowercase, hyphens). It needs at least `title` and `starts_on`.
 - `kleros_role` is one of `host`, `co_host`, `speaking`, `sponsor`, `booth`, `judging`, `attending`.
 - `region` is one of `Europe`, `Asia`, `Africa`, `Oceania`, `Latin America`, `North America`, `Online`.
