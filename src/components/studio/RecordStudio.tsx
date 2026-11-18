@@ -33,6 +33,10 @@ export default function RecordStudio() {
             <li><b>Link it to events.</b> Pick any events, drafts included, or create a new one. It then shows in the Talks of each.</li>
           </ol>
           <p className="muted small">Until it is linked to a published event, a recording is visible to the Kleros team only.</p>
+          <div className="note rs-private">
+            <b>Recording a private meeting?</b> For a general assembly or anything only some people should hear, create a private event first and record from its page. The recording then stays with the people you invite.
+            <div className="row-flex"><Link className="btn sm" href="/admin/events/new?visibility=private&then=record">Create a private event and record</Link></div>
+          </div>
         </aside>
       </div>
     </div>

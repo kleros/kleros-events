@@ -66,7 +66,10 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <h1>Events desk</h1>
           <p className="muted">Plan events, run them live, and keep talks and slides together afterwards.</p>
         </div>
-        <Link className="btn primary" href="/admin/events/new">Add event</Link>
+        <div className="row-flex">
+          <Link className="btn primary" href="/admin/events/new">Add event</Link>
+          <Link className="btn" href="/admin/events/new?visibility=private">Add private event</Link>
+        </div>
       </header>
       <LumaSync last={((sync.data ?? [])[0] as SyncLog | undefined) ?? null} />
 

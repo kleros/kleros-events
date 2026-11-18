@@ -92,3 +92,9 @@
   .adm-tabs { display: flex; width: 100%; }
   .adm-tabs a { flex: 1 1 auto; justify-content: center; }
 }
+
+/* why a visibility choice is locked, and the way forward (EventForm) */
+.note.vis-why { display: grid; gap: var(--s-2); margin: 0; }
+/* /record: the private-meeting route */
+.note.rs-private { display: grid; gap: var(--s-2); }
+.note.rs-private b { color: var(--white); }

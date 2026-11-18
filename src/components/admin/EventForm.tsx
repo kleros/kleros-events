@@ -20,13 +20,21 @@ export function parseEmails(text: string) {
  * 0010); an older event with no creator can only be made private by the admin. Only the creator
  * deletes a private event; the team deletes public ones.
  */
-export default function EventForm({ event, me }: { event?: EventRow; me?: { isTeam: boolean; isAdmin?: boolean; userId: string } }) {
+export default function EventForm({ event, me, initialVisibility, then, copyOf }: {
+  event?: EventRow; me?: { isTeam: boolean; isAdmin?: boolean; userId: string };
+  /** a new event: start with Private chosen (from "Add private event") */
+  initialVisibility?: "public" | "private";
+  /** a new event: "record" opens the recorder on the new event's page after saving */
+  then?: "record";
+  /** a new event: start from another event's details ("Make a private copy") */
+  copyOf?: EventRow;
+}) {
   const router = useRouter();
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const [topics, setTopics] = useState<string[]>(event?.topics ?? []);
-  const [visibility, setVisibility] = useState<"public" | "private">(event?.visibility ?? "public");
+  const [visibility, setVisibility] = useState<"public" | "private">(event?.visibility ?? initialVisibility ?? "public");
   const [collabs, setCollabs] = useState("");
   const isTeam = me?.isTeam ?? true;
   const isCreator = !!event?.created_by && event.created_by === me?.userId;
@@ -53,7 +61,7 @@ export default function EventForm({ event, me }: { event?: EventRow; me?: { isTe
     if (!event && visibility === "private" && emails.bad.length) { setErr(`Not an email address: ${emails.bad.join(", ")}`); return; }
     setBusy(true);
     const sb = supabaseBrowser();
-    const res = event ? await sb.from("events").update(row).eq("id", event.id).select("id").single() : await sb.from("events").insert(row).select("id").single();
+    const res = event ? await sb.from("events").update(row).eq("id", event.id).select("id, slug").single() : await sb.from("events").insert(row).select("id, slug").single();
     if (res.error) { setBusy(false); setErr(saveError(res.error.message, visibility)); return; }
     // made public: the collaborator list goes (the database does this too from 0012)
     if (event?.visibility === "private" && visibility === "public") await sb.from("event_collaborators").delete().eq("event_id", event.id);
@@ -62,7 +70,9 @@ export default function EventForm({ event, me }: { event?: EventRow; me?: { isTe
       if (error) { setBusy(false); setErr(`The event was created, but the collaborators were not added: ${error.message}`); router.push(`/admin/events/${res.data.id}#collaborators`); return; }
     }
     setBusy(false);
-    if (!event) router.push(`/admin/events/${res.data.id}`); else router.refresh();
+    if (!event) router.push(then === "record" ? `/events/${res.data.slug}#record` : `/admin/events/${res.data.id}`);
+    // say it worked: the page shows "Saved" from ?saved=1
+    else { router.replace(`/admin/events/${event.id}?saved=1`); router.refresh(); }
   }
   async function remove() {
     if (!event) return;
@@ -86,10 +96,49 @@ export default function EventForm({ event, me }: { event?: EventRow; me?: { isTe
     router.push("/admin");
   }
 
-  const v = event;
+  // a private copy keeps the details but gets its own address
+  const v = event ?? (copyOf ? { ...copyOf, slug: "" } : undefined);
+  // why a choice is locked, said once and visibly, with a way forward
+  const lockedPrivate = !canMakePrivate && visibility !== "private";
+  const lockedPublic = !canMakePublic && visibility !== "public";
+  const privateReason = !event?.created_by
+    ? "This event was imported from Luma or added before private events existed, so only an admin can make it private."
+    : "A teammate created this event, so only they can make it private.";
   return (
     <form className="panel" onSubmit={submit}>
-      <div className="field"><label htmlFor="title">Event name</label><input id="title" name="title" required defaultValue={v?.title} placeholder="Kleros Court Day Lisbon" /></div>
+      <div className="field"><label htmlFor="title">Event name</label><input id="title" name="title" required defaultValue={v?.title} placeholder={visibility === "private" ? "General assembly, November 2026" : "Kleros Court Day Lisbon"} /></div>
+      <fieldset className="field vis-choice">
+        <legend className="lbl">Who can see it</legend>
+        <label className="vis-opt" data-on={visibility === "public"} aria-disabled={lockedPublic}>
+          <input type="radio" name="visibility" value="public" checked={visibility === "public"} disabled={lockedPublic} onChange={() => setVisibility("public")} />
+          <span><b>Public</b><span className="muted small">Listed on the site once published. The whole Kleros team can see and edit it.</span></span>
+        </label>
+        <label className="vis-opt" data-on={visibility === "private"} aria-disabled={lockedPrivate}>
+          <input type="radio" name="visibility" value="private" checked={visibility === "private"} disabled={lockedPrivate} onChange={() => setVisibility("private")} />
+          <span><b>Private</b><span className="muted small">Only {event && event.created_by && event.created_by !== me?.userId ? "its creator" : "you"} and the people you add can see it, its recordings and its questions. Other team members and admins cannot.</span></span>
+        </label>
+      </fieldset>
+      {lockedPrivate && event && (
+        <div className="note vis-why">
+          {privateReason} To record something private, make a private copy: it keeps these details, and this public event stays as it is.
+          <div className="row-flex"><a className="btn sm" href={`/admin/events/new?visibility=private&from=${event.id}`}>Make a private copy</a></div>
+        </div>
+      )}
+      {lockedPublic && (
+        <div className="note vis-why">{isCreator ? "Making an event public needs a Kleros team account." : "Only the person who created this private event can make it public."}</div>
+      )}
+      {visibility === "private" && !event && (
+        <div className="field"><label htmlFor="collabs">People to add (optional)</label>
+          <textarea id="collabs" value={collabs} onChange={(e) => setCollabs(e.target.value)} placeholder={"name@kleros.io, partner@example.org"} style={{ minHeight: 60 }} />
+          <span className="muted small">Email addresses, separated by commas or new lines. They see the event once they sign in with that email. Nobody is emailed automatically. More can be added later.</span>
+        </div>
+      )}
+      {visibility === "private" && event?.visibility === "public" && (
+        <p className="note" style={{ margin: 0 }}>Saving makes this event private: it leaves the public site, and other team members lose access to it, its materials and its questions. {!event.created_by && "You become its creator."}</p>
+      )}
+      {visibility === "public" && event?.visibility === "private" && (
+        <p className="note" style={{ margin: 0 }}>Saving makes this event public: the whole Kleros team can see and edit it, its materials and its questions. It stays off the public site until its status is set to Published. The collaborator list is cleared.</p>
+      )}
       <div className="two">
         <div className="field"><label htmlFor="kleros_role">Kleros&apos; role</label><select id="kleros_role" name="kleros_role" defaultValue={v?.kleros_role ?? "host"}>{Object.entries(ROLE_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></div>
         <div className="field"><label htmlFor="organizer">Organizer</label><input id="organizer" name="organizer" defaultValue={v?.organizer ?? ""} placeholder="Kleros, ETHGlobal, a university…" /></div>
@@ -100,29 +149,6 @@ export default function EventForm({ event, me }: { event?: EventRow; me?: { isTe
           ? <div className="field"><label htmlFor="status">Status</label><select id="status" name="status" defaultValue={v?.status ?? "draft"}><option value="draft">Draft (team only)</option><option value="published">Published</option></select></div>
           : <div className="field"><span className="lbl">Status</span><p className="muted small" style={{ margin: "6px 0 0" }}>Private events are never listed on the public site.</p></div>}
       </div>
-      <fieldset className="field vis-choice">
-        <legend className="lbl">Who can see it</legend>
-        <label className="vis-opt" data-on={visibility === "public"} aria-disabled={!canMakePublic && visibility !== "public"}>
-          <input type="radio" name="visibility" value="public" checked={visibility === "public"} disabled={!canMakePublic && visibility !== "public"} onChange={() => setVisibility("public")} />
-          <span><b>Public</b><span className="muted small">Listed on the site once published. The whole Kleros team can see and edit it.{!canMakePublic && (isCreator ? " Making an event public needs a Kleros team account." : " Only the person who created this event can make it public.")}</span></span>
-        </label>
-        <label className="vis-opt" data-on={visibility === "private"} aria-disabled={!canMakePrivate && visibility !== "private"}>
-          <input type="radio" name="visibility" value="private" checked={visibility === "private"} disabled={!canMakePrivate && visibility !== "private"} onChange={() => setVisibility("private")} />
-          <span><b>Private</b><span className="muted small">Only {event && event.created_by && event.created_by !== me?.userId ? "its creator" : "you"} and the collaborators added can see it, open its materials and questions, and edit it. Other team members and admins cannot.{!canMakePrivate && (event?.created_by ? " Only the person who created this event can make it private." : " Events added before private events existed can only be made private by the admin.")}</span></span>
-        </label>
-      </fieldset>
-      {visibility === "private" && !event && (
-        <div className="field"><label htmlFor="collabs">Collaborators</label>
-          <textarea id="collabs" value={collabs} onChange={(e) => setCollabs(e.target.value)} placeholder={"name@kleros.io, partner@example.org"} style={{ minHeight: 60 }} />
-          <span className="muted small">Email addresses, separated by commas or new lines. They see the event once they sign in with that email. More can be added later.</span>
-        </div>
-      )}
-      {visibility === "private" && event?.visibility === "public" && (
-        <p className="note" style={{ margin: 0 }}>Saving makes this event private: it leaves the public site, and other team members lose access to it, its materials and its questions. {!event.created_by && "You become its creator."}</p>
-      )}
-      {visibility === "public" && event?.visibility === "private" && (
-        <p className="note" style={{ margin: 0 }}>Saving makes this event public: the whole Kleros team can see and edit it, its materials and its questions. It stays off the public site until its status is set to Published. The collaborator list is cleared.</p>
-      )}
       <div className="two">
         <div className="field"><label htmlFor="starts_on">Starts</label><input id="starts_on" name="starts_on" type="date" required defaultValue={v?.starts_on} /></div>
         <div className="field"><label htmlFor="ends_on">Ends</label><input id="ends_on" name="ends_on" type="date" defaultValue={v?.ends_on ?? ""} /></div>
@@ -147,10 +173,10 @@ export default function EventForm({ event, me }: { event?: EventRow; me?: { isTe
         <div className="chips" style={{ margin: 0 }}>{TOPICS.map((t) => <button type="button" key={t} className="chip" aria-pressed={topics.includes(t)} onClick={() => setTopics(topics.includes(t) ? topics.filter((x) => x !== t) : [...topics, t])}>{t}</button>)}</div></div>
       <div className="field"><label htmlFor="description">Description</label><textarea id="description" name="description" defaultValue={v?.description ?? ""} /></div>
       <div className="field"><label htmlFor="recap">Recap (after the event)</label><textarea id="recap" name="recap" defaultValue={v?.recap ?? ""} placeholder="What happened, who attended, key takeaways" /></div>
-      <div className="field"><label htmlFor="slug">URL slug</label><input id="slug" name="slug" defaultValue={v?.slug ?? ""} placeholder={event ? "Keeps the current address if empty" : "Generated from the name if empty"} /></div>
+      <div className="field"><label htmlFor="slug">Web address (the end of the link)</label><input id="slug" name="slug" defaultValue={v?.slug ?? ""} placeholder={event ? "Keeps the current address if empty" : "Made from the name if empty"} /></div>
       {err && <div className="note">{err}</div>}
       <div className="row-flex">
-        <button className="btn primary" type="submit" disabled={busy}>{busy ? "Saving…" : event ? "Save changes" : "Create event"}</button>
+        <button className="btn primary" type="submit" disabled={busy}>{busy ? "Saving…" : event ? "Save changes" : then === "record" ? "Create and start recording" : visibility === "private" ? "Create private event" : "Create event"}</button>
         {event && canDelete && <button className="btn ghost" type="button" onClick={remove}>{confirmDel ? (event.visibility === "private" ? "Click again to delete this event and its materials" : "Click again to delete this event") : "Delete event"}</button>}
       </div>
     </form>
@@ -159,7 +185,7 @@ export default function EventForm({ event, me }: { event?: EventRow; me?: { isTe
 
 /** Plain-language reasons for the database refusals a save can hit. */
 function saveError(msg: string, visibility: "public" | "private") {
-  if (msg.includes("events_slug_key")) return "Another event already uses this URL slug.";
+  if (msg.includes("events_slug_key")) return "Another event already uses this web address. Change the name or the web address.";
   if (/Only the person who created this event|needs a Kleros team account/.test(msg)) return msg;
   if (/row-level security/i.test(msg)) {
     return visibility === "private"

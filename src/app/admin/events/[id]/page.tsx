@@ -14,8 +14,9 @@ import type { AgendaItem, EventRow, TeamMember } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditEventPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string }> }) {
   const { id } = await params;
+  const saved = (await searchParams).saved === "1";
   const { user, isTeam, isAdmin } = await requireTeam(`/admin/events/${id}`);
   const sb = await supabaseServer();
   // the team edits public events; a private event's creator and collaborators edit it, team or not
@@ -68,6 +69,11 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
       <div className="wrap ed-body">
         <section id="details" className="ed-sec">
           <div className="ed-sec-h"><h2>Details</h2><p className="muted small">Title, dates, place, description and the recap shown after the event.</p></div>
+          {saved && (
+            <div className="ok" role="status">
+              Saved. {isPrivate ? "This event is private: only you and the people you added can see it." : e.status === "published" ? "The changes are live on the event page." : "It is still a draft, so only the team can see it."}
+            </div>
+          )}
           {/* keyed so a saved change (a new address, a switch) resets the form instead of keeping old values */}
           <EventForm key={`${e.slug}:${e.updated_at}`} event={e} me={{ isTeam, isAdmin, userId: user.id }} />
         </section>

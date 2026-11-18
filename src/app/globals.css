@@ -426,7 +426,7 @@ footer.site .base a { display: inline; color: var(--muted); text-decoration: und
 }
 @media (max-width: 600px) {
   .card.talk { flex-direction: row; align-items: stretch; }
-  .card.talk .cover { width: 136px; aspect-ratio: auto; min-height: 92px; border-bottom: 0; border-right: 1px solid var(--line); }
+  .card.talk .cover { width: 132px; aspect-ratio: 16 / 9; align-self: flex-start; margin: var(--s-3) 0 var(--s-3) var(--s-3); border: 1px solid var(--line); border-radius: var(--r-sm); }
   .card.talk .gen-text { display: none; }
   .card.talk .gen .play { width: 36px; height: 36px; font-size: 0.85rem; top: 50%; }
   .card.talk .body { padding: var(--s-3); gap: 3px; }

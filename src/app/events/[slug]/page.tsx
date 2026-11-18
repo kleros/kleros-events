@@ -89,7 +89,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     agenda.length > 0 && ["agenda", "Agenda"],
     team.length > 0 && ["team", "Kleros team"],
     ["ask", past ? "Questions" : "Ask the speaker"],
-    ["meet", "Meet Kleros"],
+    // an internal meeting's page has no sales blocks
+    e.visibility !== "private" && ["meet", "Meet Kleros"],
   ].filter(Boolean) as [string, string][];
 
   return (
@@ -114,7 +115,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               {past && talks.length > 0 && <a className="btn cta" href="#talks">▶ Watch {plural(talks.length, "talk")}</a>}
               {canEdit && <Link className="btn" href={`/events/${e.slug}/host`}>Run this event</Link>}
               {canEdit && <StudioButton mode="record" className="btn"><span className="dot" aria-hidden /> Record a session</StudioButton>}
-              {canEdit && <Link className="btn ghost" href={`/admin/events/${e.id}`}>Edit</Link>}
+              {canEdit && <Link className="btn" href={`/admin/events/${e.id}`}>Edit details</Link>}
             </div>
           ) : null}
           {e.visibility === "private"
@@ -217,9 +218,9 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           </section>
 
           {/* visitors often land here from a QR code or a post, so say what Kleros is */}
-          {!isTeam && <PromoStrip lead="What is Kleros?" />}
+          {!isTeam && e.visibility !== "private" && <PromoStrip lead="What is Kleros?" />}
 
-          <section id="meet" className="sec">
+          {e.visibility !== "private" && <section id="meet" className="sec">
             <h2>Meet Kleros</h2>
             <div className="panel meet">
               <p>{past
@@ -228,8 +229,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               <div className="row-flex">
                 {booker?.calendar_url && <a className="btn sm primary" href={booker.calendar_url} target="_blank" rel="noopener">Pick a time with {booker.name.split(" ")[0]} ↗</a>}
               </div>
-              {/* requests are read by the whole team, so none from a private event's page */}
-              {e.visibility !== "private" && <MeetingForm eventId={e.id} />}
+              {/* requests are read by the whole team; this section is not shown on a private event's page */}
+              <MeetingForm eventId={e.id} />
             </div>
             <div className="prods">
               {products.map((p) => (
@@ -240,7 +241,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 </a>
               ))}
             </div>
-          </section>
+          </section>}
         </div>
 
         <aside className={`side ${past ? "late" : ""}`}>
