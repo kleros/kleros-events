@@ -72,6 +72,11 @@ export const byTalkRank = (a: Pick<Material, "title" | "speaker">, b: Pick<Mater
  * its own line instead of cutting it off. Titles without a trailing note stay whole.
  */
 export function splitTitle(t: string) {
+  // "Clip from Facundo Trotz's lightning talk (5 Nov): what it says" leads with what it says
+  const c = t.match(/^Clip from (.+?)\s*\(([^()]+)\):\s*(.{12,})$/i);
+  if (c) return { main: c[3][0].toUpperCase() + c[3].slice(1), aside: `Clip from ${c[1]}, ${c[2]}` };
+  const c2 = t.match(/^Clip:\s*(.{12,})$/i);
+  if (c2) return { main: c2[1][0].toUpperCase() + c2[1].slice(1), aside: "Clip" };
   const x = t.match(/^(.*\S)\s*\(([^()]+)\)\s*$/);
   return x && x[1].length >= 20 ? { main: x[1], aside: x[2] } : { main: t, aside: "" };
 }
@@ -105,6 +110,13 @@ export const MATERIAL_GROUPS: { label: string; kinds: MaterialKind[] }[] = [
 
 type EventRef = Pick<EventRow, "slug" | "title" | "starts_on">;
 
+// true when a title's note already names the event ("Devcon 8 workshop, 6 Nov" under Devcon 8)
+const mentions = (note: string, title: string) => {
+  const f = (x: string) => x.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+  const head = f(title).split(/\s*(?:::|,|·| - )\s*/)[0].slice(0, 20);
+  return !!note && head.length >= 4 && f(note).includes(head);
+};
+
 /**
  * A watchable talk: preview, title, speaker and a clear Watch action. `event` names the event
  * under the title; leave `showEvent` off where cards already sit under their event.
@@ -128,7 +140,7 @@ export function TalkCard({ m, event, note, showEvent = true }: { m: Material; ev
         <h3 title={aside ? m.title : undefined}><Link href={href}>{main}</Link></h3>
         {m.speaker && <div className="who">{m.speaker}</div>}
         {aside && <div className="sub" title={aside}>{aside}</div>}
-        {event && showEvent && <Link className="sub" href={`/events/${event.slug}`}>{event.title}</Link>}
+        {event && showEvent && !mentions(aside, event.title) && <Link className="sub" href={`/events/${event.slug}`}>{event.title}</Link>}
         {note && <div className="sub">{note}</div>}
         <div className="foot">
           <Link className="btn sm primary" href={href}>▶ {verb}</Link>

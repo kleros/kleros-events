@@ -77,7 +77,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const stats = ([
     past ? [c.attended, "attended"] : [c.going, "going"],
     [talks.length, talks.length === 1 ? "talk" : "talks"],
-    [otherCount, otherCount === 1 ? "file or link" : "files and links"],
+    [otherCount, matLabel.toLowerCase().replace("&", "and")],
     [agenda.length, agenda.length === 1 ? "agenda item" : "agenda items"],
     [team.length, "from Kleros"],
   ] as [number, string][]).filter(([n]) => n > 0).slice(0, 3);
