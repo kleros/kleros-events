@@ -65,8 +65,9 @@ export default async function Home() {
                 {featuredLive ? "Happening now" : next ? "Next up" : "Latest event"}
                 {featuredStatus && featuredStatus.cls !== "live" ? ` · ${featuredStatus.text}` : ""}
               </span>
-              <span className="feature-title">{featured.title}</span>
-              <span className="feature-meta">{fmtRange(featured.starts_on, featured.ends_on)}{next && featured.start_time ? ` · ${featured.start_time.slice(0, 5)}` : ""} · {place(featured)}</span>
+              {/* the tile shows the name, dates and place; the start time is the one thing it leaves out */}
+              <span className="sr-only">{featured.title}, {fmtRange(featured.starts_on, featured.ends_on)}, {place(featured)}</span>
+              {next && featured.start_time && <span className="feature-meta">Starts at {featured.start_time.slice(0, 5)}{featured.timezone ? ` ${featured.timezone}` : ""}</span>}
               <span className="feature-go">{!next && talkCount(featured.id) ? `Watch ${plural(talkCount(featured.id), "talk")} →` : "See the event →"}</span>
             </Link>
           )}

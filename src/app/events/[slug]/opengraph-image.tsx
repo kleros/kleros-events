@@ -2,14 +2,16 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { getPublicEvent } from "@/lib/data";
-import { SHARE_SIZE, coverTree, shareFallbackTree } from "@/lib/cover/tree";
+import { coverImage } from "@/lib/cover/pick";
+import { SHARE_SIZE, shareTree, shareFallbackTree } from "@/lib/cover/share";
+import { fetchArt } from "@/lib/cover/art";
 import { toReact } from "@/lib/cover/react";
 
-// The picture a link to an event shows on X, LinkedIn, Telegram and the rest: always the designed Kleros cover
-// (the place, title, date and Kleros's part), also for an event with an official poster, since a poster is rarely
-// 1200x630 and says nothing about Kleros. Only a published public event that is not an example gets one; anything
-// else, private, draft, example or unknown, gets the same plain Kleros Events picture, so the image says nothing about
-// whether the event exists and a demo event never passes for a real one.
+// The picture a link to an event shows on X, LinkedIn, Telegram and the rest, in the look of the event's tile: the
+// Kleros frame, Kleros's part, the event's name, dates and place, and its own poster when it can be fetched. Only a
+// published public event that is not an example gets one; anything else, private, draft, example or unknown, gets
+// the same plain Kleros Events picture, so the image says nothing about whether the event exists and a demo event
+// never passes for a real one.
 export const runtime = "nodejs";
 export const size = { width: SHARE_SIZE.width, height: SHARE_SIZE.height };
 export const contentType = "image/png";
@@ -24,12 +26,10 @@ let fonts: Promise<Font[]> | undefined;
 function loadFonts(): Promise<Font[]> {
   fonts ??= Promise.all([
     readFile(join(FONT_DIR, "InstrumentSerif-Regular.ttf")),
-    readFile(join(FONT_DIR, "InstrumentSerif-Italic.ttf")),
     readFile(join(FONT_DIR, "Geist-Regular.ttf")),
     readFile(join(FONT_DIR, "Geist-Medium.ttf")),
-  ]).then(([serif, serifItalic, sans, sansMedium]): Font[] => [
+  ]).then(([serif, sans, sansMedium]): Font[] => [
     { name: "Instrument Serif", data: serif, weight: 400, style: "normal" },
-    { name: "Instrument Serif", data: serifItalic, weight: 400, style: "italic" },
     { name: "Geist", data: sans, weight: 400, style: "normal" },
     { name: "Geist", data: sansMedium, weight: 500, style: "normal" },
   ]).catch((err) => { fonts = undefined; throw err; });
@@ -39,9 +39,11 @@ function loadFonts(): Promise<Font[]> {
 export default async function Image({ params }: { params: Promise<{ slug: string }> | { slug: string } }) {
   const { slug } = await params;
   const [event, list] = await Promise.all([getPublicEvent(slug), loadFonts()]);
-  const tree = event && !event.is_example ? coverTree(event, { variant: "share" }) : shareFallbackTree();
+  const shown = event && !event.is_example ? event : null;
+  const art = shown ? await fetchArt(coverImage(shown)) : null;
+  const tree = shown ? shareTree(shown, art) : shareFallbackTree();
   // next/og marks every image immutable for a year by default, but the address stays the same when the event's
-  // title or dates change, or a draft is published, so CDNs keep it for an hour instead
+  // title, dates or poster change, or a draft is published, so CDNs keep it for an hour instead
   return new ImageResponse(toReact(tree), {
     ...size,
     fonts: list,

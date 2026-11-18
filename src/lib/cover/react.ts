@@ -1,5 +1,5 @@
 import { createElement, type ReactElement, type ReactNode } from "react";
-import type { CoverChild, CoverNode } from "./tree";
+import type { CoverChild, CoverNode } from "./share";
 
 /**
  * A cover tree as React elements. The props are already React's (camelCase SVG attributes, style objects,

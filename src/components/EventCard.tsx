@@ -3,10 +3,8 @@ import type { EventRow } from "@/lib/types";
 import { KLEROS_HOSTED, ROLE_LABEL } from "@/lib/kleros";
 import { excerpt, fmtRange, isLive, plural, place } from "@/lib/format";
 import { fileUrl } from "./MaterialRow";
-import Thumb from "./Thumb";
+import EventTile from "./EventTile";
 import { coverPick } from "@/lib/cover/pick";
-import { coverTree } from "@/lib/cover/tree";
-import { toReact } from "@/lib/cover/react";
 
 /** One quiet status label at most: private beats draft beats live beats example. */
 export function statusLabel(e: Pick<EventRow, "status" | "starts_on" | "ends_on" | "is_example"> & { visibility?: EventRow["visibility"] }) {
@@ -23,15 +21,20 @@ export function RolePill({ e }: { e: Pick<EventRow, "kleros_role"> }) {
 }
 
 /**
- * The visual top of an event: its official poster shown whole (see lib/cover/pick.ts), else the designed Kleros
- * cover, which also stands in quietly when the poster's link is broken.
+ * The visual top of an event (components/EventTile.tsx): the Kleros frame with the event's own poster (chosen in
+ * lib/cover/pick.ts), its name, dates, place and Kleros's part, so the picture alone says what the event is.
  */
 export function EventCover({ e, className = "" }: { e: EventRow; className?: string }) {
-  const designed = toReact(coverTree(e, { variant: "card" }));
   const pick = coverPick(e);
   return (
-    <span className={`cover ${className}`} style={pick?.bg ? { background: pick.bg } : undefined}>
-      {pick ? <Thumb src={fileUrl(pick.src)} contain={pick.fit !== "cover"} position={pick.position} fallback={designed} /> : designed}
+    <span className={`cover ${className}`}>
+      <EventTile
+        title={e.title}
+        meta={`${fmtRange(e.starts_on, e.ends_on)} · ${place(e)}`}
+        role={ROLE_LABEL[e.kleros_role]}
+        art={pick ? { src: fileUrl(pick.src), crop: pick.fit === "cover", position: pick.position, bg: pick.bg } : null}
+        seed={e.slug}
+      />
     </span>
   );
 }
@@ -43,19 +46,21 @@ export default function EventCard({ e, talks = 0, materials = 0, going = 0, why,
   // say what there is to open: talks to watch first, else slides, photos and posts
   const count = talks ? plural(talks, "talk") : materials ? `${materials} ${materials === 1 ? "file or link" : "files and links"}` : going ? `${going} going` : "";
   const text = showExcerpt ? excerpt(e) : "";
-  // the title is the one link; it stretches over the whole card, so the card stays clickable
-  // and a screen reader hears the event's name instead of the whole card read out as a link
+  // The tile already shows the name, dates, place and Kleros's part, so the text under it only adds what is
+  // new: the status, what there is to open, the summary. The title is still the one link, read out by screen
+  // readers (the tile is hidden from them) and stretched over the whole card so the card stays clickable.
+  const foot = [status && <span key="s" className={`st ${status.cls}`}>{status.text}</span>, count && <b key="c">{count}</b>].filter(Boolean);
   return (
     <article className="card ev">
       <EventCover e={e} />
       <div className="body">
-        <p className="card-meta">
-          {status && <><span className={`st ${status.cls}`}>{status.text}</span> · </>}
-          <time dateTime={e.starts_on}>{fmtRange(e.starts_on, e.ends_on)}</time> · {place(e)}
-        </p>
-        <h3><Link className="stretch" href={`/events/${e.slug}`}>{e.title}</Link></h3>
+        <h3 className="ev-h">
+          <Link className="stretch" href={`/events/${e.slug}`}>
+            <span className="sr-only">{e.title}, {fmtRange(e.starts_on, e.ends_on)}, {place(e)}, {ROLE_LABEL[e.kleros_role]}</span>
+          </Link>
+        </h3>
+        {foot.length > 0 && <p className="card-foot">{foot.map((x, i) => <span key={i}>{i > 0 && " · "}{x}</span>)}</p>}
         {text && <p className="desc-clamp">{text}</p>}
-        <p className="card-foot">{ROLE_LABEL[e.kleros_role]}{count && <> · <b>{count}</b></>}</p>
         {why && <p className="why">{why}</p>}
         {mine && <p className="why">{mine}</p>}
       </div>

@@ -6,14 +6,14 @@ import type { EventRow } from "@/lib/types";
  * or a "Kleros is sponsoring" announcement graphic.
  */
 
-/** A picture and how it sits in the 4:3 frame: whole on the frame (the default), or filling it. */
+/** A picture and how it sits in the event's tile (components/EventTile.tsx): whole (the default), or cropped. */
 export type Cover = {
   src: string;
-  /** "cover" fills the frame and crops the overflow; for pictures with no text near the edges */
+  /** "cover" crops the picture to a 4:3 window instead of showing it whole; for a tall poster that would be a sliver */
   fit?: "cover";
   /** object-position when cropped, e.g. "top" to keep a tall poster's title */
   position?: string;
-  /** the frame's colour around a picture shown whole, matched to the picture's own background */
+  /** a colour behind the picture, for a poster with a see-through background */
   bg?: string;
 };
 
@@ -27,9 +27,9 @@ export type Cover = {
 export const OFFICIAL: Record<string, string | Cover | null> = {
   // the organiser's poster or key art
   "stanford-blockchain-governance-summit-2025": "https://images.lumacdn.com/event-covers/2x/f66baba0-483d-4250-8803-d2d959b83fcf.png",
-  "eth-cluj-2025": { src: "https://images.lumacdn.com/event-covers/yl/e4e7a4c2-ee0c-484c-9bf2-4ab53bd421ae.png", bg: "#0C0A22" },
+  "eth-cluj-2025": "https://images.lumacdn.com/event-covers/yl/e4e7a4c2-ee0c-484c-9bf2-4ab53bd421ae.png",
   "ethcc-8-cannes-2025": "https://ethcc.io/_next/static/media/ethcc8.e51d8494.jpg",
-  "blockchaingov-symposium-paris-2025": { src: "https://images.lumacdn.com/event-covers/ff/aa98f79d-3d18-45ea-997f-282482aa07a9.png", bg: "#FFFFFF" },
+  "blockchaingov-symposium-paris-2025": "https://images.lumacdn.com/event-covers/ff/aa98f79d-3d18-45ea-997f-282482aa07a9.png",
   "devconnect-legal-scholars-program-2025": "https://storage.googleapis.com/ethereum-hackmd/upload_cdacb108dd9be2e5b893c6449b70999e.jpg",
   "argentina-onchain-edge-city-patagonia-2025": "https://substack-post-media.s3.amazonaws.com/public/images/4797c18d-484d-440e-82b2-8e7d9220eb04_1920x1080.jpeg",
   "devconnect-buenos-aires-2025": "https://devconnect.org/og-argentina.png?reset=1",
@@ -38,15 +38,15 @@ export const OFFICIAL: Record<string, string | Cover | null> = {
   "neuchatel-blockchain-dispute-resolution-2025": "https://pbs.twimg.com/media/Gq1WGl2WMAAZatp?format=jpg&name=large",
   "champagnat-blockchain-justicia-mendoza-2025": "https://pbs.twimg.com/media/G2CCc16WkAE8nlC?format=jpg&name=large",
   "ethcc-9-cannes-2026": "https://dl-migration-assets.s3.eu-central-1.amazonaws.com/images/1772112487743.webp",
-  "forecast-and-coffee-berkeley-2026": { src: "https://images.lumacdn.com/cdn-cgi/image/format=auto,fit=cover,dpr=2,background=white,quality=75,width=400,height=400/uploads/8g/6b538be7-5f21-42d1-a87c-a55a8755f899.png", fit: "cover" },
+  "forecast-and-coffee-berkeley-2026": "https://images.lumacdn.com/cdn-cgi/image/format=auto,fit=cover,dpr=2,background=white,quality=75,width=400,height=400/uploads/8g/6b538be7-5f21-42d1-a87c-a55a8755f899.png",
   "austral-derecho-tecnologia-congreso-2026": { src: "https://abogados.com.ar/assets/img/articulos/2026-08-24-110521-segundo-congreso-internacional-de-derecho-y-tecnologia-3-y-4-septiembre-1.jpg", fit: "cover", position: "top" },
   "ethtaipei-2026": "https://images.lumacdn.com/cdn-cgi/image/format=auto,fit=cover,dpr=2,background=white,quality=75,width=400,height=400/uploads/8u/2f66bc60-6ba7-4c92-be0c-72c15291df52.jpg",
   "token2049-singapore-2026": "https://cdn.prod.website-files.com/6756df8f05088bc3e51c64c0/6a9e828d9aa96c64f392c993_T2049%20Singapore%20-%20OpenGraph%20(2026)%202%20OCT%202025.jpeg",
-  "4s-toronto-2026": { src: "https://4sonline.org/photos/ConferencePageBannerToronto2026_12092025192656.JPG", bg: "#FFFFFF" },
+  "4s-toronto-2026": "https://4sonline.org/photos/ConferencePageBannerToronto2026_12092025192656.JPG",
   "who-judges-the-machines-buenos-aires-2026": "https://serv1.evento-simple.com/imagenes/productores/661/eventos/77/image_xl.png",
   "merge-madrid-2026": "https://www.mmerge.io/img/social_2026.jpg",
   "devcon-8-mumbai": "https://www.devcon.org/assets/images/new-og.jpg",
-  "ethchiangmai-chiang-mai-2026": { src: "https://ethchiangmai.com/assets/bg-full-BA50xEUG.webp", fit: "cover" },
+  "ethchiangmai-chiang-mai-2026": "https://ethchiangmai.com/assets/bg-full-BA50xEUG.webp",
   "ethcc-10-cannes-2027": { src: "https://ethcc.io/ethcc-10-og.png", bg: "#FFFFFF" },
 
   // a designed Kleros visual for the event (blog header, webinar poster)
