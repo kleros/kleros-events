@@ -6,34 +6,35 @@ The Vercel deployment can keep running alongside. Both read the same Supabase da
 
 ## 1. Create the site
 
-1. In Netlify, go to **Add new project → Import an existing project → GitHub**, then pick `weiwei-ooi/kleros-events`, branch `main`.
-2. Leave the build settings empty. They come from `netlify.toml`: `npm run build`, publish `.next`, Node 22.
+1. Log in to Netlify (the repository owner, `weiwei-ooi`, can log in with Google or GitHub).
+2. Go to **Add new project → Import an existing project → GitHub**. GitHub asks once to let Netlify read the repository: choose `weiwei-ooi`, then **Only select repositories**, then `kleros-events`, and approve.
+3. Pick `weiwei-ooi/kleros-events`, branch `main`, and deploy. Leave the build settings empty: they come from `netlify.toml` (`npm run build`, publish `.next`, Node 22).
 
-The repository belongs to Wei Wei's personal GitHub account, so Netlify may not list it for someone else. Two ways around that:
+From then on every commit to `main` deploys on its own. Events, talks and materials need no deploy at all: they live in the database, so the site shows them as soon as they are added.
 
-- **Fork it** into an account Netlify can read, such as the Kleros GitHub organization, and import the fork. New changes then reach the site when someone presses **Sync fork** on GitHub. This needs the repository to be public.
-- **Allow the Netlify app** on the original. Wei Wei does this once at https://github.com/apps/netlify/installations/new: choose `weiwei-ooi`, then **Only select repositories**, then `kleros-events`. New changes then deploy on their own.
+Importing a fork instead (for example into the Kleros GitHub organization) also works, but then new changes only reach the site when someone presses **Sync fork** on GitHub. The site at events.kleros.io was built that way on 29 Oct 2026 and stayed on that copy, so prefer importing the original.
 
 ## 2. Environment variables
 
-Set these under **Site configuration → Environment variables**.
+The database address and its public key are already in `netlify.toml`, so a new site shows the real events with no settings. Values in `netlify.toml` win over values typed in the Netlify UI, so a UI value cannot point the site at another database by mistake. To move to another database, change `netlify.toml`.
+
+The rest are optional. Set them under **Project configuration → Environment variables**, and mark the keys as secret.
 
 | Variable | Needed | Where to find it |
 |---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | yes | Supabase → Project settings → API (the same value as in the Vercel project) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Same place. This key is public by design; the database rules protect the data. |
 | `NEXT_PUBLIC_SITE_URL` | no | Leave unset. Netlify's main site address is used for share links, QR codes and calendar files, and that becomes `https://events.kleros.io` once the domain is set as primary. |
 | `GROQ_API_KEY` | no | Turns on transcripts of recordings. Mark it as secret. |
 | `ANTHROPIC_API_KEY` | no | Turns on talk summaries and the site assistant (the Ask button). Mark it as secret. Give the key's Anthropic workspace a monthly spend limit (see the README under "Site assistant", with the other `ASK_*` settings). |
 | `SUPABASE_SERVICE_ROLE_KEY` | for the assistant outside the team | Required, with migration `0014_security.sql` run in Supabase, before visitors and accounts outside the team can use the assistant: it keeps their question limits in the database. Without it only the team sees the Ask button. It also lets a failed transcript run always record its error. Mark it as secret. |
 
-Changing a variable needs a new deploy before it takes effect.
+Changing a variable needs a new deploy before it takes effect (**Deploys → Trigger deploy**).
 
 ## 3. Domain
 
-1. In **Domain management**, add `events.kleros.io` and set it as the primary domain.
-2. In Cloudflare, point a `CNAME` record for `events` at the Netlify address, for example `kleros-events.netlify.app`. Set it to **DNS only** (grey cloud).
-3. Run one more deploy, so that share links and QR codes pick up the domain.
+1. If `events.kleros.io` is still attached to another Netlify site, remove it there first (that site's **Domain management → Options → Remove domain**). Netlify lets only one site hold a domain.
+2. In **Domain management**, add `events.kleros.io` and set it as the primary domain.
+3. In Cloudflare, point the `CNAME` record for `events` at the new site's Netlify address, for example `kleros-events.netlify.app`. Set it to **DNS only** (grey cloud).
+4. Run one more deploy, so that share links and QR codes pick up the domain.
 
 If the Netlify site is ever deleted, remove the `events` record in Cloudflare at the same time. A record left pointing at a deleted site lets someone else take over the address, and the hourly feed sync reads `events.kleros.io` when GitHub does not answer.
 

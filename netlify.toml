@@ -7,3 +7,9 @@
 [build.environment]
   NODE_VERSION = "22"
   NEXT_TELEMETRY_DISABLED = "1"
+  # The site's database (Supabase project "kleros-events"). Both values are public by design: they
+  # ship in every page the browser loads, and the database rules protect the data. Keeping them here
+  # means a new Netlify site needs no settings, and values set in the Netlify UI cannot point the
+  # site at another database by mistake (netlify.toml wins over the UI). Secret keys never go here.
+  NEXT_PUBLIC_SUPABASE_URL = "https://pdrvfjmhmauovehanyan.supabase.co"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_aojO60b1fNRj6AOG6lPSRw_pzbnSnlI"
