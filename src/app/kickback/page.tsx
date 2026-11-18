@@ -3,7 +3,7 @@ import { KICKBACK_URL } from "@/lib/kleros";
 import Ext from "@/components/Ext";
 
 export const metadata: Metadata = {
-  title: "Kickback",
+  title: "Proof of Presence",
   description: "Run your own kickback event with Proof of Presence: guests put down a refundable deposit, and Kleros settles who came.",
 };
 
