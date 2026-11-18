@@ -1,12 +1,14 @@
 import Link from "next/link";
 import type { EventRow, Material, MaterialKind } from "@/lib/types";
-import { fmtDur, fmtRange, fmtSize, plural } from "@/lib/format";
+import { fmtDur, fmtSize, plural } from "@/lib/format";
 import Thumb from "./Thumb";
 import GenCover from "./Cover";
 
 const KIND: Record<string, string> = { talk: "TALK", slides: "PDF", audio: "AUD", video: "VID", doc: "DOC", image: "IMG", link: "URL", social: "POST" };
 // slides kept as a link (Google Slides, a claude.ai deck) are not a PDF
-const badge = (m: Pick<Material, "kind" | "file_path">) => (m.kind === "slides" && !m.file_path ? "DECK" : KIND[m.kind] ?? "FILE");
+// and a photo kept only as a link (a post on X) is a post
+const badge = (m: Pick<Material, "kind" | "file_path">) =>
+  m.kind === "slides" && !m.file_path ? "DECK" : m.kind === "image" && !m.file_path ? "POST" : KIND[m.kind] ?? "FILE";
 
 /**
  * Where the site serves a stored file: /f/<path>, which hands out a signed storage address to
@@ -55,6 +57,43 @@ export function videoThumb(m: Pick<Material, "kind" | "url">) {
   return null;
 }
 
+/** A short excerpt of a longer talk: its title starts with "Clip". */
+export const isClip = (m: Pick<Material, "title">) => /^clip\b/i.test(m.title.trim());
+
+/**
+ * Order of talks within one event: full talks first, then clips, then videos with no speaker
+ * (a preview stream, directions to the booth). Sorting is stable, so each group keeps its order.
+ */
+export const talkRank = (m: Pick<Material, "title" | "speaker">) => (isClip(m) ? 1 : !m.speaker ? 2 : 0);
+export const byTalkRank = (a: Pick<Material, "title" | "speaker">, b: Pick<Material, "title" | "speaker">) => talkRank(a) - talkRank(b);
+
+/**
+ * "Title (format, date, source)" split into the title and its note, so cards show the note on
+ * its own line instead of cutting it off. Titles without a trailing note stay whole.
+ */
+export function splitTitle(t: string) {
+  const x = t.match(/^(.*\S)\s*\(([^()]+)\)\s*$/);
+  return x && x[1].length >= 20 ? { main: x[1], aside: x[2] } : { main: t, aside: "" };
+}
+
+const SOURCES: [RegExp, string][] = [
+  [/(^|\.)(x|twitter)\.com$/, "X"], [/(^|\.)linkedin\.com$/, "LinkedIn"], [/(^|\.)youtube\.com$|^youtu\.be$/, "YouTube"],
+  [/^drive\.google\.com$/, "Google Drive"], [/^docs\.google\.com$/, "Google Docs"], [/(^|\.)luma\.com$|^lu\.ma$/, "Luma"],
+];
+/** Where a link opens, in words a visitor knows: X, LinkedIn, YouTube, or the site's own name. */
+export function sourceOf(url: string | null | undefined) {
+  const h = hostOf(url ?? null);
+  return SOURCES.find(([r]) => r.test(h))?.[1] ?? h;
+}
+
+/** What a watchable item is, for card footers and talk pages: "Clip on X", "Video on YouTube". */
+export function watchLabel(m: Pick<Material, "kind" | "title" | "url" | "file_path" | "pages">) {
+  if (m.kind === "talk") return m.pages ? plural(m.pages, "slide") + " with audio" : "Slides with audio";
+  if (m.kind === "audio") return m.url ? "Recording with slides" : "Audio recording";
+  const src = m.url && !m.file_path ? sourceOf(m.url) : "";
+  return (isClip(m) ? "Clip" : "Video") + (src ? ` on ${src}` : "");
+}
+
 /** How the archive and the event page group materials, in display order. */
 export const MATERIAL_GROUPS: { label: string; kinds: MaterialKind[] }[] = [
   { label: "Slides", kinds: ["slides"] },
@@ -66,29 +105,34 @@ export const MATERIAL_GROUPS: { label: string; kinds: MaterialKind[] }[] = [
 
 type EventRef = Pick<EventRow, "slug" | "title" | "starts_on">;
 
-/** A watchable talk: preview, title, speaker, event and a clear Watch action. */
-export function TalkCard({ m, event, note }: { m: Material; event?: EventRef; note?: string }) {
+/**
+ * A watchable talk: preview, title, speaker and a clear Watch action. `event` names the event
+ * under the title; leave `showEvent` off where cards already sit under their event.
+ */
+export function TalkCard({ m, event, note, showEvent = true }: { m: Material; event?: EventRef; note?: string; showEvent?: boolean }) {
   const href = `/talks/${m.id}`;
-  const detail = m.kind === "talk" ? (m.pages ? plural(m.pages, "slide") + " with audio" : "Slides with audio") : m.kind === "audio" ? (m.url ? "Recording with slides" : "Audio recording") : "Video";
   const verb = m.kind === "audio" ? "Listen" : "Watch";
+  const { main, aside } = splitTitle(m.title);
+  const coverLabel = m.kind === "talk" ? "Talk with slides" : isClip(m) ? "Clip" : "Recording";
   return (
     <article className="card talk">
       <Link className="cover" href={href} aria-label={`${verb}: ${m.title}`} tabIndex={-1}>
         <Thumb src={videoThumb(m)} fallback={
-          <GenCover seed={event?.slug ?? m.event_id ?? m.id} className="talk-gen" big={m.speaker ?? undefined} small={m.kind === "talk" ? "Talk with slides" : "Recording"}>
+          <GenCover seed={event?.slug ?? m.event_id ?? m.id} className="talk-gen" big={m.speaker ?? undefined} small={coverLabel}>
             <span className="play">▶</span>
           </GenCover>
         } />
         {m.duration_seconds ? <span className="dur mono">{fmtDur(m.duration_seconds)}</span> : null}
       </Link>
       <div className="body">
-        <h3><Link href={href}>{m.title}</Link></h3>
+        <h3 title={aside ? m.title : undefined}><Link href={href}>{main}</Link></h3>
         {m.speaker && <div className="who">{m.speaker}</div>}
-        {event && <Link className="sub" href={`/events/${event.slug}`}>{event.title} · {fmtRange(event.starts_on)}</Link>}
+        {aside && <div className="sub" title={aside}>{aside}</div>}
+        {event && showEvent && <Link className="sub" href={`/events/${event.slug}`}>{event.title}</Link>}
         {note && <div className="sub">{note}</div>}
         <div className="foot">
           <Link className="btn sm primary" href={href}>▶ {verb}</Link>
-          <span>{detail}</span>
+          <span>{watchLabel(m)}</span>
         </div>
       </div>
     </article>
@@ -103,8 +147,8 @@ export function ArchiveRow({ m, eventSlug }: { m: Material; eventSlug: string })
   // a recording's url is its slides link; its own file is the audio
   const file = m.kind === "audio" && m.file_path ? fileUrl(m.file_path) : linkUrl(m.url) || fileUrl(m.file_path);
   const detail = isWatchable(m)
-    ? [m.kind === "talk" ? (m.pages ? plural(m.pages, "slide") + " with audio" : "Slides with audio") : "Video", m.duration_seconds ? fmtDur(m.duration_seconds) : ""]
-    : [m.kind === "link" || m.kind === "social" ? hostOf(m.url) : "", m.kind === "audio" && m.duration_seconds ? fmtDur(m.duration_seconds) : "", fmtSize(m.size_bytes)];
+    ? [watchLabel(m), m.duration_seconds ? fmtDur(m.duration_seconds) : ""]
+    : [m.url && !m.file_path ? sourceOf(m.url) : "", m.kind === "audio" && m.duration_seconds ? fmtDur(m.duration_seconds) : "", fmtSize(m.size_bytes)];
   const sub = [m.speaker, ...detail].filter(Boolean).join(" · ");
   const thumb = videoThumb(m);
   let action: React.ReactNode;
@@ -137,7 +181,7 @@ export default function MaterialRow({ m, eventTitle, eventSlug }: { m: Material;
   const sub = [m.speaker,
     m.kind === "talk" ? `${m.pages ?? "?"} slides${m.duration_seconds ? " · " + fmtDur(m.duration_seconds) : ""}` : "",
     m.kind !== "talk" ? fmtSize(m.size_bytes) : "",
-    m.kind === "link" || m.kind === "social" ? hostOf(m.url) : ""].filter(Boolean).join(" · ");
+    m.url && !m.file_path && m.kind !== "talk" && m.kind !== "slides" ? sourceOf(m.url) : ""].filter(Boolean).join(" · ");
   return (
     <div className="mrow">
       {m.kind === "image" && m.file_path

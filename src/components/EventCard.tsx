@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { EventRow } from "@/lib/types";
 import { KLEROS_HOSTED, ROLE_LABEL } from "@/lib/kleros";
-import { fmtRange, isLive, plural, place } from "@/lib/format";
+import { excerpt, fmtRange, isLive, plural, place } from "@/lib/format";
 import { fileUrl } from "./MaterialRow";
 import Thumb from "./Thumb";
 import GenCover from "./Cover";
@@ -45,7 +45,9 @@ export default function EventCard({ e, talks = 0, materials = 0, going = 0, why,
   e: EventRow; talks?: number; materials?: number; going?: number; why?: string; mine?: string;
 }) {
   const status = statusLabel(e);
-  const count = talks ? plural(talks, "talk") : materials ? plural(materials, "item") : going ? `${going} going` : "";
+  // say what there is to open: talks to watch first, else slides, photos and posts
+  const count = talks ? `▶ ${plural(talks, "talk")}` : materials ? `${materials} ${materials === 1 ? "link or file" : "links & files"}` : going ? `${going} going` : "";
+  const text = excerpt(e);
   return (
     <Link className="card ev" href={`/events/${e.slug}`}>
       <span className="cover-wrap">
@@ -57,12 +59,12 @@ export default function EventCard({ e, talks = 0, materials = 0, going = 0, why,
         <span className="date">{fmtRange(e.starts_on, e.ends_on)}</span>
         <h3>{e.title}</h3>
         <span className="meta"><RolePill e={e} /><span className="pill plain">{e.event_type}</span></span>
-        {e.description && <span className="desc-clamp">{e.description}</span>}
+        {text && <span className="desc-clamp">{text}</span>}
         {why && <span className="why">{why}</span>}
         {mine && <span className="why">{mine}</span>}
         <span className="foot">
           <span>{place(e)}</span>
-          {count && <span className="mono">{count}</span>}
+          {count && <span className={talks ? "has-talks" : ""}>{count}</span>}
         </span>
       </span>
     </Link>

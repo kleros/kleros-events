@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getEvent, eventCounts } from "@/lib/data";
-import { fmtRange, isPast, place } from "@/lib/format";
+import { cleanDescription, excerpt, fmtRange, isPast, place, plural } from "@/lib/format";
 import { ROLE_LABEL, productsFor } from "@/lib/kleros";
 import { EventCover, RolePill, statusLabel } from "@/components/EventCard";
-import MaterialRow, { MATERIAL_GROUPS, TalkCard, isTalkLike, linkUrl } from "@/components/MaterialRow";
+import MaterialRow, { MATERIAL_GROUPS, TalkCard, byTalkRank, isTalkLike, linkUrl, sourceOf } from "@/components/MaterialRow";
+import PromoStrip from "@/components/PromoStrip";
 import AttendanceButtons from "@/components/AttendanceButtons";
 import AskTheSpeaker from "@/components/AskTheSpeaker";
 import MeetingForm from "@/components/MeetingForm";
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   // a signed-out visitor gets a sign-in page here rather than a 404, which search engines must not keep
   if (!data) return { title: "Event not found", robots: { index: false } };
   const e = data.event;
-  return { title: e.title, description: `${ROLE_LABEL[e.kleros_role]} · ${fmtRange(e.starts_on, e.ends_on)} · ${place(e)}. ${e.description ?? ""}`.slice(0, 200) };
+  return { title: e.title, description: `${ROLE_LABEL[e.kleros_role]} · ${fmtRange(e.starts_on, e.ends_on)} · ${place(e)}. ${excerpt(e)}`.slice(0, 200) };
 }
 
 export default async function EventPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -49,9 +50,17 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   // a private event only reaches this page for its creator and collaborators, who may edit it
   const canEdit = isTeam || (!!user && e.visibility === "private");
   const status = statusLabel(e);
-  // talks with slides, videos, and recordings (audio files) are all listed under Talks
-  const talks = materials.filter(isTalkLike);
-  const groups = MATERIAL_GROUPS.map((g) => ({ ...g, items: materials.filter((m) => g.kinds.includes(m.kind) && !isTalkLike(m)) })).filter((g) => g.items.length);
+  // talks with slides, videos, and recordings (audio files) are all listed under Talks:
+  // full talks first, then clips, then previews and other videos with no speaker
+  const talks = materials.filter(isTalkLike).sort(byTalkRank);
+  // after the event, the newest posts (wrap-ups, recaps) come first in each group
+  const groups = MATERIAL_GROUPS.map((g) => {
+    const items = materials.filter((m) => g.kinds.includes(m.kind) && !isTalkLike(m));
+    return { ...g, items: past ? items.reverse() : items };
+  }).filter((g) => g.items.length);
+  // name the section after what it holds: no "Slides" heading over a list of posts
+  const has = (label: string) => groups.some((g) => g.label === label);
+  const matLabel = has("Slides") ? "Slides & links" : has("Photos") ? "Photos & posts" : has("Audio") || has("Documents") ? "Files & links" : "Links & posts";
   // recordings saved without slides, for "Attach slides to a recording"
   const bareRecordings = materials.filter((m) => m.kind === "audio" && !!m.file_path);
   const otherCount = groups.reduce((s, g) => s + g.items.length, 0);
@@ -60,7 +69,9 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const booker = team.map((t) => t.team_members).find((m) => m?.calendar_url);
   const time = e.start_time ? `${e.start_time.slice(0, 5)}${e.timezone ? ` ${e.timezone}` : ""}` : "";
   const where = [e.venue, place(e)].filter(Boolean).join(", ");
-  const hasAbout = !!(e.description || e.recap);
+  // after the event, the date, time and ticket lines of a Luma description no longer help
+  const description = past ? cleanDescription(e.description) : e.description;
+  const hasAbout = !!(description || e.recap);
   const ticketLabel = e.url && /luma\.com|lu\.ma/.test(e.url) ? "RSVP on Luma" : "Get tickets";
 
   const stats = ([
@@ -74,10 +85,10 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const sections = [
     hasAbout && ["about", "About"],
     (talks.length > 0 || canEdit) && ["talks", talks.length ? `Talks (${talks.length})` : "Talks"],
-    otherCount > 0 && ["materials", `Slides & links (${otherCount})`],
+    otherCount > 0 && ["materials", `${matLabel} (${otherCount})`],
     agenda.length > 0 && ["agenda", "Agenda"],
     team.length > 0 && ["team", "Kleros team"],
-    ["ask", "Ask the speaker"],
+    ["ask", past ? "Questions" : "Ask the speaker"],
     ["meet", "Meet Kleros"],
   ].filter(Boolean) as [string, string][];
 
@@ -97,9 +108,10 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             <span>{fmtRange(e.starts_on, e.ends_on)}{time && ` · ${time}`}</span>
             <span>{where}</span>
           </div>
-          {(e.url && !past) || canEdit ? (
+          {(e.url && !past) || (past && talks.length > 0) || canEdit ? (
             <div className="row-flex">
               {e.url && !past && <a className="btn cta" href={e.url} target="_blank" rel="noopener">{ticketLabel} ↗</a>}
+              {past && talks.length > 0 && <a className="btn cta" href="#talks">▶ Watch {plural(talks.length, "talk")}</a>}
               {canEdit && <Link className="btn" href={`/events/${e.slug}/host`}>Run this event</Link>}
               {canEdit && <StudioButton mode="record" className="btn"><span className="dot" aria-hidden /> Record a session</StudioButton>}
               {canEdit && <Link className="btn ghost" href={`/admin/events/${e.id}`}>Edit</Link>}
@@ -128,7 +140,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                   <p className="desc">{e.recap}</p>
                 </div>
               )}
-              {e.description && <p className="desc">{e.description}</p>}
+              {description && <p className="desc">{description}</p>}
             </section>
           )}
 
@@ -145,14 +157,14 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               )}
               {canEdit && <EventStudio event={{ id: e.id, slug: e.slug, title: e.title }} agenda={agenda} recordings={bareRecordings} isTeam={isTeam} />}
               {talks.length > 0
-                ? <div className="grid two-up">{talks.map((m) => <TalkCard key={m.id} m={m} event={e} />)}</div>
+                ? <div className="grid two-up">{talks.map((m) => <TalkCard key={m.id} m={m} event={e} showEvent={false} />)}</div>
                 : <p className="quiet-empty">No talks yet. Record a session here, or add a recording or video link.</p>}
             </section>
           )}
 
           {groups.length > 0 && (
             <section id="materials" className="sec">
-              <h2>Slides &amp; links</h2>
+              <h2>{matLabel}</h2>
               {groups.map((g) => (
                 <div key={g.label} className="mgroup">
                   <h3 className="sub-h">{g.label}</h3>
@@ -200,9 +212,12 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           )}
 
           <section id="ask" className="sec">
-            <h2>Ask the speaker</h2>
-            <AskTheSpeaker eventId={e.id} signedIn={!!user} isTeam={canEdit} displayName={profile?.display_name ?? ""} slug={e.slug} />
+            <h2>{past ? "Questions for the speakers" : "Ask the speaker"}</h2>
+            <AskTheSpeaker eventId={e.id} signedIn={!!user} isTeam={canEdit} displayName={profile?.display_name ?? ""} slug={e.slug} past={past} />
           </section>
+
+          {/* visitors often land here from a QR code or a post, so say what Kleros is */}
+          {!isTeam && <PromoStrip lead="What is Kleros?" />}
 
           <section id="meet" className="sec">
             <h2>Meet Kleros</h2>
@@ -228,7 +243,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           </section>
         </div>
 
-        <aside className="side">
+        <aside className={`side ${past ? "late" : ""}`}>
           <div className="panel">
             {stats.length > 0 && (
               <div className="counts">
@@ -240,8 +255,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               {e.organizer && <><dt>Organiser</dt><dd>{e.organizer}</dd></>}
               <dt>Format</dt><dd>{e.event_type}</dd>
               {e.topics.length > 0 && <><dt>Topics</dt><dd>{e.topics.join(", ")}</dd></>}
-              <dt>Kleros</dt><dd>{ROLE_LABEL[e.kleros_role]}</dd>
-              {past && e.url && <><dt>Event page</dt><dd><a href={e.url} target="_blank" rel="noopener">Open ↗</a></dd></>}
+              {past && e.url && <><dt>Official site</dt><dd><a href={e.url} target="_blank" rel="noopener">{sourceOf(e.url) || "Open"} ↗</a></dd></>}
             </dl>
           </div>
         </aside>

@@ -6,7 +6,7 @@ import { authorOf, byNew, byTop, useQuestions } from "@/lib/useQuestions";
 import { qaError } from "@/lib/qaErrors";
 import type { Question } from "@/lib/types";
 
-export default function AskTheSpeaker({ eventId, signedIn, isTeam, displayName, slug }: { eventId: string; signedIn: boolean; isTeam: boolean; displayName: string; slug: string }) {
+export default function AskTheSpeaker({ eventId, signedIn, isTeam, displayName, slug, past = false }: { eventId: string; signedIn: boolean; isTeam: boolean; displayName: string; slug: string; past?: boolean }) {
   // the same live list as the phone page: realtime filtered to this event, reloads gathered and spread out
   const { questions, myVotes, uid, reload } = useQuestions(eventId, { poll: false });
   const [body, setBody] = useState("");
@@ -47,7 +47,7 @@ export default function AskTheSpeaker({ eventId, signedIn, isTeam, displayName, 
   return (
     <div className="stack">
       <form className="row-flex" onSubmit={ask}>
-        <input className="search" value={body} onChange={(e) => setBody(e.target.value)} placeholder="Ask the Kleros speakers a question" maxLength={280} minLength={3} required aria-label="Your question" />
+        <input className="search" value={body} onChange={(e) => setBody(e.target.value)} placeholder={past ? "Leave a question for the speakers" : "Ask the Kleros speakers a question"} maxLength={280} minLength={3} required aria-label="Your question" />
         {signedIn
           ? <label className="muted small"><input type="checkbox" checked={anon} onChange={(e) => setAnon(e.target.checked)} /> Ask anonymously</label>
           : <input className="search" style={{ flex: "0 1 160px" }} value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Your name (optional)" maxLength={40} aria-label="Your name" />}
@@ -56,7 +56,8 @@ export default function AskTheSpeaker({ eventId, signedIn, isTeam, displayName, 
       {err && <div className="note">{err}</div>}
       <div className="row-flex">
         <div className="seg" role="group" aria-label="Sort"><button aria-pressed={sort === "top"} onClick={() => setSort("top")}>Top</button><button aria-pressed={sort === "new"} onClick={() => setSort("new")}>Newest</button></div>
-        <Link className="btn sm ghost" href={`/q/${slug}`}>Ask from your phone</Link>
+        {/* the phone page is for the room during the talk */}
+        {!past && <Link className="btn sm ghost" href={`/q/${slug}`}>Ask from your phone</Link>}
         {isTeam && <Link className="btn sm" href={`/events/${slug}/host`} style={{ marginLeft: "auto" }}>Moderate in host console</Link>}
       </div>
       {list.map((q) => (
@@ -68,7 +69,9 @@ export default function AskTheSpeaker({ eventId, signedIn, isTeam, displayName, 
           </div>
         </div>
       ))}
-      {!list.length && <p className="quiet-empty">No questions yet. Questions work during the talk and after it, and the speakers see them all.</p>}
+      {!list.length && <p className="quiet-empty">{past
+        ? "No questions yet. The speakers see every question and may reply later."
+        : "No questions yet. Questions work during the talk and after it, and the speakers see them all."}</p>}
     </div>
   );
 }

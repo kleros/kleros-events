@@ -288,7 +288,7 @@ function TeamTools({ state, row, setup, canTranscribe, busy, msg, onGenerate, on
         </label>
       </div>
       {notSetUp && <p className="tx-note">{NOT_SET_UP}</p>}
-      {!notSetUp && !setup.summary && has && <p className="tx-note">Summaries are not set up yet. Add ANTHROPIC_API_KEY in Vercel, Project, Settings, Environment Variables, then redeploy.</p>}
+      {!notSetUp && !setup.summary && has && <p className="tx-note">Summaries are not switched on yet. An admin adds ANTHROPIC_API_KEY to the site&apos;s environment variables (Netlify: Project configuration, Environment variables; Vercel: Settings, Environment Variables), then redeploys.</p>}
       {!canTranscribe && !has && <p className="muted small">This item has no recording stored on the site, so a transcript cannot be made automatically. Upload one instead: YouTube offers one under “Show transcript”, and most meeting tools export .vtt files.</p>}
       {state.status === "error" && state.error && !state.setup && <p className="tx-note" role="alert">{state.error}</p>}
       {msg && <p className="tx-note">{msg}</p>}

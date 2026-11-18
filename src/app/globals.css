@@ -380,6 +380,29 @@ footer.site .base a { display: inline; color: var(--muted); text-decoration: und
 .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--white); color: var(--bg); padding: 10px var(--s-4); border-radius: var(--r-sm); z-index: 200; font-size: 0.92rem; max-width: calc(100vw - 32px); }
 @media (prefers-reduced-motion: reduce) { .recording .dot { animation: none; } }
 
+/* friendlier lists: notes, show-more buttons, year headings */
+.quiet-empty.center { text-align: center; margin-top: var(--s-6); }
+.btn.more { justify-self: center; margin-top: var(--s-2); }
+.year { display: grid; gap: var(--s-3); }
+.year + .year { margin-top: var(--s-5); }
+.card .foot .has-talks { color: var(--lavender); font-weight: 500; }
+.refine .rec-chip { align-self: center; padding: 6px 12px; font-size: 0.875rem; }
+.files .link-btn { justify-self: start; font-size: 0.875rem; }
+
+/* a video that plays on another site (a clip on X): a poster that says where it opens */
+.video.ext { position: relative; display: block; text-decoration: none; color: inherit; }
+.video.ext .gen-big { font-size: clamp(1.6rem, 6cqi, 3rem); }
+.video.ext .play { width: 72px; height: 72px; font-size: 1.4rem; }
+.video.ext:hover .play { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.ext-go { position: absolute; z-index: 2; right: var(--s-4); bottom: var(--s-4); padding: var(--s-2) 14px; border-radius: var(--r-sm); background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: 0.95rem; }
+
+/* talk page: the full session a clip comes from, and what to watch next */
+.full-session { display: grid; gap: 4px; padding: var(--s-4); border: 1px solid rgb(167 139 250 / 0.3); border-radius: var(--r); text-decoration: none; color: var(--fg);
+  background: linear-gradient(100deg, rgb(124 92 230 / 0.16), transparent 70%), var(--surface); }
+.full-session:hover { border-color: var(--accent); }
+.full-session b { color: var(--white); font-size: 1.1rem; }
+.more-talks { margin-top: var(--s-5); }
+
 @media (max-width: 860px) {
   .detail, .player, .ev-head, .me-grid, .hero { grid-template-columns: minmax(0, 1fr); }
   .ev-head { gap: var(--s-5); padding-top: var(--s-5); }
@@ -389,6 +412,7 @@ footer.site .base a { display: inline; color: var(--muted); text-decoration: und
   .promo { grid-template-columns: auto minmax(0, 1fr); }
   .promo-links { grid-column: 1 / -1; }
   .side { position: static; order: -1; }
+  .side.late { order: 1; }
   .anchors { position: static; margin-bottom: var(--s-5); }
   footer.site .wrap { grid-template-columns: 1fr 1fr; }
   footer.site .about { grid-column: 1 / -1; }
@@ -399,6 +423,17 @@ footer.site .base a { display: inline; color: var(--muted); text-decoration: und
   .nav .nav-me { margin-left: auto; }
   .day { min-height: 52px; }
   .day a { font-size: 0; padding: 0; height: 6px; }
+}
+@media (max-width: 600px) {
+  .card.talk { flex-direction: row; align-items: stretch; }
+  .card.talk .cover { width: 136px; aspect-ratio: auto; min-height: 92px; border-bottom: 0; border-right: 1px solid var(--line); }
+  .card.talk .gen-text { display: none; }
+  .card.talk .gen .play { width: 36px; height: 36px; font-size: 0.85rem; top: 50%; }
+  .card.talk .body { padding: var(--s-3); gap: 3px; }
+  .card.talk h3 { font-size: 0.98rem; -webkit-line-clamp: 3; }
+  .card.talk .foot { padding-top: var(--s-2); border-top: 0; }
+  .card.talk .foot .btn { display: none; }
+  .ext-go { right: var(--s-2); bottom: var(--s-2); font-size: 0.85rem; padding: 6px 10px; }
 }
 @media (max-width: 520px) {
   .two { grid-template-columns: 1fr; }

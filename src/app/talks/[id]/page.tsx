@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getMaterial } from "@/lib/data";
-import { fmtDur, fmtRange } from "@/lib/format";
+import { eventMaterials, getMaterial } from "@/lib/data";
+import { fmtDur } from "@/lib/format";
+import type { Material } from "@/lib/types";
 import TalkPlayer from "@/components/TalkPlayer";
-import { driveId, fileUrl, linkUrl, youtubeId } from "@/components/MaterialRow";
+import GenCover from "@/components/Cover";
+import { TalkCard, byTalkRank, driveId, fileUrl, isClip, isWatchable, linkUrl, sourceOf, splitTitle, videoThumb, watchLabel, youtubeId } from "@/components/MaterialRow";
 import PromoStrip from "@/components/PromoStrip";
 import EventChip from "@/components/studio/EventChip";
 import { currentUser, supabaseServer } from "@/lib/supabase/server";
@@ -20,8 +22,17 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const [m, t] = await Promise.all([getMaterial(id), getTranscript(id)]);
   // a signed-out visitor gets a sign-in page here rather than a 404, which search engines must not keep
   if (!m) return { title: "Talk not found", robots: { index: false } };
-  const fallback = `${m.speaker ? m.speaker + (m.events ? " at " : "") : ""}${m.events?.title ?? ""}. ${m.kind === "audio" ? "Recording" : "Slides and recording"}.`.replace(/^\. /, "");
-  return { title: m.title, description: t?.summary?.tldr?.slice(0, 300) || fallback };
+  // say what the link holds ("Video on YouTube", "Clip on X", "12 slides with audio"), not a fixed phrase
+  const what = m.kind === "slides" ? "Slides" : watchLabel(m);
+  const fallback = `${m.speaker ? m.speaker + (m.events ? " at " : "") : ""}${m.events?.title ?? ""}. ${what}.`.replace(/^\. /, "");
+  const description = t?.summary?.tldr?.slice(0, 300) || fallback;
+  // a YouTube or Drive picture for the shared link's preview card
+  const img = videoThumb(m);
+  return {
+    title: m.title, description,
+    openGraph: { siteName: "Kleros Events", title: m.title, description, ...(img ? { images: [img] } : {}) },
+    twitter: { card: img ? "summary_large_image" : "summary", site: "@kleros_io", title: m.title, description, ...(img ? { images: [img] } : {}) },
+  };
 }
 
 export default async function TalkPage({ params }: { params: Promise<{ id: string }> }) {
@@ -53,7 +64,15 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
     if (drive) player = <div className="video" data-player><iframe src={`https://drive.google.com/file/d/${drive}/preview`} allow="autoplay; fullscreen" allowFullScreen title={m.title} /></div>;
     else if (yt) { player = <YouTubePlayer id={yt} title={m.title} />; canSeek = true; }
     else if (m.file_path) { player = <MediaPlayer kind="video" src={fileUrl(m.file_path)} title={m.title} />; canSeek = true; }
-    else if (m.url) player = <a className="btn" href={linkUrl(m.url)} target="_blank" rel="noopener">Open video ↗</a>;
+    // a video that can't play here (a clip posted on X): a poster that clearly opens it where it lives
+    else if (m.url) player = (
+      <a className="video ext" href={linkUrl(m.url)} target="_blank" rel="noopener">
+        <GenCover seed={m.event_id ?? m.id} className="talk-gen" big={m.speaker ?? undefined} small={watchLabel(m)}>
+          <span className="play">▶</span>
+        </GenCover>
+        <span className="ext-go">Watch on {sourceOf(m.url) || "the original site"} ↗</span>
+      </a>
+    );
   } else if (m.kind === "audio") {
     player = <MediaPlayer kind="audio" src={fileUrl(m.file_path)} title={m.title} />;
     canSeek = true;
@@ -64,15 +83,25 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
 
   const recorded = m.kind === "talk" || m.kind === "audio" || m.kind === "video";
   const canTranscribe = (m.kind === "talk" && !!m.audio_path) || ((m.kind === "audio" || m.kind === "video") && !!m.file_path);
-  const detail = [m.speaker, m.kind === "audio" ? (m.url ? "Recording with slides" : "Audio recording") : m.pages ? `${m.pages} slides` : "", m.duration_seconds ? fmtDur(m.duration_seconds) : ""].filter(Boolean).join(" · ");
+  const { main, aside } = splitTitle(m.title);
+  const detail = [m.speaker, aside, m.kind === "audio" ? (m.url ? "Recording with slides" : "Audio recording") : m.kind === "video" ? watchLabel(m) : m.pages ? `${m.pages} slides` : "", m.duration_seconds ? fmtDur(m.duration_seconds) : ""].filter(Boolean).join(" · ");
+
+  // What to watch next: the other talks of the same event, and for a clip, the session it comes from.
+  const siblings: Material[] = m.events ? await eventMaterials(await supabaseServer(), m.events.id) : [];
+  const people = (s: string | null) => (s ?? "").toLowerCase().split(/,|\band\b|&/).map((x) => x.trim()).filter(Boolean);
+  const sharesSpeaker = (o: Material) => people(o.speaker).some((p) => people(m.speaker).includes(p));
+  const fullSession = isClip(m) ? siblings.find((o) => o.id !== m.id && isWatchable(o) && !isClip(o) && sharesSpeaker(o)) : undefined;
+  const clips = !isClip(m) ? siblings.filter((o) => o.id !== m.id && isWatchable(o) && isClip(o) && sharesSpeaker(o)) : [];
+  const more = siblings.filter((o) => o.id !== m.id && o.id !== fullSession?.id && isWatchable(o) && !clips.includes(o))
+    .sort((a, b) => Number(!sharesSpeaker(a)) - Number(!sharesSpeaker(b)) || byTalkRank(a, b)).slice(0, 4);
 
   return (
     <div className="wrap page stack">
       <div>
         {m.events
-          ? <Link href={`/events/${m.events.slug}`} className="back">← {m.events.title} · {fmtRange(m.events.starts_on)}</Link>
+          ? <Link href={`/events/${m.events.slug}`} className="back">← {m.events.title}</Link>
           : <Link href="/admin/recordings" className="back">← Recordings library</Link>}
-        <h1 className="talk-title">{m.title}</h1>
+        <h1 className="talk-title">{main}</h1>
         <div className="muted small">{detail}</div>
         {m.linkedEvents.length > 1 && (
           <div className="talk-events">
@@ -92,6 +121,25 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
           {player}
         </TranscriptArea>
       ) : player}
+      {fullSession && (
+        <Link className="full-session" href={`/talks/${fullSession.id}`}>
+          <span className="eyebrow">From the full session</span>
+          <b>{splitTitle(fullSession.title).main}</b>
+          <span className="muted small">{[fullSession.speaker, watchLabel(fullSession)].filter(Boolean).join(" · ")} →</span>
+        </Link>
+      )}
+      {clips.length > 0 && (
+        <section className="stack more-talks">
+          <h2 className="sub-h">Clips from this talk</h2>
+          <div className="grid">{clips.map((o) => <TalkCard key={o.id} m={o} showEvent={false} />)}</div>
+        </section>
+      )}
+      {m.events && more.length > 0 && (
+        <section className="stack more-talks">
+          <div className="section-h first"><h2>More from {m.events.title}</h2><Link href={`/events/${m.events.slug}#talks`}>All talks of this event →</Link></div>
+          <div className="grid">{more.map((o) => <TalkCard key={o.id} m={o} showEvent={false} />)}</div>
+        </section>
+      )}
       <PromoStrip lead="Liked this talk?" />
     </div>
   );
