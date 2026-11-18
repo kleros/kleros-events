@@ -870,6 +870,32 @@
       "title": "Clip from Federico Ast's Devcon 8 lightning talk (5 Nov): when agents hire, pay and deliver for people, someone still has to decide who was right",
       "speaker": "Federico Ast",
       "url": "https://x.com/Kleros_io/status/2122899626973954318"
+    },
+    {
+      "id": "2026-11-18-x-2122587032316743687",
+      "kind": "event",
+      "source": "https://x.com/ETHChiangmai/status/2122587032316743687",
+      "event": {
+        "slug": "ethchiangmai-chiang-mai-2026",
+        "title": "ETHChiangmai 2026",
+        "kleros_role": "sponsor",
+        "organizer": "ETHChiangmai",
+        "event_type": "Conference",
+        "starts_on": "2026-11-11",
+        "ends_on": "2026-12-30",
+        "city": "Chiang Mai",
+        "country": "Thailand",
+        "region": "Asia",
+        "url": "https://ethchiangmai.com",
+        "cover_path": "https://pbs.twimg.com/media/HXTxppgawAASkCx?format=jpg&name=large",
+        "description": "Kleros is a sponsor of ETHChiangmai 2026, seven weeks of Ethereum events at 4Seas Nimman in Chiang Mai, from 11 November to 30 December. Clément Lesaege, co-founder and CTO of Kleros, is a featured speaker and is in Chiang Mai to talk about AI agents, decision markets and decentralized dispute resolution. The programme includes two Nomad Markets (14 to 15 November and 18 to 19 December), a hackathon on 26 and 27 December and the CROPS Summit on 27 December.",
+        "topics": [
+          "AI agents",
+          "Prediction markets",
+          "Arbitration",
+          "Community"
+        ]
+      }
     }
   ]
 }
