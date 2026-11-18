@@ -1,0 +1,91 @@
+/* Events list and event page. Tokens and shared utilities (.btn, .tabs, .menu, .fold, .sub-h,
+   .page-head, .result-line) live in globals.css; cards, covers and link lists in media.css. */
+
+/* ---------- events list ---------- */
+.ev-browser { min-width: 0; }
+.ev-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3) var(--s-4); }
+.ev-tools .search { flex: 1 1 280px; max-width: 520px; }
+.ev-tools .tabs { margin-left: auto; }
+.ev-filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3) var(--s-4); margin-top: var(--s-3); }
+.ev-filters select.f { flex: 0 1 200px; }
+.ev-filters .check { display: inline-flex; align-items: center; gap: var(--s-2); min-height: 40px; font-size: var(--t-sm); color: var(--fg); cursor: pointer; }
+.ev-filters .check input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
+.result-line .link-btn { font-size: inherit; }
+
+.timeline { margin-top: var(--s-7); min-width: 0; }
+.timeline + .timeline { margin-top: var(--s-9); }
+.tl-h, .year-h { font: 400 var(--t-h2)/1.2 var(--font-display), Georgia, serif; letter-spacing: 0; color: var(--white); margin: 0 0 var(--s-5); }
+.year + .year { margin-top: var(--s-8); }
+/* the calendar's list of the month's events */
+.timeline > .sub-h { margin: 0 0 var(--s-5); }
+.timeline > .quiet-empty { margin: 0; padding: 0; }
+.timeline > .btn.more { display: flex; width: fit-content; margin: var(--s-7) auto 0; }
+.ev-browser > .month, .ev-browser > .empty { margin-top: var(--s-7); }
+
+/* ---------- event page ---------- */
+.ev-back { display: inline-block; margin-top: var(--s-5); }
+
+.ev-head { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: var(--s-8); align-items: center; padding-top: var(--s-6); }
+.ev-title { display: grid; gap: var(--s-4); align-content: start; min-width: 0; }
+.ev-title h1 { font-size: var(--t-h1); line-height: 1.1; overflow-wrap: anywhere; }
+.when-where { display: grid; gap: 2px; font-size: var(--t-base); line-height: 1.5; color: var(--fg); font-variant-numeric: tabular-nums; }
+.when-where span + span { color: var(--muted); }
+.role-line { font-size: var(--t-sm); line-height: 1.45; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ev-title > .organiser { margin-top: calc(-1 * var(--s-2)); }
+.ev-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); margin-top: var(--s-2); }
+/* the attendance buttons join the row; the private notes field and the saved line go below it */
+.ev-actions > .stack, .ev-actions > .stack > .row-flex { display: contents; }
+.ev-actions > .stack > :not(.row-flex) { order: 1; flex-basis: 100%; }
+.ev-actions > .stack > .field { max-width: 520px; }
+.ev-title > .note { justify-self: start; max-width: 60ch; }
+
+.cover.ev-cover { width: 100%; aspect-ratio: 4 / 3; border-radius: var(--r-lg); }
+.ev-cover .gen-big { font-size: clamp(1.8rem, 13cqi, 3.6rem); }
+
+/* the Manage menu (team tools); ManageMenu opens it leftwards near the right edge of the screen */
+.menu.manage > summary { gap: 6px; }
+.menu.manage .menu-panel { min-width: 240px; }
+
+.sections { display: grid; gap: var(--s-9); padding-top: var(--s-9); min-width: 0; }
+.sec { display: grid; gap: var(--s-5); align-content: start; min-width: 0; }
+.sec > h2 { font: 400 var(--t-h2)/1.2 var(--font-display), Georgia, serif; letter-spacing: 0; color: var(--white); }
+.sec > .muted.small { margin-top: calc(-1 * var(--s-3)); }
+.ev-recap { display: grid; gap: var(--s-2); }
+.desc { white-space: pre-wrap; max-width: 68ch; overflow-wrap: anywhere; }
+.organiser { font-size: var(--t-sm); line-height: 1.45; color: var(--muted); overflow-wrap: anywhere; }
+.sec > .quiet-empty { padding: 0; }
+.sec > .quiet-empty .link-btn { font-size: inherit; }
+
+.mat-group { display: grid; gap: var(--s-3); min-width: 0; }
+.mat-group + .mat-group { margin-top: var(--s-5); }
+.mat-group > .photo-grid + .link-list { margin-top: var(--s-3); }
+
+.team { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: var(--s-4) var(--s-6); }
+.person { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: var(--s-3); align-items: center; font-size: var(--t-sm); min-width: 0; }
+.person .av { width: 36px; height: 36px; border-radius: 50%; background: var(--accent-soft); color: var(--lavender); display: grid; place-items: center; font-weight: 500; overflow: hidden; }
+.person .av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.person .who { display: grid; min-width: 0; line-height: 1.4; }
+.person .who > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.person .who b { font-weight: 500; color: var(--white); }
+.person .who a { color: var(--lavender); text-decoration: none; }
+.person .who a:hover { text-decoration: underline; }
+
+.meet { display: grid; gap: var(--s-4); max-width: 68ch; justify-items: start; }
+.meet > form { justify-self: stretch; }
+.meet-links { font-size: var(--t-sm); line-height: 1.45; color: var(--muted); }
+
+@media (max-width: 860px) {
+  .ev-head { grid-template-columns: minmax(0, 1fr); gap: var(--s-5); }
+  .ev-cover { order: -1; }
+}
+@media (max-width: 600px) {
+  .timeline + .timeline { margin-top: var(--s-8); }
+  .ev-filters select.f { flex: 1 1 160px; }
+  .sections { gap: var(--s-8); padding-top: var(--s-8); }
+}
+/* the back link gets a taller tap area on touch screens (globals.css): keep it where it sits */
+@media (pointer: coarse) {
+  .ev-back { margin-top: calc(var(--s-5) - 11px); }
+  .ev-filters .check { min-height: 44px; }
+  .person .who a { padding-block: 6px; margin-block: -6px; }
+}

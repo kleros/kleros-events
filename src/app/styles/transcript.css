@@ -1,12 +1,17 @@
 /* Talk page: summary, transcript and the team's transcript tools. Uses the palette tokens from globals.css. */
 
-.tx-summary, .tx-body, .tx-team {
+/* summary and transcript sit on the page itself: space separates them, no box */
+.tx-summary, .tx-body { border: 0; background: none; padding: 0; min-width: 0; }
+.tx-summary { margin-block: var(--s-4) var(--s-2); }
+.tx-body { margin-top: var(--s-6); }
+.tx-team {
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--r);
   padding: var(--s-4) var(--s-5) var(--s-5); min-width: 0;
 }
 .tx-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; margin-bottom: var(--s-3); }
-.tx-head h2.eyebrow { margin: 0; color: var(--lavender); }
-.tx-sub { font: 500 0.75rem/1 var(--font-body), sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: var(--s-4) 0 var(--s-2); }
+/* the section names read like the site's other sub-headings, not like an uppercase label */
+.tx-head h2.eyebrow { margin: 0; font: 500 var(--t-base, 1rem)/1.4 var(--font-body), sans-serif; letter-spacing: 0; text-transform: none; color: var(--white); }
+.tx-sub { font: 500 var(--t-sm, 0.875rem)/1.4 var(--font-body), sans-serif; letter-spacing: 0; text-transform: none; color: var(--muted); margin: var(--s-4) 0 var(--s-2); }
 .tx-fine { margin-top: var(--s-4); font-size: 0.8rem; color: var(--muted); }
 .tx-t { font-size: 0.8rem; color: var(--lavender); white-space: nowrap; font-variant-numeric: tabular-nums; }
 button.tx-t { background: none; border: 0; padding: 2px 6px; margin: -2px -6px; border-radius: 6px; cursor: pointer; font-family: var(--font-mono), ui-monospace, monospace; }
@@ -103,7 +108,6 @@ div.tx-note { display: grid; gap: var(--s-2); }
 .rec-tx a { color: var(--lavender); }
 
 @media (max-width: 760px) {
-  .tx-summary, .tx-body { padding: var(--s-4); }
   .tx-sum-grid { grid-template-columns: 1fr; gap: var(--s-2); }
   .tx-chapters { border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: var(--s-4); margin-top: var(--s-2); }
   .tx-line, .tx-chapters li > button, .tx-chapters li > div, .tx-qa-row, .tx-todo-row { grid-template-columns: 3.6em minmax(0, 1fr); gap: var(--s-2); }

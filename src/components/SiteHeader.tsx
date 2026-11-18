@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { currentUser } from "@/lib/supabase/server";
+import KlerosLogo from "./KlerosLogo";
 import NavLinks from "./NavLinks";
 
 export default async function SiteHeader() {
@@ -8,10 +9,8 @@ export default async function SiteHeader() {
     <header className="top">
       <div className="wrap">
         <Link className="brand" href="/" aria-label="Kleros Events home">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/kleros-logo.svg" alt="Kleros" />
-          <span className="sep" />
-          <span><em className="em">Events</em></span>
+          <KlerosLogo className="brand-logo" />
+          <span className="brand-word">Events</span>
         </Link>
         <NavLinks signedIn={!!user} isTeam={!!profile?.is_team} />
       </div>

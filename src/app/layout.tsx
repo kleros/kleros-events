@@ -7,6 +7,8 @@ import "./styles/admin.css";
 import "./styles/transcript.css";
 import "./styles/studio.css";
 import "./styles/ask.css";
+import "./styles/media.css";
+import "./styles/event-pages.css";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import AskLauncher from "@/components/ask/AskLauncher";
@@ -25,12 +27,23 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", site: "@kleros_io" },
 };
 
-// the browser bar on phones takes the page's darkest background
-export const viewport: Viewport = { themeColor: "#120F19", colorScheme: "dark" };
+// A saved light or dark choice goes on <html> before the first paint. With none, CSS color-scheme follows the OS.
+// There is no CSP today; if one is added, this inline script needs a nonce.
+const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}})()`;
+
+// the browser bar on phones takes the page background of the theme in use (ThemeToggle updates it for a saved choice)
+export const viewport: Viewport = {
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#FAF9FB" },
+    { media: "(prefers-color-scheme: dark)", color: "#15121B" },
+  ],
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
+    <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`} suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} /></head>
       <body>
         {/* first stop for the keyboard: past the header and menu to the page itself */}
         <a className="skip" href="#main">Skip to content</a>

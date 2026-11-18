@@ -58,7 +58,7 @@
 .btn.danger-armed { color: var(--rec); border-color: var(--rec); }
 
 /* event editor */
-.ed-head { position: sticky; top: 57px; z-index: 4; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+.ed-head { position: sticky; top: var(--header-h); z-index: 4; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
 .ed-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-top: 18px; }
 .ed-title { display: grid; gap: 4px; min-width: 0; }
 .ed-title h1 { font-size: clamp(1.6rem, 3vw, 2.2rem); overflow-wrap: anywhere; }
@@ -69,10 +69,10 @@
 .ed-body { display: grid; gap: 40px; padding-block: 28px 8px; max-width: 980px; }
 .ed-sec { display: grid; gap: 14px; }
 /* A jump to a section clears the site header and the sticky editor bar once. html's scroll-padding
-   (globals.css) already keeps var(--header-h) + 56px = 113px clear; the editor bar (.ed-head, pinned
-   at 57px) is about 164px tall with a one-line title, so it ends near 221px. 124px more lands the
-   heading about 16px below it. The selector outranks globals.css's section[id] rule. */
-.ed-body > .ed-sec { scroll-margin-top: 124px; }
+   (globals.css) already keeps var(--header-h) + 16px = 80px clear; the editor bar (.ed-head, pinned
+   under the 64px header) is about 164px tall with a one-line title, so it ends near 228px. 164px more
+   lands the heading about 16px below it. The selector outranks globals.css's section[id] rule. */
+.ed-body > .ed-sec { scroll-margin-top: 164px; }
 /* keep the pinned bar one row tall on wide screens, so the offset above holds for long titles too */
 @media (min-width: 861px) {
   .ed-top { flex-wrap: nowrap; }
@@ -92,11 +92,11 @@
   .req > .btn { justify-self: start; }
   .acc-form { grid-template-columns: minmax(0, 1fr); }
   .acc-form .btn { justify-self: start; }
-  /* the site header wraps on small screens, so the editor header scrolls with the page */
+  /* a second pinned bar under the site header would take too much of a small screen: it scrolls with the page */
   .ed-head { position: static; }
   /* all section links stay in view on a phone instead of scrolling off with a hidden scrollbar */
   .ed-anchors { flex-wrap: wrap; overflow: visible; }
-  /* nothing is pinned here, and html's scroll-padding (16px) is room enough */
+  /* only the site header is pinned here, and html's scroll-padding already clears it */
   .ed-body > .ed-sec { scroll-margin-top: 0; }
 }
 @media (max-width: 520px) {

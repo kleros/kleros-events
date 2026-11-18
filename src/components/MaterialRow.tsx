@@ -3,6 +3,7 @@ import type { EventRow, Material, MaterialKind } from "@/lib/types";
 import { fmtDur, fmtSize, plural } from "@/lib/format";
 import Thumb from "./Thumb";
 import GenCover from "./Cover";
+import Ext from "./Ext";
 
 const KIND: Record<string, string> = { talk: "TALK", slides: "PDF", audio: "AUD", video: "VID", doc: "DOC", image: "IMG", link: "URL", social: "POST" };
 // slides kept as a link (Google Slides, a claude.ai deck) are not a PDF
@@ -110,44 +111,106 @@ export const MATERIAL_GROUPS: { label: string; kinds: MaterialKind[] }[] = [
 
 type EventRef = Pick<EventRow, "slug" | "title" | "starts_on">;
 
-// true when a title's note already names the event ("Devcon 8 workshop, 6 Nov" under Devcon 8)
-const mentions = (note: string, title: string) => {
-  const f = (x: string) => x.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
-  const head = f(title).split(/\s*(?:::|,|·| - )\s*/)[0].slice(0, 20);
-  return !!note && head.length >= 4 && f(note).includes(head);
-};
-
 /**
- * A watchable talk: preview, title, speaker and a clear Watch action. `event` names the event
- * under the title; leave `showEvent` off where cards already sit under their event.
+ * A watchable talk: preview, title, then one quiet line with speaker, length and (with
+ * `showEvent`) the event. Leave `showEvent` off where cards already sit under their event.
  */
 export function TalkCard({ m, event, note, showEvent = true }: { m: Material; event?: EventRef; note?: string; showEvent?: boolean }) {
   const href = `/talks/${m.id}`;
   const verb = m.kind === "audio" ? "Listen" : "Watch";
-  const { main, aside } = splitTitle(m.title);
-  const coverLabel = m.kind === "talk" ? "Talk with slides" : isClip(m) ? "Clip" : "Recording";
+  const { main } = splitTitle(m.title);
+  const meta = [isClip(m) ? "Clip" : "", m.speaker, m.duration_seconds ? fmtDur(m.duration_seconds) : "", showEvent && event ? event.title : ""]
+    .filter(Boolean).join(" · ");
   return (
     <article className="card talk">
       <Link className="cover" href={href} aria-label={`${verb}: ${m.title}`} tabIndex={-1}>
         <Thumb src={videoThumb(m)} fallback={
-          <GenCover seed={event?.slug ?? m.event_id ?? m.id} className="talk-gen" big={m.speaker ?? undefined} small={coverLabel}>
+          <GenCover seed={m.id}>
             <span className="play" aria-hidden="true">▶</span>
           </GenCover>
         } />
-        {m.duration_seconds ? <span className="dur mono">{fmtDur(m.duration_seconds)}</span> : null}
       </Link>
       <div className="body">
-        <h3 title={aside ? m.title : undefined}><Link className="stretch" href={href}>{main}</Link></h3>
-        {m.speaker && <div className="who">{m.speaker}</div>}
-        {aside && <div className="sub" title={aside}>{aside}</div>}
-        {event && showEvent && !mentions(aside, event.title) && <Link className="sub" href={`/events/${event.slug}`}>{event.title}</Link>}
-        {note && <div className="sub">{note}</div>}
-        <div className="foot">
-          <Link className="btn sm primary" href={href}><span aria-hidden="true">▶</span> {verb}</Link>
-          <span>{watchLabel(m)}</span>
-        </div>
+        <h3 title={m.title}><Link className="stretch" href={href}>{main}</Link></h3>
+        {meta && <p className="card-meta">{meta}</p>}
+        {note && <p className="card-meta">{note}</p>}
       </div>
     </article>
+  );
+}
+
+const KIND_WORD: Record<MaterialKind, string> = {
+  talk: "Talk", slides: "Slides", audio: "Audio", video: "Video", doc: "Document", image: "Photo", link: "Link", social: "Post",
+};
+
+/** One row of a link list: the title, and on the right where it opens. */
+function LinkRow({ m }: { m: Material }) {
+  // stored slides and recordings open on their own talk page; everything else where it lives
+  const internal = (m.kind === "slides" || m.kind === "audio") && !!m.file_path;
+  const href = internal ? `/talks/${m.id}` : linkUrl(m.url) || fileUrl(m.file_path);
+  const external = !internal && /^https?:\/\//.test(href);
+  const source = internal ? (m.kind === "slides" ? "Slides" : "Recording")
+    : external ? sourceOf(href) || KIND_WORD[m.kind]
+    : [KIND_WORD[m.kind], fmtSize(m.size_bytes)].filter(Boolean).join(" · ");
+  const body = (
+    <>
+      <span className="link-t">{m.title}</span>
+      <span className="link-s">{[m.speaker, source].filter(Boolean).join(" · ")}{href && !internal && <Ext />}</span>
+    </>
+  );
+  if (!href) return <div className="link-row">{body}</div>;
+  if (internal) return <Link className="link-row" href={href}>{body}</Link>;
+  return <a className="link-row" href={href} target="_blank" rel="noopener">{body}</a>;
+}
+
+/**
+ * Slides, documents, links and posts as a plain list of rows. The first `first` show; the rest
+ * fold under "Show all N". Server-safe: no hooks, so pages and client components can both use it.
+ */
+export function LinkList({ items, first = 6 }: { items: Material[]; first?: number }) {
+  if (!items.length) return null;
+  const head = items.slice(0, first), tail = items.slice(first);
+  const rows = (list: Material[]) => <ul className="links">{list.map((m) => <li key={m.id}><LinkRow m={m} /></li>)}</ul>;
+  return (
+    <div className="link-list">
+      {rows(head)}
+      {tail.length > 0 && (
+        <details className="fold more">
+          <summary>Show all {items.length}</summary>
+          {rows(tail)}
+        </details>
+      )}
+    </div>
+  );
+}
+
+/** Photos as square tiles that open the full picture in a new tab; the rest fold under "Show all N photos". */
+export function PhotoGrid({ items, first = 8 }: { items: Material[]; first?: number }) {
+  if (!items.length) return null;
+  const head = items.slice(0, first), tail = items.slice(first);
+  const tiles = (list: Material[]) => (
+    <ul className="photos">
+      {list.map((m) => (
+        <li key={m.id}>
+          <a href={fileUrl(m.file_path)} target="_blank" rel="noopener">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={fileUrl(m.file_path)} alt={m.title} loading="lazy" />
+            <span className="sr-only"> (opens in a new tab)</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
+  return (
+    <div className="photo-grid">
+      {tiles(head)}
+      {tail.length > 0 && (
+        <details className="fold more">
+          <summary>Show all {items.length} photos</summary>
+          {tiles(tail)}
+        </details>
+      )}
+    </div>
   );
 }
 

@@ -3,13 +3,13 @@
 
 /* team buttons under the Talks heading */
 .sec-tools { display: flex; gap: var(--s-2); flex-wrap: wrap; align-items: center; }
-.sec-tools .dot, .ev-title .btn .dot, .adm-head .btn .dot { width: 8px; height: 8px; }
+.sec-tools .dot, .ev-title .btn .dot, .adm-head .btn .dot, .menu-panel .dot { width: 8px; height: 8px; }
 .btn.primary .dot { background: var(--accent-ink); }
 
 /* the studio panel (inside Talks) */
 .studio { display: grid; gap: var(--s-4); padding: var(--s-4); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line)); border-radius: var(--r);
-  background: linear-gradient(160deg, rgb(124 92 230 / 0.10), transparent 60%), var(--surface); min-width: 0;
-  /* html's scroll-padding (globals.css, 113px) already clears the header and the event page's jump bar (about 102px) */
+  background: var(--surface); min-width: 0;
+  /* html's scroll-padding (globals.css: the header height plus 16px) already clears the pinned header */
   scroll-margin-top: var(--s-2); }
 .studio-h { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-3); }
 .studio-t { display: grid; gap: var(--s-2); min-width: 0; }
@@ -41,7 +41,7 @@
 .talk-unlinked { margin-top: var(--s-3); }
 
 /* Link to events dialog */
-.le-dialog { width: min(640px, calc(100vw - 24px)); max-height: min(760px, calc(100dvh - 24px)); padding: 0; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); color: var(--fg); box-shadow: 0 30px 80px -20px rgb(0 0 0 / 0.8); }
+.le-dialog { width: min(640px, calc(100vw - 24px)); max-height: min(760px, calc(100dvh - 24px)); padding: 0; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); color: var(--fg); box-shadow: 0 12px 32px var(--shadow-c); }
 .le-dialog::backdrop { background: rgb(10 8 15 / 0.66); backdrop-filter: blur(3px); }
 .le-dialog[open] { display: flex; }
 .le-inner { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-5); width: 100%; min-height: 0; }

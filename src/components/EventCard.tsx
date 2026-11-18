@@ -20,20 +20,9 @@ export function RolePill({ e }: { e: Pick<EventRow, "kleros_role"> }) {
   return <span className={`pill ${KLEROS_HOSTED.includes(e.kleros_role) ? "host" : "part"}`}>{ROLE_LABEL[e.kleros_role]}</span>;
 }
 
-/** Date tile: day number over the short month. */
-export function DateTile({ iso }: { iso: string }) {
-  const d = new Date(iso + "T12:00:00");
-  return (
-    <span className="date-tile" aria-hidden>
-      <b>{d.getDate()}</b>
-      <span>{d.toLocaleDateString("en-GB", { month: "short" })}</span>
-    </span>
-  );
-}
-
-/** The visual top of an event: its Luma cover, or a generated one with the city. */
+/** The visual top of an event: its Luma cover shown whole, or a generated one with the city. */
 export function EventCover({ e, className = "" }: { e: EventRow; className?: string }) {
-  const gen = <GenCover seed={e.slug} big={e.city || "Online"} small={e.event_type} />;
+  const gen = <GenCover seed={e.slug} big={e.city || "Online"} />;
   return (
     <span className={`cover ${className}`}>
       {e.cover_path ? <Thumb src={fileUrl(e.cover_path)} contain fallback={gen} /> : gen}
@@ -41,35 +30,29 @@ export function EventCover({ e, className = "" }: { e: EventRow; className?: str
   );
 }
 
-export default function EventCard({ e, talks = 0, materials = 0, going = 0, why, mine }: {
-  e: EventRow; talks?: number; materials?: number; going?: number; why?: string; mine?: string;
+export default function EventCard({ e, talks = 0, materials = 0, going = 0, why, mine, showExcerpt = false }: {
+  e: EventRow; talks?: number; materials?: number; going?: number; why?: string; mine?: string; showExcerpt?: boolean;
 }) {
   const status = statusLabel(e);
   // say what there is to open: talks to watch first, else slides, photos and posts
-  const count = talks ? <><span aria-hidden="true">▶</span> {plural(talks, "talk")}</> : materials ? `${materials} ${materials === 1 ? "file or link" : "files and links"}` : going ? `${going} going` : "";
-  const text = excerpt(e);
+  const count = talks ? plural(talks, "talk") : materials ? `${materials} ${materials === 1 ? "file or link" : "files and links"}` : going ? `${going} going` : "";
+  const text = showExcerpt ? excerpt(e) : "";
   // the title is the one link; it stretches over the whole card, so the card stays clickable
   // and a screen reader hears the event's name instead of the whole card read out as a link
   return (
     <article className="card ev">
-      <div className="cover-wrap">
-        <EventCover e={e} />
-        <span className="on-cover oc-tl"><DateTile iso={e.starts_on} /></span>
-        {status && <span className={`pill ${status.cls} on-cover oc-tr`}>{status.text}</span>}
-      </div>
+      <EventCover e={e} />
       <div className="body">
-        <span className="date">{fmtRange(e.starts_on, e.ends_on)}</span>
+        <p className="card-meta">
+          {status && <><span className={`st ${status.cls}`}>{status.text}</span> · </>}
+          <time dateTime={e.starts_on}>{fmtRange(e.starts_on, e.ends_on)}</time> · {place(e)}
+        </p>
         <h3><Link className="stretch" href={`/events/${e.slug}`}>{e.title}</Link></h3>
-        <span className="meta"><RolePill e={e} /><span className="pill plain">{e.event_type}</span></span>
-        {text && <span className="desc-clamp">{text}</span>}
-        {why && <span className="why">{why}</span>}
-        {mine && <span className="why">{mine}</span>}
-        <span className="foot">
-          <span>{place(e)}</span>
-          {count && <span className={talks ? "has-talks" : ""}>{count}</span>}
-        </span>
+        {text && <p className="desc-clamp">{text}</p>}
+        <p className="card-foot">{ROLE_LABEL[e.kleros_role]}{count && <> · <b>{count}</b></>}</p>
+        {why && <p className="why">{why}</p>}
+        {mine && <p className="why">{mine}</p>}
       </div>
     </article>
   );
 }
-

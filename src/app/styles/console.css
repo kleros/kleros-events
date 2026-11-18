@@ -8,6 +8,9 @@ body:has(.console) > header.top, body:has(.console) footer.site,
 body:has(.scr-page) > header.top, body:has(.scr-page) footer.site,
 body:has(.qa-page) > header.top, body:has(.qa-page) footer.site { display: none; }
 body:has(.scr-page) { overflow: hidden; }
+/* The console and the projector stay dark whatever theme the visitor chose (globals.css also sets this on <html>).
+   The recorder panels below also appear on light pages (the event studio, /record) and use tokens only. */
+.console, .scr { color-scheme: dark; }
 
 /* ---------- shared bits ---------- */
 .pip { width: 8px; height: 8px; border-radius: 50%; background: var(--good); display: inline-block; flex: none; }
@@ -149,7 +152,7 @@ body:has(.scr-page) { overflow: hidden; }
 .rec-audio { width: 100%; }
 .rec-facts { display: flex; gap: 8px 18px; flex-wrap: wrap; color: var(--muted); }
 /* Save and friends stay in reach while the review player and fields scroll */
-.rec-actions { position: sticky; bottom: 0; z-index: 2; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 0 -18px; padding: 14px 18px; border-top: 1px solid var(--line); background: var(--surface); border-radius: 0 0 var(--r) var(--r); box-shadow: 0 -10px 18px -12px rgb(0 0 0 / 0.6); }
+.rec-actions { position: sticky; bottom: 0; z-index: 2; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 0 -18px; padding: 14px 18px; border-top: 1px solid var(--line); background: var(--surface); border-radius: 0 0 var(--r) var(--r); box-shadow: 0 -10px 18px -12px var(--shadow-c); }
 .rec-actions .spacer { flex: 1; }
 .btn.danger { color: var(--rec); }
 
@@ -260,9 +263,9 @@ body:has(.scr-page) { overflow: hidden; }
 .qa-head h1 { font-size: clamp(1.9rem, 7vw, 2.6rem); overflow-wrap: anywhere; }
 .qa-form { display: grid; gap: 10px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
 .qa-form .ok, .qa-form .note { margin: 0; }
-.qa-box { width: 100%; min-height: 128px; padding: 12px 14px; font-size: 1.08rem; line-height: 1.5; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); resize: vertical; }
+.qa-box { width: 100%; min-height: 128px; padding: 12px 14px; font-size: 1.08rem; line-height: 1.5; border: 1px solid var(--field-line); border-radius: 10px; background: var(--bg); resize: vertical; }
 .qa-box:focus, .qa-name:focus { border-color: var(--accent); outline: none; }
-.qa-name { width: 100%; min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); font-size: 16px; }
+.qa-name { width: 100%; min-width: 0; padding: 10px 12px; border: 1px solid var(--field-line); border-radius: 8px; background: var(--bg); font-size: 16px; }
 .qa-count { font-size: 0.8rem; color: var(--muted); text-align: right; margin-top: -4px; font-variant-numeric: tabular-nums; }
 .qa-count.low { color: var(--warn); }
 .qa-send { justify-content: center; padding: 12px 18px; font-size: 1.02rem; border-radius: 10px; }

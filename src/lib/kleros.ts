@@ -57,12 +57,14 @@ export const LUMA_URL = "https://luma.com/user/kleros_io";
 // Proof of Presence, the Kleros kickback app: refundable event deposits with Kleros as the referee.
 // Points at the review copy until kickback.kleros.io serves the new site; then change it to "https://kickback.kleros.io".
 export const KICKBACK_URL = "https://weiwei-ooi.github.io/devcon-side-event-kickback/kickback";
+// The kickback site itself, linked from the top-right corner of the header.
+export const KICKBACK_SITE = "https://kickback.kleros.io";
 
 export const SOCIALS = [
-  { label: "Luma", url: LUMA_URL },
   { label: "X", url: "https://x.com/kleros_io" },
   { label: "Telegram", url: "https://t.me/kleros" },
   { label: "LinkedIn", url: "https://www.linkedin.com/company/kleros" },
+  { label: "Luma", url: LUMA_URL },
   { label: "Reddit", url: "https://www.reddit.com/r/Kleros/" },
   { label: "GitHub", url: "https://github.com/kleros" },
   { label: "Blog", url: "https://blog.kleros.io" },

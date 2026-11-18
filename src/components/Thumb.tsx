@@ -1,7 +1,10 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 
-/** A cover or video thumbnail that quietly falls back to its placeholder if the image fails to load. */
+/**
+ * A cover or video thumbnail that quietly falls back to its placeholder if the image fails to load.
+ * `contain` shows the whole picture on the cover's flat frame, with no blurred copy behind it.
+ */
 export default function Thumb({ src, fallback, contain = false }: { src?: string | null; fallback: React.ReactNode; contain?: boolean }) {
   const [failed, setFailed] = useState(false);
   const ref = useRef<HTMLImageElement>(null);
@@ -12,11 +15,7 @@ export default function Thumb({ src, fallback, contain = false }: { src?: string
   }, [src]);
   if (!src || failed) return <>{fallback}</>;
   return (
-    <>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      {contain && <img className="thumb-bg" src={src} alt="" aria-hidden loading="lazy" />}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img ref={ref} className={contain ? "thumb-img contain" : "thumb-img"} src={src} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />
-    </>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img ref={ref} className={contain ? "thumb-img contain" : "thumb-img"} src={src} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />
   );
 }

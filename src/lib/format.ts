@@ -6,12 +6,34 @@ export const isPast = (e: Pick<EventRow, "starts_on" | "ends_on">) => endOf(e) <
 export const isLive = (e: Pick<EventRow, "starts_on" | "ends_on">) => e.starts_on <= todayIso() && endOf(e) >= todayIso();
 export const place = (e: Pick<EventRow, "city" | "country">) => (e.city ? [e.city, e.country].filter(Boolean).join(", ") : "Online");
 
-export function fmtRange(a: string, b?: string | null) {
-  const A = new Date(a + "T12:00:00");
-  const full: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" };
-  if (!b || b === a) return A.toLocaleDateString("en-GB", { weekday: "short", ...full });
-  const B = new Date(b + "T12:00:00");
-  return `${A.toLocaleDateString("en-GB", { day: "numeric", month: "short" })} – ${B.toLocaleDateString("en-GB", full)}`;
+// Fixed English names, so the server and the browser print the same text whatever their locale data.
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** "2026-11-04" (or a longer ISO timestamp) as its year, month and day; null when it is not a date. */
+function ymd(s: string | null | undefined) {
+  const x = /^(\d{4})-(\d{2})-(\d{2})/.exec(s ?? "");
+  if (!x) return null;
+  const y = +x[1], m = +x[2], d = +x[3];
+  return m >= 1 && m <= 12 && d >= 1 && d <= 31 ? { y, m, d } : null;
+}
+
+/**
+ * A date or a date range: "4 Nov 2026" ("Wed 4 Nov 2026" with `weekday`), "3–6 Nov 2026",
+ * "30 Oct – 2 Nov 2026", "30 Dec 2026 – 2 Jan 2027". The weekday only shows on a single day.
+ */
+export function fmtRange(a: string, b?: string | null, opts: { weekday?: boolean } = {}) {
+  const A = ymd(a);
+  if (!A) return a;
+  const B = b && b !== a ? ymd(b) : null;
+  const day = (x: { y: number; m: number; d: number }) => `${x.d} ${MONTHS[x.m - 1]}`;
+  if (!B || (B.y === A.y && B.m === A.m && B.d === A.d)) {
+    const wd = opts.weekday ? WEEKDAYS[new Date(Date.UTC(A.y, A.m - 1, A.d)).getUTCDay()] + " " : "";
+    return `${wd}${day(A)} ${A.y}`;
+  }
+  if (A.y !== B.y) return `${day(A)} ${A.y} – ${day(B)} ${B.y}`;
+  if (A.m !== B.m) return `${day(A)} – ${day(B)} ${B.y}`;
+  return `${A.d}–${B.d} ${MONTHS[A.m - 1]} ${A.y}`;
 }
 
 export function fmtDur(s: number | null | undefined) {

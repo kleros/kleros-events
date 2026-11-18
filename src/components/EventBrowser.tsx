@@ -10,7 +10,7 @@ export type When = "all" | "upcoming" | "past";
 export type View = "list" | "calendar";
 type Counts = { talks: Record<string, number>; materials: Record<string, number>; going: Record<string, number> };
 
-const WHEN: [When, string][] = [["all", "All"], ["upcoming", "Upcoming"], ["past", "Past"]];
+const LUMA_NOTE = <>No upcoming events announced yet. New ones are posted on <a href={LUMA_URL} target="_blank" rel="noopener">Luma</a> first.</>;
 
 export default function EventBrowser({ events, counts, initialWhen = "all", initialView = "list", initialMonth }: {
   events: EventRow[]; counts: Counts; initialWhen?: When; initialView?: View;
@@ -23,6 +23,8 @@ export default function EventBrowser({ events, counts, initialWhen = "all", init
   const [topic, setTopic] = useState("");
   const [q, setQ] = useState("");
   const [rec, setRec] = useState(false);
+  // the filters panel starts closed: no filter is set when the page loads
+  const [showFilters, setShowFilters] = useState(false);
   const [month, setMonth] = useState(() => { const [y, m] = initialMonth.split("-").map(Number); return new Date(y, m - 1, 1, 12); });
 
   // Keep the address shareable without reloading the page.
@@ -48,41 +50,52 @@ export default function EventBrowser({ events, counts, initialWhen = "all", init
   // most recently ended first; on the same day, the event with more talks
   const past = matching.filter(isPast).sort((a, b) => latestFirst(a, b) || (counts.talks[b.id] ?? 0) - (counts.talks[a.id] ?? 0));
   const filtered = !!(type || topic || q.trim() || rec);
+  const activeFilters = [type, topic, rec].filter(Boolean).length;
   const clear = () => { setType(""); setTopic(""); setQ(""); setRec(false); };
 
+  // ?when=upcoming or ?when=past still narrows the list; the calendar always shows every event
+  const only = view === "list" && when !== "all" ? when : null;
   const shownCount = view === "calendar" ? matching.length : when === "upcoming" ? upcoming.length : when === "past" ? past.length : matching.length;
+  const totalCount = only === "upcoming" ? events.filter((e) => !isPast(e)).length : only === "past" ? events.filter(isPast).length : events.length;
+  const noun = only ? `${only} event` : "event";
+  const showAll = <button type="button" className="link-btn" onClick={() => setWhen("all")}>Show all events</button>;
 
   return (
-    <div className="browser">
-      <div className="toolbar">
-        {/* stays in calendar view (disabled) so the toolbar does not shift */}
-        <div className="seg" role="group" aria-label="Timeline" title={view === "calendar" ? "The calendar shows every event" : undefined}>
-          {WHEN.map(([v, l]) => (
-            <button key={v} aria-pressed={view === "list" && when === v} disabled={view === "calendar"} onClick={() => setWhen(v)}>
-              {l}{v !== "all" && <span className="n">{v === "upcoming" ? upcoming.length : past.length}</span>}
-            </button>
-          ))}
-        </div>
-        <div className="seg" role="group" aria-label="View">
-          <button aria-pressed={view === "list"} onClick={() => setView("list")}>List</button>
-          <button aria-pressed={view === "calendar"} onClick={() => setView("calendar")}>Calendar</button>
+    <div className="ev-browser">
+      <div className="ev-tools">
+        <input className="search" type="search" placeholder="Search by name, city or topic" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search events" />
+        <button type="button" className="btn" aria-expanded={showFilters} aria-controls="ev-filters" onClick={() => setShowFilters(!showFilters)}>
+          Filters{activeFilters > 0 && <> · {activeFilters}<span className="sr-only"> active</span></>}
+        </button>
+        <div className="tabs" role="group" aria-label="View">
+          <button type="button" aria-pressed={view === "list"} onClick={() => setView("list")}>List</button>
+          <button type="button" aria-pressed={view === "calendar"} onClick={() => setView("calendar")}>Calendar</button>
         </div>
       </div>
 
-      <div className="refine">
-        <input className="search" type="search" placeholder="Search by name, city or topic" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search events" />
-        <select className="f" value={topic} onChange={(e) => setTopic(e.target.value)} aria-label="Topic">
-          <option value="">All topics</option>{topics.map((t) => <option key={t}>{t}</option>)}
-        </select>
-        <select className="f" value={type} onChange={(e) => setType(e.target.value)} aria-label="Event type">
-          <option value="">All formats</option>{types.map((t) => <option key={t}>{t}</option>)}
-        </select>
-        <button className="chip rec-chip" aria-pressed={rec} onClick={() => setRec(!rec)}><span aria-hidden="true">▶</span> With recorded talks</button>
-      </div>
-      <div className="result-line" role="status">
-        <span>{plural(shownCount, "event")}{filtered ? " match" : ""}</span>
-        {filtered && <button className="link-btn" onClick={clear}>Clear filters</button>}
-      </div>
+      {showFilters && (
+        <div id="ev-filters" className="ev-filters">
+          <select className="f" value={topic} onChange={(e) => setTopic(e.target.value)} aria-label="Topic">
+            <option value="">All topics</option>{topics.map((t) => <option key={t}>{t}</option>)}
+          </select>
+          <select className="f" value={type} onChange={(e) => setType(e.target.value)} aria-label="Event type">
+            <option value="">All formats</option>{types.map((t) => <option key={t}>{t}</option>)}
+          </select>
+          <label className="check"><input type="checkbox" checked={rec} onChange={(e) => setRec(e.target.checked)} /> With recorded talks</label>
+        </div>
+      )}
+
+      {/* always in the page, so screen readers hear the count change; text only when it helps */}
+      <p className="result-line" role="status">
+        {filtered ? (
+          <>
+            {shownCount} of {plural(totalCount, noun)} {shownCount === 1 ? "matches" : "match"} · <button type="button" className="link-btn" onClick={clear}>Clear filters</button>
+            {only && <> · {showAll}</>}
+          </>
+        ) : only ? (
+          <>{only === "upcoming" ? "Upcoming" : "Past"} events only · {showAll}</>
+        ) : null}
+      </p>
 
       {!events.length ? (
         <div className="empty"><b>No events on record yet</b>The Kleros team adds events here. Upcoming ones also appear on <a href={LUMA_URL} target="_blank" rel="noopener">Luma</a>.</div>
@@ -93,15 +106,12 @@ export default function EventBrowser({ events, counts, initialWhen = "all", init
         </>
       ) : (
         <>
-          {/* in "All" with nothing coming up, one quiet line instead of an empty "Upcoming 0" section */}
-          {when === "all" && !upcoming.length ? (
-            !filtered && <p className="quiet-empty">No upcoming events announced yet. New ones are posted on <a href={LUMA_URL} target="_blank" rel="noopener">Luma</a> first.</p>
-          ) : when !== "past" && (
-            <Timeline title={when === "all" ? "Upcoming" : undefined} list={upcoming} counts={counts}
-              empty={filtered ? "No upcoming events match." : <>No upcoming events announced yet. New ones are posted on <a href={LUMA_URL} target="_blank" rel="noopener">Luma</a> first.</>} />
+          {/* with a filter on and nothing coming up, no empty "Upcoming" section in the full list */}
+          {when !== "past" && (upcoming.length > 0 || !filtered || when === "upcoming") && (
+            <Timeline title="Upcoming" list={upcoming} counts={counts} empty={filtered ? "No upcoming events match." : LUMA_NOTE} />
           )}
           {when !== "upcoming" && (
-            <Timeline title={when === "all" ? "Past" : undefined} list={past} counts={counts} byYear limit={filtered ? undefined : 12}
+            <Timeline list={past} counts={counts} byYear limit={filtered ? undefined : 12}
               empty={filtered ? "No past events match." : "No past events on record yet."} />
           )}
         </>
@@ -111,8 +121,8 @@ export default function EventBrowser({ events, counts, initialWhen = "all", init
 }
 
 /**
- * A titled list of event cards. `byYear` puts a year heading before each year's cards; `limit`
- * shows that many cards first, with a button for the rest (searching or filtering shows all).
+ * A list of event cards. `title` heads it; `byYear` puts a year heading before each year's cards;
+ * `limit` shows that many cards first, with a button for the rest (searching or filtering shows all).
  */
 function Timeline({ title, list, counts, empty, byYear = false, limit }: {
   title?: string; list: EventRow[]; counts: Counts; empty: React.ReactNode; byYear?: boolean; limit?: number;
@@ -123,17 +133,17 @@ function Timeline({ title, list, counts, empty, byYear = false, limit }: {
   const years = byYear ? [...new Set(shown.map((e) => e.starts_on.slice(0, 4)))] : [];
   return (
     <section className="timeline">
-      {title && <h2 className="tl-h">{title} <span className="count">{list.length}</span></h2>}
+      {title && <h2 className="tl-h">{title}</h2>}
       {!list.length ? <p className="quiet-empty">{empty}</p>
-        : years.length > 1 ? years.map((y) => (
+        : byYear ? years.map((y) => (
           <div key={y} className="year">
-            <h3 className="month-h">{y} · {plural(list.filter((e) => e.starts_on.startsWith(y)).length, "event")}</h3>
-            <div className="ev-grid">{shown.filter((e) => e.starts_on.startsWith(y)).map(card)}</div>
+            <h2 className="year-h">{y}</h2>
+            <div className="grid">{shown.filter((e) => e.starts_on.startsWith(y)).map(card)}</div>
           </div>
         ))
-        : <div className="ev-grid">{shown.map(card)}</div>}
+        : <div className="grid">{shown.map(card)}</div>}
       {shown.length < list.length && (
-        <button className="btn more" onClick={() => setAll(true)}>Show all {plural(list.length, "event")}</button>
+        <button type="button" className="btn more" onClick={() => setAll(true)}>Show all {plural(list.length, byYear ? "past event" : "event")}</button>
       )}
     </section>
   );
@@ -150,9 +160,9 @@ function MonthList({ month, events, counts }: { month: Date; events: EventRow[];
   const label = month.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
   return (
     <section className="timeline">
-      <h3 className="month-h">{list.length ? `${plural(list.length, "event")} in ${label}` : `Nothing on record for ${label}`}</h3>
+      <h3 className="sub-h">{list.length ? `${plural(list.length, "event")} in ${label}` : `Nothing on record for ${label}`}</h3>
       {list.length > 0 && (
-        <div className="ev-grid">
+        <div className="grid">
           {list.map((e) => <EventCard key={e.id} e={e} talks={counts.talks[e.id]} materials={counts.materials[e.id]} going={isPast(e) ? 0 : counts.going[e.id]} />)}
         </div>
       )}

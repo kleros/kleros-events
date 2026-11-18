@@ -3,12 +3,11 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { eventMaterials, getMaterial } from "@/lib/data";
-import { fmtDur } from "@/lib/format";
+import { fmtDur, plural } from "@/lib/format";
 import type { Material } from "@/lib/types";
 import TalkPlayer from "@/components/TalkPlayer";
 import GenCover from "@/components/Cover";
 import { TalkCard, byTalkRank, driveId, fileUrl, isClip, isWatchable, linkUrl, sourceOf, splitTitle, videoThumb, watchLabel, youtubeId } from "@/components/MaterialRow";
-import PromoStrip from "@/components/PromoStrip";
 import Ext from "@/components/Ext";
 import EventChip from "@/components/studio/EventChip";
 import { currentUser, supabaseServer } from "@/lib/supabase/server";
@@ -42,7 +41,6 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
   const [m, { user, profile }, transcript] = await Promise.all([getMaterial(id), currentUser(), getTranscript(id)]);
   if (!m && !user) return (
     <div className="wrap page con-gate">
-      <div className="eyebrow">Talk</div>
       <h1>This talk is not available</h1>
       <p className="muted">The link may be old or mistyped. If someone shared a private event&apos;s talk with you, sign in with the email address they used and it opens.</p>
       <div className="row-flex">
@@ -72,7 +70,7 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
     // a video that can't play here (a clip posted on X): a poster that clearly opens it where it lives
     else if (m.url) player = (
       <a className="video ext" href={linkUrl(m.url)} target="_blank" rel="noopener">
-        <GenCover seed={m.event_id ?? m.id} className="talk-gen" big={m.speaker ?? undefined} small={watchLabel(m)}>
+        <GenCover seed={m.id}>
           <span className="play" aria-hidden="true">▶</span>
         </GenCover>
         <span className="ext-go">Watch on {sourceOf(m.url) || "the original site"}<Ext /></span>
@@ -89,7 +87,7 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
   const recorded = m.kind === "talk" || m.kind === "audio" || m.kind === "video";
   const canTranscribe = (m.kind === "talk" && !!m.audio_path) || ((m.kind === "audio" || m.kind === "video") && !!m.file_path);
   const { main, aside } = splitTitle(m.title);
-  const detail = [m.speaker, aside, m.kind === "audio" ? (m.url ? "Recording with slides" : "Audio recording") : m.kind === "video" ? watchLabel(m) : m.pages ? `${m.pages} slides` : "", m.duration_seconds ? fmtDur(m.duration_seconds) : ""].filter(Boolean).join(" · ");
+  const detail = [m.speaker, aside, (m.kind === "talk" || m.kind === "slides") && m.pages ? plural(m.pages, "slide") : "", m.duration_seconds ? fmtDur(m.duration_seconds) : ""].filter(Boolean).join(" · ");
 
   // What to watch next: the other talks of the same event, and for a clip, the session it comes from.
   const siblings: Material[] = m.events ? await eventMaterials(await supabaseServer(), m.events.id) : [];
@@ -98,7 +96,7 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
   const fullSession = isClip(m) ? siblings.find((o) => o.id !== m.id && isWatchable(o) && !isClip(o) && sharesSpeaker(o)) : undefined;
   const clips = !isClip(m) ? siblings.filter((o) => o.id !== m.id && isWatchable(o) && isClip(o) && sharesSpeaker(o)) : [];
   const more = siblings.filter((o) => o.id !== m.id && o.id !== fullSession?.id && isWatchable(o) && !clips.includes(o))
-    .sort((a, b) => Number(!sharesSpeaker(a)) - Number(!sharesSpeaker(b)) || byTalkRank(a, b)).slice(0, 4);
+    .sort((a, b) => Number(!sharesSpeaker(a)) - Number(!sharesSpeaker(b)) || byTalkRank(a, b)).slice(0, 3);
 
   return (
     <div className="wrap page stack">
@@ -128,25 +126,22 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
         </TranscriptArea>
       ) : player}
       {fullSession && (
-        <Link className="full-session" href={`/talks/${fullSession.id}`}>
-          <span className="eyebrow">From the full session</span>
-          <b>{splitTitle(fullSession.title).main}</b>
-          <span className="muted small">{[fullSession.speaker, watchLabel(fullSession)].filter(Boolean).join(" · ")} →</span>
-        </Link>
+        <p className="full-session-line">
+          <Link className="full-session" href={`/talks/${fullSession.id}`}>From the full session: <b>{splitTitle(fullSession.title).main}</b> →</Link>
+        </p>
       )}
       {clips.length > 0 && (
-        <section className="stack more-talks">
-          <h2 className="sub-h">Clips from this talk</h2>
-          <div className="grid">{clips.map((o) => <TalkCard key={o.id} m={o} showEvent={false} />)}</div>
+        <section className="block">
+          <div className="section-h"><h2>Clips from this talk</h2></div>
+          <div className="grid">{clips.slice(0, 3).map((o) => <TalkCard key={o.id} m={o} showEvent={false} />)}</div>
         </section>
       )}
       {m.events && more.length > 0 && (
-        <section className="stack more-talks">
-          <div className="section-h first"><h2>More from {m.events.title}</h2><Link href={`/events/${m.events.slug}#talks`}>All talks of this event →</Link></div>
+        <section className="block">
+          <div className="section-h"><h2>More from {m.events.title}</h2><Link href={`/events/${m.events.slug}#talks`}>All talks of this event →</Link></div>
           <div className="grid">{more.map((o) => <TalkCard key={o.id} m={o} showEvent={false} />)}</div>
         </section>
       )}
-      <PromoStrip lead="Liked this talk?" />
     </div>
   );
 }

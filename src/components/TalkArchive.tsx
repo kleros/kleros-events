@@ -3,8 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { EventRow, Material, MaterialKind } from "@/lib/types";
 import { fmtRange, latestFirst, matchesWords, place, plural } from "@/lib/format";
-import { ArchiveRow, MATERIAL_GROUPS, TalkCard, byTalkRank, isWatchable } from "./MaterialRow";
-import { EventCover } from "./EventCard";
+import { LinkList, MATERIAL_GROUPS, PhotoGrid, TalkCard, byTalkRank, isWatchable, talkRank } from "./MaterialRow";
 
 type Tab = "all" | "talks" | "slides" | "posts";
 // The page is called Talks, so it opens on the talks; "Everything" adds slides, photos and posts.
@@ -18,7 +17,7 @@ const DEFAULT_TAB: Tab = "talks";
 
 type Ev = EventRow;
 
-// Events shown at first, and posts and links shown per event before "Show more".
+// Events shown at first, and posts and links shown per event before "Show all".
 const EVENTS_STEP = 8;
 const ROWS_FIRST = 4;
 
@@ -29,11 +28,12 @@ function filesLabel(items: Material[]) {
   return (s[0].toUpperCase() + s.slice(1)).replace(/ and links and posts$/, ", links and posts");
 }
 
+const isPhoto = (m: Material) => m.kind === "image" && !!m.file_path;
+
 export default function TalkArchive({ materials, events }: { materials: Material[]; events: Ev[] }) {
   const [tab, setTab] = useState<Tab>(DEFAULT_TAB);
   const [q, setQ] = useState("");
   const [limit, setLimit] = useState(EVENTS_STEP);
-  const [open, setOpen] = useState<Set<string>>(new Set());
   const byId = Object.fromEntries(events.map((e) => [e.id, e]));
   const current = TABS.find((t) => t.v === tab)!;
   const kinds = current.kinds;
@@ -61,60 +61,59 @@ export default function TalkArchive({ materials, events }: { materials: Material
   const list = pairs.filter(({ m, e }) => (!kinds || kinds.includes(m.kind)) && matches(m, e));
   const groups = [...new Set(list.map(({ e }) => e.id))].map((id) => byId[id]).sort(latestFirst)
     .map((e) => ({ e, items: list.filter((x) => x.e.id === e.id).map((x) => x.m).sort((a, b) => a.created_at.localeCompare(b.created_at)) }));
-  // the counts follow the search, so a search that finds 3 talks says so on the tab
-  const tabCount = (t: (typeof TABS)[number]) => new Set(pairs.filter(({ m, e }) => (!t.kinds || t.kinds.includes(m.kind)) && matches(m, e)).map(({ m }) => m.id)).size;
   const shown = new Set(list.map(({ m }) => m.id)).size;
   const visible = needle ? groups : groups.slice(0, limit);
+  // posts and links fold after a few, unless searching or on a tab that shows only them
+  const rowsFirst = needle || tab === "slides" || tab === "posts" ? Infinity : ROWS_FIRST;
 
   return (
-    <div className="browser">
-      <div className="toolbar">
-        <div className="seg" role="group" aria-label="Type">
-          {TABS.map((t) => <button key={t.v} aria-pressed={tab === t.v} onClick={() => setTab(t.v)}>{t.label} <span className="n">{tabCount(t)}</span></button>)}
+    <div className="archive">
+      <div className="arch-tools">
+        <div className="tabs" role="group" aria-label="Type">
+          {TABS.map((t) => <button key={t.v} type="button" aria-pressed={tab === t.v} onClick={() => setTab(t.v)}>{t.label}</button>)}
         </div>
-      </div>
-      <div className="refine">
         <input className="search" type="search" placeholder="Search by title, speaker or event" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search the talks" />
       </div>
-      <div className="result-line" role="status">
-        <span>{plural(shown, current.one, current.many)} from {plural(groups.length, "event")}</span>
-        {needle && <button className="link-btn" onClick={() => setQ("")}>Clear search</button>}
-      </div>
+      <p className="result-line" role="status">
+        {needle ? <>{plural(shown, current.one, current.many)} from {plural(groups.length, "event")} · <button type="button" className="link-btn" onClick={() => setQ("")}>Clear search</button></> : null}
+      </p>
 
       {visible.map(({ e, items }) => {
         const watch = items.filter(isWatchable).sort(byTalkRank);
+        const full = watch.filter((m) => talkRank(m) === 0);
+        // clips and videos with no speaker fold under the full talks
+        const extra = watch.filter((m) => talkRank(m) !== 0);
         const rest = items.filter((m) => !isWatchable(m));
-        // posts and links fold after a few, unless searching or on a tab that shows only them
-        const full = open.has(e.id) || !!needle || tab === "slides" || tab === "posts";
-        const rows = full ? rest : rest.slice(0, ROWS_FIRST);
+        const extraGrid = <div className="grid four">{extra.map((m) => <TalkCard key={m.id} m={m} event={e} showEvent={false} />)}</div>;
         return (
           <section key={e.id} className="arch-event">
             <header className="arch-h">
-              <Link className="arch-cover" href={`/events/${e.slug}`} tabIndex={-1} aria-hidden><EventCover e={e} /></Link>
-              <div className="arch-t">
-                <h2><Link href={`/events/${e.slug}`}>{e.title}</Link></h2>
-                <span className="muted small">{fmtRange(e.starts_on, e.ends_on)} · {place(e)} · {plural(items.length, current.one, current.many)}</span>
-              </div>
-              <Link className="btn sm ghost arch-go" href={`/events/${e.slug}`}>Event page →</Link>
+              <h2><Link href={`/events/${e.slug}`}>{e.title}</Link></h2>
+              <p className="arch-meta">{fmtRange(e.starts_on, e.ends_on)} · {place(e)} · {plural(items.length, current.one, current.many)}</p>
             </header>
-            {/* talk cards first, then slides, audio and links in one panel below */}
-            {watch.length > 0 && <div className="media">
-              {watch.map((m) => <TalkCard key={m.id} m={m} event={e} showEvent={false} />)}
-            </div>}
+            {full.length > 0 && <div className="grid">{full.map((m) => <TalkCard key={m.id} m={m} event={e} showEvent={false} />)}</div>}
+            {extra.length > 0 && (full.length > 0
+              ? (
+                <details className="fold" open={!!needle}>
+                  <summary>Clips and short videos ({extra.length})</summary>
+                  {extraGrid}
+                </details>
+              )
+              : extraGrid)}
             {rest.length > 0 && (
-              <div className="files">
+              <div className="arch-files">
                 <h3 className="sub-h">{filesLabel(rest)}</h3>
-                <div className="lib cols">{rows.map((m) => <ArchiveRow key={m.id} m={m} eventSlug={e.slug} />)}</div>
-                {rows.length < rest.length && (
-                  <button className="link-btn" onClick={() => setOpen(new Set(open).add(e.id))}>Show {rest.length - rows.length} more</button>
-                )}
+                <PhotoGrid items={rest.filter(isPhoto)} />
+                <LinkList items={rest.filter((m) => !isPhoto(m))} first={rowsFirst} />
               </div>
             )}
           </section>
         );
       })}
       {visible.length < groups.length && (
-        <button className="btn more" onClick={() => setLimit((n) => n + EVENTS_STEP)}>Show older events ({plural(groups.length - visible.length, "more event")})</button>
+        <div className="arch-more">
+          <button type="button" className="btn more" onClick={() => setLimit((n) => n + EVENTS_STEP)}>Show older events ({plural(groups.length - visible.length, "more event")})</button>
+        </div>
       )}
       {!groups.length && (
         <div className="empty">

@@ -38,9 +38,9 @@ export default function AttendanceButtons({ eventId, past, signedIn, slug }: { e
     <div className="stack" style={{ gap: 8 }}>
       <div className="row-flex">
         {signedIn
-          ? options.map(([v, g, l]) => <button key={v} className={`btn sm ${status === v ? "on" : ""}`} aria-pressed={status === v} onClick={() => save(status === v ? null : v)}><span>{g && <><span aria-hidden>{g}</span> </>}{l}</span></button>)
-          : <Link className="btn sm" href={`/login?next=/events/${slug}`}>Sign in to save this event</Link>}
-        {!past && <a className="btn sm" href={`/events/${slug}/calendar.ics`}>Add to calendar</a>}
+          ? options.map(([v, g, l]) => <button key={v} className={`btn ghost ${status === v ? "on" : ""}`} aria-pressed={status === v} onClick={() => save(status === v ? null : v)}><span>{g && <><span aria-hidden>{g}</span> </>}{l}</span></button>)
+          : <Link className="btn ghost" href={`/login?next=/events/${slug}`}>Sign in to save this event</Link>}
+        {!past && <a className="btn ghost" href={`/events/${slug}/calendar.ics`}>Add to calendar</a>}
       </div>
       {signedIn && status && (
         <div className="field">
