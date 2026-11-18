@@ -860,6 +860,16 @@
       "title": "Clip: Federico Ast with Husam Abboud at the Onchain Legal Summit on who decides when deals between AI agents go wrong (the full session is on YouTube)",
       "speaker": "Federico Ast and Husam Abboud",
       "url": "https://x.com/Kleros_io/status/2120374475506204809"
+    },
+    {
+      "id": "2026-11-18-x-2122899626973954318",
+      "kind": "material",
+      "source": "https://x.com/Kleros_io/status/2122899626973954318",
+      "event_slug": "devcon-8-mumbai",
+      "material_kind": "video",
+      "title": "Clip from Federico Ast's Devcon 8 lightning talk (5 Nov): when agents hire, pay and deliver for people, someone still has to decide who was right",
+      "speaker": "Federico Ast",
+      "url": "https://x.com/Kleros_io/status/2122899626973954318"
     }
   ]
 }
