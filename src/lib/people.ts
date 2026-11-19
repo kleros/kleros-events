@@ -69,7 +69,7 @@ export const PEOPLE: Person[] = [
     x: "JuanSamitier", linkedin: "https://www.linkedin.com/in/juan-samitier-47b4321a5/",
   },
   {
-    slug: "weiwei", name: "Weiwei", role: "Event Manager", aliases: ["Wei Wei Ooi", "Wei Wei"], oldSlugs: ["wei-wei-ooi"],
+    slug: "weiwei", name: "Wei Wei", role: "Event Manager", aliases: ["Wei Wei Ooi", "Weiwei"], oldSlugs: ["wei-wei-ooi"],
     bio: "Runs Kleros at events: booths, side events, workshops and the team's schedule on the ground. The person to talk to about bringing Kleros to your event.",
     x: "weiwei_ooi", linkedin: "https://www.linkedin.com/in/ooiweiwei/",
   },
