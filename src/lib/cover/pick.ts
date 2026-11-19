@@ -46,7 +46,8 @@ export const OFFICIAL: Record<string, string | Cover | null> = {
   "who-judges-the-machines-buenos-aires-2026": "https://serv1.evento-simple.com/imagenes/productores/661/eventos/77/image_xl.png",
   "merge-madrid-2026": "https://www.mmerge.io/img/social_2026.jpg",
   "devcon-8-mumbai": "https://www.devcon.org/assets/images/new-og.jpg",
-  "ethchiangmai-chiang-mai-2026": "https://ethchiangmai.com/assets/bg-full-BA50xEUG.webp",
+  // the organiser's poster with the name, the 4 Seas and sponsor logos (X, 5 Nov 2026); the site itself only has the backdrop
+  "ethchiangmai-chiang-mai-2026": "https://pbs.twimg.com/media/HWWieEtWwAAlrOJ?format=jpg&name=large",
   "ethcc-10-cannes-2027": { src: "https://ethcc.io/ethcc-10-og.png", bg: "#FFFFFF" },
 
   // a designed Kleros visual for the event (blog header, webinar poster)
