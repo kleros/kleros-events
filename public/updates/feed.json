@@ -918,6 +918,26 @@
           "Community"
         ]
       }
+    },
+    {
+      "id": "2026-11-19-x-2122993406532038887",
+      "kind": "material",
+      "source": "https://x.com/Kleros_io/status/2122993406532038887",
+      "event_slug": "the-future-is-tradable",
+      "material_kind": "video",
+      "title": "Clip from Clément Lesaege's talk 'From Event Markets to Information Finance' (15 Oct): as AI makes work cheap to produce, reviewing it becomes the expensive part; opportunity markets built with Seer could act as the filter, with Kleros Court deciding disputed results",
+      "speaker": "Clément Lesaege",
+      "url": "https://x.com/Kleros_io/status/2122993406532038887"
+    },
+    {
+      "id": "2026-11-19-x-2122595495763915053",
+      "kind": "material",
+      "source": "https://x.com/weiwei_ooi/status/2122595495763915053",
+      "event_slug": "ethchiangmai-chiang-mai-2026",
+      "material_kind": "social",
+      "title": "Wei Wei Ooi on Kleros at ETHChiangmai: conversations on the agentic economy and oracles in Chiang Mai, quoting the organiser's sponsor announcement",
+      "speaker": "Wei Wei Ooi",
+      "url": "https://x.com/weiwei_ooi/status/2122595495763915053"
     }
   ]
 }
