@@ -7,8 +7,8 @@ export const SUMMARY_SCHEMA = {
   additionalProperties: false,
   required: ["tldr", "key_points", "chapters", "quotes", "audience_questions", "action_items"],
   properties: {
-    tldr: { type: "string", description: "Two or three sentences on what the talk covered." },
-    key_points: { type: "array", items: { type: "string" }, description: "4 to 8 concrete takeaways." },
+    tldr: { type: "string", description: "Two or three short sentences on the core ideas: what was argued or learned. No venue, session or speaker-introduction framing." },
+    key_points: { type: "array", items: { type: "string" }, description: "3 to 5 short takeaways, one sentence each." },
     chapters: {
       type: "array",
       items: { type: "object", additionalProperties: false, required: ["t", "title"], properties: { t: { type: "number" }, title: { type: "string" } } },
@@ -53,7 +53,8 @@ Rules:
 - Output only JSON that matches the schema. No prose around it.
 - Every "t" is a start time in seconds copied from the bracketed times in the transcript (the line where that chapter, quote or question begins). Never invent times beyond the transcript's end.
 - chapters: 3 to 10 for a long talk (fewer for a short one), in order, the first at t = 0 or the first line. Titles are short plain labels (2 to 7 words), sentence case, no numbering.
-- key_points: 4 to 8 concrete takeaways with specifics (numbers, mechanisms, examples, product names) rather than vague claims.
+- tldr: two or three short sentences (about 60 words in all) on the core ideas, what the speakers argued or what a viewer learns. Do not describe the logistics: no "this session/webinar/panel opens...", no venue, event or hub name, no list of who spoke or of topics covered. Lead with the main idea itself.
+- key_points: 3 to 5 concrete takeaways, one short sentence each (under about 25 words), with specifics (numbers, mechanisms, examples, product names) rather than vague claims.
 - quotes: up to 4 short verbatim sentences worth quoting, cleaned of filler words ("um", "you know") but otherwise exact. speaker only when the transcript or the provided speaker field makes it certain; otherwise an empty string.
 - audience_questions: questions from the audience or the host, if the recording has a Q&A, with a one sentence summary of the answer; an empty list when there is none.
 - action_items: only for a working meeting (a team call, briefing or planning session): the tasks people agreed to do or were asked to do, each as a short instruction starting with a verb, at the time it was agreed. owner only when the recording makes clear who takes it; due only when a day or date is said. An empty list for a talk or panel.
