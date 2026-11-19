@@ -59,7 +59,7 @@ export default function ManageMenu({ slug, eventId, isTeam, hasBareRecordings }:
         <StudioButton mode="files" className="menu-item">Add files or links</StudioButton>
         {hasBareRecordings && <StudioButton mode="slides" className="menu-item">Attach slides to a recording</StudioButton>}
         <Link href={`/admin/events/${eventId}`}>Edit details</Link>
-        {isTeam && <Link href="/admin/recordings">Recordings library</Link>}
+        {isTeam && <Link href="/admin/recordings">All recordings</Link>}
       </div>
     </details>
   );

@@ -28,8 +28,8 @@ export default function RecordStudio() {
         <aside className="panel rs-side">
           <div className="eyebrow">How it works</div>
           <ol className="rs-steps">
-            <li><b>Name it and record.</b> Load the speaker&apos;s PDF to time-stamp each slide change, or record audio only.</li>
-            <li><b>Review and save.</b> A transcript and summary start on their own once it is saved.</li>
+            <li><b>Press Start.</b> Nothing else is needed: the title, speaker and slides can all be added after. Pick <b>Online call</b> to record a Zoom or Meet call in another tab, with the slides it shares.</li>
+            <li><b>Review and save.</b> A transcript and notes (summary, key points, action items) start on their own once it is saved.</li>
             <li><b>Link it to events.</b> Pick any events, drafts included, or create a new one. It then shows in the Talks of each.</li>
           </ol>
           <p className="muted small">Until it is linked to a published event, a recording is visible to the Kleros team only.</p>

@@ -7,7 +7,7 @@ import type { PickEvent } from "@/lib/materials-client";
 import NotTeam from "@/components/NotTeam";
 import RecordingsLibrary from "@/components/studio/RecordingsLibrary";
 
-export const metadata: Metadata = { title: "Recordings library" };
+export const metadata: Metadata = { title: "All recordings" };
 export const dynamic = "force-dynamic";
 
 export default async function RecordingsPage() {

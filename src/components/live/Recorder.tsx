@@ -2,7 +2,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { openPdf, type PdfDoc } from "@/lib/pdf";
-import { addChunk, audioExt, canRecord, dropSession, pickMime, savePdf, saveSession, sessionBlob, sessionPdf, unsavedSessions, type RecSession } from "@/lib/recorder";
+import { addChunk, addFrame, audioExt, canRecord, canShareScreen, dropSession, keepStorage, pickMime, savePdf, saveSession, sessionBlob, sessionFrames, sessionPdf, unsavedSessions, type RecSession } from "@/lib/recorder";
+import { jpegsToPdf } from "@/lib/jpegPdf";
 import { fmtDur, fmtSize, slugify } from "@/lib/format";
 import type { SlideMark } from "@/lib/types";
 import { uploadToStorage } from "@/lib/materials-client";
@@ -46,6 +47,25 @@ const capMsg = (s: number) =>
  * bitrate, so after the first minute the measured rate is used to tell how much time is left.
  */
 const rateAt = (bytes: number, secs: number) => (secs > 60 && bytes > 0 ? bytes / secs : NOMINAL_RATE);
+
+function shareError(e: unknown) {
+  const n = (e as Error)?.name;
+  if (n === "NotAllowedError" || n === "AbortError") return "Nothing was shared, so the recording did not start. Press Start recording again and pick the call's tab or window.";
+  if (n === "NotSupportedError" || n === "TypeError") return "This browser cannot share a screen. Use Chrome or Edge on a laptop for online calls.";
+  return `The screen could not be shared: ${(e as Error)?.message || "unknown error"}.`;
+}
+
+type Frame = { blob: Blob; w: number; h: number; t: number };
+// slides from a shared screen: looked at every 1.5 s on a 32 x 18 thumbnail; a new slide is a picture that
+// changed by more than CHANGED from the last one kept and has held still (under STILL) since the last look (6 lets small webcam tiles move)
+const FRAME_EVERY = 1500, STILL = 6, CHANGED = 9, MAX_FRAMES = 200, FRAME_W = 1600;
+
+/** Builds the slides PDF and slide marks from captured frames (the first one always starts at 0). */
+async function framesToSlides(list: Frame[]) {
+  const blob = await jpegsToPdf(list);
+  const marks = list.map((f, i) => ({ p: i + 1, t: i === 0 ? 0 : f.t }));
+  return { blob, marks };
+}
 
 function micError(e: unknown) {
   const n = (e as Error)?.name;
@@ -124,8 +144,18 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
   const [backup, setBackup] = useState(true);
   const [otherTab, setOtherTab] = useState(false);
   const [supported, setSupported] = useState(true);
+  // in the room (the laptop's microphone) or an online call (a shared tab or window, its sound and the microphone)
+  const [source, setSource] = useState<"room" | "call">("room");
+  const [captureSlides, setCaptureSlides] = useState(true);
+  const [shotCount, setShotCount] = useState(0);
+  const [lastShot, setLastShot] = useState("");
+  const [canShare, setCanShare] = useState(false);
 
   const media = useRef<MediaRecorder | null>(null);
+  const extra = useRef<MediaStream[]>([]);      // the shared screen and the microphone behind a mixed call stream
+  const mixCtx = useRef<AudioContext | null>(null);
+  const frames = useRef<Frame[]>([]);
+  const shotTimer = useRef<ReturnType<typeof setInterval>>(undefined);
   const stream = useRef<MediaStream | null>(null);
   const session = useRef<RecSession | null>(null);
   const chunks = useRef<Blob[]>([]);
@@ -150,7 +180,7 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
 
   const setPhase = useCallback((p: RecPhase) => { setPhaseState(p); }, []);
   useEffect(() => { onPhase?.(phase, title || target?.title); }, [phase, title, target, onPhase]);
-  useEffect(() => { setSupported(canRecord()); }, []);
+  useEffect(() => { setSupported(canRecord()); setCanShare(canShareScreen()); }, []);
 
   // a new session picked from the agenda (only possible while nothing is recorded)
   useEffect(() => {
@@ -160,19 +190,24 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
   }, [target, setPhase]);
 
   // ---------- recovery and other tabs ----------
+  const mountedAt = useRef(Date.now());
   const refreshLeftovers = useCallback(async () => {
     try {
       const all = await unsavedSessions(recKey);
       const now = Date.now();
       // skip the one in progress here and any that another tab is still writing to
-      setLeftovers(all.filter((s) => s.id !== session.current?.id && now - (liveIds.current.get(s.id) ?? 0) > 8000 && now - (s.updatedAt ?? 0) > 12000));
+      // a tab still recording announces itself every 3 s, so once this page has listened for a few
+      // seconds, silence means the recording stopped (a crash or a closed tab) and it can be offered
+      const listened = now - mountedAt.current > 4000;
+      setLeftovers(all.filter((s) => s.id !== session.current?.id && now - (liveIds.current.get(s.id) ?? 0) > 8000 && (listened || now - (s.updatedAt ?? 0) > 12000)));
     } catch { setLeftovers([]); }
   }, [recKey]);
   useEffect(() => {
     refreshLeftovers();
     // a tab that crashed seconds ago still looks "in progress"; look again once it has gone quiet
-    const t = setTimeout(refreshLeftovers, 13000);
-    return () => clearTimeout(t);
+    const t = setTimeout(refreshLeftovers, 4500);
+    const t2 = setTimeout(refreshLeftovers, 13000);
+    return () => { clearTimeout(t); clearTimeout(t2); };
   }, [refreshLeftovers]);
 
   useEffect(() => {
@@ -268,6 +303,7 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
       mounted.current = false;
       if (media.current?.state === "recording") media.current.stop();
       stream.current?.getTracks().forEach((t) => t.stop());
+      stopExtra();
       closeAudio();
       wake.current?.release().catch(() => {});
       wake.current = null;
@@ -288,6 +324,60 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
     if (!mounted.current || media.current?.state !== "recording") { w.release().catch(() => {}); return; }
     if (wake.current && wake.current !== w) wake.current.release().catch(() => {});
     wake.current = w;
+  }
+
+  function stopExtra() {
+    clearInterval(shotTimer.current);
+    extra.current.forEach((x) => x.getTracks().forEach((t) => t.stop()));
+    extra.current = [];
+    const m = mixCtx.current; mixCtx.current = null;
+    if (m && m.state !== "closed") m.close().catch(() => {});
+  }
+
+  /** Watches the shared screen and keeps a picture each time the slide changes. */
+  function watchScreen(track: MediaStreamTrack) {
+    const video = document.createElement("video");
+    video.muted = true; video.playsInline = true;
+    video.srcObject = new MediaStream([track]);
+    video.play().catch(() => {});
+    const small = document.createElement("canvas"); small.width = 32; small.height = 18;
+    const sctx = small.getContext("2d", { willReadFrequently: true });
+    let prev: Uint8ClampedArray | null = null, kept: Uint8ClampedArray | null = null;
+    const gray = (d: Uint8ClampedArray) => { const g = new Uint8ClampedArray(d.length / 4); for (let i = 0; i < g.length; i++) g[i] = (d[i * 4] * 3 + d[i * 4 + 1] * 6 + d[i * 4 + 2]) / 10; return g; };
+    const diff = (a: Uint8ClampedArray, b: Uint8ClampedArray) => { let t = 0; for (let i = 0; i < a.length; i++) t += Math.abs(a[i] - b[i]); return t / a.length; };
+    let busy = false;
+    clearInterval(shotTimer.current);
+    shotTimer.current = setInterval(async () => {
+      if (busy || media.current?.state !== "recording" || !sctx || !video.videoWidth || frames.current.length >= MAX_FRAMES) return;
+      sctx.drawImage(video, 0, 0, 32, 18);
+      const g = gray(sctx.getImageData(0, 0, 32, 18).data);
+      const still = !!prev && diff(g, prev) < STILL;
+      prev = g;
+      if (!still || (kept && diff(g, kept) < CHANGED)) return;
+      kept = g;
+      busy = true;
+      try {
+        const t = clockNow(clock.current);
+        const w = Math.min(FRAME_W, video.videoWidth), h = Math.round(video.videoHeight * (w / video.videoWidth));
+        const big = document.createElement("canvas"); big.width = w; big.height = h;
+        big.getContext("2d")?.drawImage(video, 0, 0, w, h);
+        const blob = await new Promise<Blob | null>((r) => big.toBlob(r, "image/jpeg", 0.8));
+        if (!blob) return;
+        const f = { blob, w, h, t };
+        frames.current.push(f);
+        const n = frames.current.length;
+        setShotCount(n);
+        setLastShot((old) => { if (old) URL.revokeObjectURL(old); return URL.createObjectURL(blob); });
+        marksRef.current = [...marksRef.current, { p: n, t: n === 1 ? 0 : t }];
+        setMarks(marksRef.current);
+        const cur = session.current;
+        if (cur) {
+          addFrame(cur.id, f).catch(() => setBackup(false));
+          session.current = { ...cur, frames: n, marks: marksRef.current, updatedAt: Date.now() };
+          saveSession(session.current).catch(() => setBackup(false));
+        }
+      } finally { busy = false; }
+    }, FRAME_EVERY);
   }
 
   function closeAudio() {
@@ -345,19 +435,54 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
     setErr(""); setWarn("");
     if (!canRecord()) { setErr("This browser cannot record audio. Use a recent version of Chrome, Edge, Firefox or Safari."); return; }
     setPhase("starting");
+    keepStorage();
     let s: MediaStream;
-    try {
-      s = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true, autoGainControl: true } });
-    } catch (e) { setErr(micError(e)); setPhase("setup"); return; }
+    let display: MediaStream | null = null;
+    if (source === "call") {
+      try {
+        display = await navigator.mediaDevices.getDisplayMedia({
+          video: { frameRate: 5 }, audio: true,
+          // Chrome and Edge: offer "share tab audio" / "share system audio", and never this tab itself
+          ...({ systemAudio: "include", selfBrowserSurface: "exclude", surfaceSwitching: "include" } as object),
+        } as DisplayMediaStreamOptions);
+      } catch (e) { setErr(shareError(e)); setPhase("setup"); return; }
+      let mic: MediaStream | null = null;
+      try { mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }); }
+      catch { /* the call's sound alone still makes a recording */ }
+      const callSound = display.getAudioTracks().length > 0;
+      if (!callSound && !mic) {
+        display.getTracks().forEach((t) => t.stop());
+        setErr("There is no sound to record: the shared screen has no sound and the microphone is blocked. Share the call's browser tab with \"Also share tab audio\" ticked, or allow the microphone, then try again.");
+        setPhase("setup"); return;
+      }
+      if (!callSound) setWarn("The shared screen has no sound, so only your microphone is recorded. To record everyone on the call, stop, then share the call's browser tab with \"Also share tab audio\" ticked.");
+      else if (!mic) setWarn("The microphone is blocked, so your own voice is recorded only as the call hears it.");
+      // one recording of the call's sound and the microphone together
+      const ctx = new AudioContext();
+      mixCtx.current = ctx;
+      const dest = ctx.createMediaStreamDestination();
+      if (callSound) ctx.createMediaStreamSource(new MediaStream(display.getAudioTracks())).connect(dest);
+      if (mic) ctx.createMediaStreamSource(mic).connect(dest);
+      ctx.resume().catch(() => {});
+      extra.current = [display, ...(mic ? [mic] : [])];
+      s = dest.stream;
+    } else {
+      try {
+        s = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true, autoGainControl: true } });
+      } catch (e) { setErr(micError(e)); setPhase("setup"); return; }
+    }
     stream.current = s;
 
     const mime = pickMime();
     let mr: MediaRecorder;
     try { mr = new MediaRecorder(s, { ...(mime ? { mimeType: mime } : {}), audioBitsPerSecond: BITRATE }); }
-    catch { try { mr = new MediaRecorder(s); } catch (e) { s.getTracks().forEach((t) => t.stop()); setErr(micError(e)); setPhase("setup"); return; } }
+    catch { try { mr = new MediaRecorder(s); } catch (e) { s.getTracks().forEach((t) => t.stop()); stopExtra(); setErr(micError(e)); setPhase("setup"); return; } }
 
-    const startPage = pdf ? page : 1;
-    marksRef.current = pdf ? [{ p: startPage, t: 0 }] : [];
+    const fromScreen = source === "call" && captureSlides && !!display?.getVideoTracks().length;
+    if (fromScreen) removePdf();
+    frames.current = []; setShotCount(0); setLastShot("");
+    const startPage = pdf && !fromScreen ? page : 1;
+    marksRef.current = pdf && !fromScreen ? [{ p: startPage, t: 0 }] : [];
     setMarks(marksRef.current);
     chunks.current = []; uploaded.current = {}; setBytes(0); setRate(NOMINAL_RATE); setSecs(0); setSaved(null);
 
@@ -365,7 +490,7 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
       id: crypto.randomUUID(), eventId: recKey, startedAt: Date.now(), mime: mr.mimeType || mime || "audio/webm", seconds: 0,
       title: title.trim(), speaker: speaker.trim(), agendaId: target?.agendaId ?? null,
       marks: marksRef.current, pages: pdf?.numPages, hasPdf: !!(pdf && pdfFile), pdfName, pdfBytes: pdf && pdfFile ? pdfFile.size : 0,
-      bytes: 0, updatedAt: Date.now(),
+      bytes: 0, updatedAt: Date.now(), source, frames: 0,
     };
     session.current = sess;
     let ok = true;
@@ -394,11 +519,21 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
       if (total >= STOP_BYTES && mr.state === "recording") { setWarn(capMsg(clockNow(clock.current) || MAX_SECS)); stop(); }
     };
     mr.onerror = () => setErr("The browser reported a recording error. What was captured so far is kept.");
-    mr.onstop = () => {
+    mr.onstop = async () => {
       const dur = clockNow(clock.current);
       clock.current.stopAt = dur;
       s.getTracks().forEach((t) => t.stop());
+      stopExtra();
       closeAudio();
+      if (frames.current.length) {
+        // the slides seen on the shared screen become an ordinary slide-synced talk
+        try {
+          const { blob: deck, marks: m } = await framesToSlides(frames.current);
+          setPdf(await openPdf(await deck.arrayBuffer())); setPdfFile(deck); setPdfName("Slides from the shared screen.pdf");
+          marksRef.current = m; setMarks(m);
+          if (session.current) await savePdf(session.current.id, deck).catch(() => {});
+        } catch { setWarn("The slides from the shared screen could not be put together, so the recording is saved as audio only."); }
+      }
       setSecs(dur);
       setWarn((w) => (w === WARN_MSG ? "" : w)); // the time-left warning no longer applies once stopped
       const b = new Blob(chunks.current, { type: mr.mimeType || sess.mime });
@@ -409,6 +544,17 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
       setBlob(b);
       setPhase("review");
     };
+    if (display) {
+      const v = display.getVideoTracks()[0];
+      if (v) v.onended = () => {
+        clearInterval(shotTimer.current);
+        if (media.current?.state !== "recording") return;
+        // the call's sound came with the shared screen; with no microphone there is nothing left to record
+        if (extra.current.length < 2) { setWarn("Screen sharing stopped, so the recording stopped. Everything captured up to that point is below."); stop(); }
+        else setWarn("Screen sharing stopped. The recording carries on with your microphone only. Stop and start again to share the call once more.");
+      };
+      if (fromScreen && v) watchScreen(v);
+    }
     s.getAudioTracks().forEach((t) => {
       t.onended = () => {
         if (media.current?.state === "recording") {
@@ -445,7 +591,8 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
   }
 
   // ---------- after stop ----------
-  async function recover(s: RecSession) {
+  async function recover(rec: RecSession) {
+    let s = rec;
     setErr(""); setConfirm("");
     try {
       const b = await sessionBlob(s);
@@ -455,6 +602,15 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
       setTitle(s.title || target?.title || ""); setSpeaker(s.speaker || target?.speaker || "");
       marksRef.current = s.marks ?? []; setMarks(marksRef.current);
       setSecs(s.seconds); setBytes(b.size);
+      const shots = s.source === "call" && s.frames && !s.hasPdf ? await sessionFrames(s.id).catch(() => []) : [];
+      if (shots.length) {
+        const { blob: deck, marks: m } = await framesToSlides(shots);
+        s = { ...s, marks: m, hasPdf: true, pdfName: "Slides from the shared screen.pdf" };
+        marksRef.current = m; setMarks(m);
+        await savePdf(s.id, deck).catch(() => {});
+        session.current = s;
+        await saveSession(s).catch(() => {});
+      }
       const kept = s.hasPdf ? await sessionPdf(s.id).catch(() => null) : null;
       if (kept) {
         try { setPdf(await openPdf(await kept.arrayBuffer())); setPdfFile(kept); setPdfName(s.pdfName || "slides.pdf"); }
@@ -616,11 +772,27 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
         <div className="rec-setup">
           {!target?.agendaId && (
             <div className="two">
-              <div className="field"><label htmlFor="rec-t">Title</label><input id="rec-t" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What this session is called" /></div>
-              <div className="field"><label htmlFor="rec-s">Speaker</label><input id="rec-s" value={speaker} onChange={(e) => setSpeaker(e.target.value)} placeholder="Full name" /></div>
+              <div className="field"><label htmlFor="rec-t">Title <span className="muted">(can be added after)</span></label><input id="rec-t" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What this session is called" /></div>
+              <div className="field"><label htmlFor="rec-s">Speaker <span className="muted">(optional)</span></label><input id="rec-s" value={speaker} onChange={(e) => setSpeaker(e.target.value)} placeholder="Full name" /></div>
             </div>
           )}
 
+          <div className="rec-source" role="radiogroup" aria-label="What are you recording?">
+            <button type="button" role="radio" aria-checked={source === "room"} className={`rec-src ${source === "room" ? "on" : ""}`} onClick={() => setSource("room")} disabled={phase === "starting"}>
+              <b>In the room</b><span className="muted small">A talk or meeting around you, through this laptop&apos;s microphone</span>
+            </button>
+            <button type="button" role="radio" aria-checked={source === "call"} className={`rec-src ${source === "call" ? "on" : ""}`} onClick={() => setSource("call")} disabled={phase === "starting" || !canShare}>
+              <b>Online call</b><span className="muted small">{canShare ? "Zoom, Meet or a webinar in another tab: its sound, your voice, and the shared slides" : "Needs Chrome or Edge on a laptop"}</span>
+            </button>
+          </div>
+
+          {source === "call" ? (
+            <div className="rec-step">
+              <p className="small"><b>How it works:</b> press Start, then pick the <b>browser tab</b> with the call and keep <b>Also share tab audio</b> switched on. Everyone on the call is recorded, and your microphone adds your own voice.</p>
+              <p className="muted small">Join Zoom from the browser (zoom.us, &quot;Join from your browser&quot;) for this: the Zoom app&apos;s sound cannot be shared on a Mac. On Windows you can share the whole screen with system audio instead.</p>
+              <label className="check small"><input type="checkbox" checked={captureSlides} onChange={(e) => setCaptureSlides(e.target.checked)} disabled={phase === "starting"} /> Capture slides from the shared screen (a picture each time the screen changes, synced with the audio)</label>
+            </div>
+          ) : (
           <div className="rec-step">
             <div className="rec-step-h">
               <span className="lbl">Slides <span className="muted">(optional)</span></span>
@@ -649,10 +821,11 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
               </div>
             )}
           </div>
+          )}
 
           <div className="rec-go">
             <button className="btn primary rec-start" onClick={start} disabled={phase === "starting" || !supported}>
-              <span className="dot" /> {phase === "starting" ? "Waiting for the microphone…" : "Start recording"}
+              <span className="dot" /> {phase === "starting" ? (source === "call" ? "Choose the call's tab…" : "Waiting for the microphone…") : "Start recording"}
             </button>
             <p className="muted small">Audio is kept on this laptop every few seconds while recording, so nothing is lost if the tab closes. Keep the laptop plugged in.</p>
           </div>
@@ -686,6 +859,12 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
               </div>
               <p className="muted small rec-hint">Change slides when the speaker does. The ← and → keys and most presenter clickers work too.</p>
             </div>
+          ) : source === "call" ? (
+            <div className="rec-audio-only">
+              {lastShot ? <img src={lastShot} alt="Latest slide captured from the shared screen" className="rec-shot" /> : null}
+              <b>Recording the call{captureSlides ? ` · ${shotCount} ${shotCount === 1 ? "slide" : "slides"} captured` : ""}</b>
+              <span className="muted small">You can switch to the call&apos;s tab. Come back here to stop. If you stop sharing, the recording stops and is kept for review.</span>
+            </div>
           ) : (
             <div className="rec-audio-only">
               <b>Recording audio only</b>
@@ -714,8 +893,8 @@ export default function Recorder({ eventId, slug, eventTitle, target, onPhase, o
               }} />
           )}
           <div className="two">
-            <div className="field"><label htmlFor="rv-t">Title</label><input id="rv-t" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={eventTitle ? `${eventTitle} recording` : "What this recording is called"} disabled={phase === "saving"} /></div>
-            <div className="field"><label htmlFor="rv-s">Speaker</label><input id="rv-s" value={speaker} onChange={(e) => setSpeaker(e.target.value)} placeholder="Full name" disabled={phase === "saving"} /></div>
+            <div className="field"><label htmlFor="rv-t">Title <span className="muted">(you can leave it)</span></label><input id="rv-t" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={eventTitle ? `${eventTitle} recording` : "What this recording is called"} disabled={phase === "saving"} /></div>
+            <div className="field"><label htmlFor="rv-s">Speaker <span className="muted">(optional)</span></label><input id="rv-s" value={speaker} onChange={(e) => setSpeaker(e.target.value)} placeholder="Full name" disabled={phase === "saving"} /></div>
           </div>
           <div className="rec-facts mono small">
             <span>{fmtDur(secs)}</span><span>{fmtSize(blob.size)}{pdf && pdfFile ? ` + ${fmtSize(pdfFile.size)} slides` : ""}</span>

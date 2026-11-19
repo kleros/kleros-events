@@ -94,8 +94,8 @@ export default function RecordingsLibrary({ materials, events, txStatus, linksRe
     <div className="wrap page stack adm-page">
       <header className="adm-head">
         <div>
-          <h1>Recordings library</h1>
-          <p className="muted">Every talk, recording and video, with the events it belongs to. A recording can be linked to several events. One with no published event is visible to the team only, and one that belongs only to private events is visible only to their creators and collaborators.</p>
+          <h1>All recordings</h1>
+          <p className="muted">Every talk, recording and video in one place, with its transcript and the events it belongs to. It lives in the team area because a new recording stays with the team until you link it to an event. Linked to a published event, it shows on that event&apos;s page for everyone. Linked only to private events, only their creator and collaborators can play it.</p>
         </div>
         <Link className="btn primary" href="/record"><span className="dot" aria-hidden /> Record a session</Link>
       </header>

@@ -297,3 +297,14 @@ body:has(.scr-page) { overflow: hidden; }
 
 /* single-column grids never grow wider than their panel */
 .bs-join, .rec-setup, .rec-live, .rec-review, .rec-saved, .rec-step, .rec-slides, .rec-recover, .qp-list, .qp-item, .sl-list, .qa, .qa-form, .qa-list, .qa-list-wrap { grid-template-columns: minmax(0, 1fr); }
+
+/* recorder: what is being recorded (in the room / online call) */
+.rec-source { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.rec-src { display: grid; gap: 4px; text-align: left; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; font: inherit; }
+.rec-src b { font-weight: 600; color: var(--white); }
+.rec-src.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.rec-src:disabled { opacity: .55; cursor: not-allowed; }
+.rec-step .check { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
+.rec-step .check input { margin-top: 3px; accent-color: var(--accent); }
+.rec-shot { width: 100%; max-width: 520px; border-radius: 8px; border: 1px solid var(--line); margin-bottom: 8px; }
+@media (max-width: 560px) { .rec-source { grid-template-columns: minmax(0, 1fr); } }

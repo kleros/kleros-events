@@ -77,6 +77,9 @@ export interface RecSession {
   pdfBytes?: number;
   bytes?: number;
   updatedAt?: number;
+  /** online call: the slides were captured from the shared screen, kept as pictures (see addFrame) */
+  frames?: number;
+  source?: "room" | "call";
 }
 
 export async function saveSession(s: RecSession) {
@@ -106,6 +109,24 @@ export async function addChunk(session: string, blob: Blob) {
   await done(tx);
 }
 
+/** A slide captured from a shared screen, kept beside the audio chunks under its own key. */
+export async function addFrame(session: string, frame: { blob: Blob; w: number; h: number; t: number }) {
+  const db = await open();
+  const tx = db.transaction("chunks", "readwrite");
+  tx.objectStore("chunks").add({ session: `${session}#frames`, blob: frame.blob, w: frame.w, h: frame.h, t: frame.t });
+  await done(tx);
+}
+
+export async function sessionFrames(session: string): Promise<{ blob: Blob; w: number; h: number; t: number }[]> {
+  const db = await open();
+  return (await req(db.transaction("chunks").objectStore("chunks").index("session").getAll(`${session}#frames`))) as { blob: Blob; w: number; h: number; t: number }[];
+}
+
+/** Asks the browser not to clear this site's storage when space runs low, so a backup survives. */
+export async function keepStorage() {
+  try { await navigator.storage?.persist?.(); } catch { /* not offered: the backup still works */ }
+}
+
 export async function unsavedSessions(eventId: string): Promise<RecSession[]> {
   const db = await open();
   const all = (await req(db.transaction("sessions").objectStore("sessions").getAll())) as RecSession[];
@@ -124,8 +145,10 @@ export async function dropSession(id: string) {
   tx.objectStore("sessions").delete(id);
   tx.objectStore("pdfs").delete(id);
   const idx = tx.objectStore("chunks").index("session");
-  const r = idx.openKeyCursor(IDBKeyRange.only(id));
-  r.onsuccess = () => { const c = r.result; if (c) { tx.objectStore("chunks").delete(c.primaryKey); c.continue(); } };
+  for (const key of [id, `${id}#frames`]) {
+    const r = idx.openKeyCursor(IDBKeyRange.only(key));
+    r.onsuccess = () => { const c = r.result; if (c) { tx.objectStore("chunks").delete(c.primaryKey); c.continue(); } };
+  }
   await done(tx);
 }
 
@@ -137,6 +160,9 @@ export function pickMime() {
   }
   return "";
 }
+
+/** Online calls: the browser can share a tab or window with its sound (Chrome and Edge; Firefox and Safari share no sound). */
+export const canShareScreen = () => typeof navigator !== "undefined" && !!navigator.mediaDevices?.getDisplayMedia;
 
 export const canRecord = () =>
   typeof window !== "undefined" && typeof MediaRecorder !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
