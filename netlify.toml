@@ -13,3 +13,7 @@
   # site at another database by mistake (netlify.toml wins over the UI). Secret keys never go here.
   NEXT_PUBLIC_SUPABASE_URL = "https://pdrvfjmhmauovehanyan.supabase.co"
   NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_aojO60b1fNRj6AOG6lPSRw_pzbnSnlI"
+  # Cloudflare Turnstile bot check on sign-in and guest questions (widget "Kleros Events sign-in" in
+  # weiwei@kleros.io's Cloudflare account, hostnames events.kleros.io and kleros-events.vercel.app). The site key is
+  # public; its secret is pasted only into Supabase > Authentication > Attack Protection.
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY = "0x4AAAAAAGIy4qsDlR6kZN1U"
