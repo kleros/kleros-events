@@ -105,7 +105,11 @@ export default function AttendanceButtons({ eventId, past, signedIn, slug, calen
             </button>
           </>
         ) : (
-          <Link className="btn ghost act" href={`/login?next=/events/${slug}`}><BookmarkIcon on={false} /><span>Save</span></Link>
+          <>
+            {/* signed out: both lead to sign-in and back here */}
+            <Link className="btn ghost act" href={`/login?next=/events/${slug}`}><BookmarkIcon on={false} /><span>Save</span></Link>
+            <Link className="btn ghost act" href={`/login?next=/events/${slug}`}><CheckIcon on={false} /><span>{past ? "I was there" : "I'm going"}</span></Link>
+          </>
         )}
         {!past && calendarUrl && (
           <span className="cal-pair">

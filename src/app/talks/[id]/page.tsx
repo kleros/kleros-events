@@ -37,8 +37,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const img = videoThumb(m);
   return {
     title: m.title, description,
-    openGraph: { siteName: "Kleros Events", title: m.title, description, ...(img ? { images: [img] } : {}) },
-    twitter: { card: img ? "summary_large_image" : "summary", site: "@kleros_io", title: m.title, description, ...(img ? { images: [img] } : {}) },
+    // with no video picture, the site's own share picture (app/share-image/route.tsx)
+    openGraph: { siteName: "Kleros Events", title: m.title, description, images: [img ?? "/share-image"] },
+    twitter: { card: "summary_large_image", site: "@kleros_io", title: m.title, description, images: [img ?? "/share-image"] },
   };
 }
 

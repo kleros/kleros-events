@@ -15,6 +15,9 @@ import SiteFooter from "@/components/SiteFooter";
 import AskLauncher from "@/components/ask/AskLauncher";
 import { SITE_URL } from "@/lib/kleros";
 
+// the site's own share picture (app/share-image/route.tsx); event pages swap in their own
+const SHARE_IMAGE = { url: "/share-image", width: 1200, height: 630, alt: "Kleros Events" };
+
 // Kleros house faces: Instrument Serif for display, Geist for text, a mono for chips.
 const display = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-display" });
 const body = Geist({ subsets: ["latin"], variable: "--font-body" });
@@ -24,8 +27,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: { default: "Kleros Events", template: "%s · Kleros Events" },
   description: "Every event Kleros hosts or takes part in, with the talks, slides and recordings to match.",
-  openGraph: { siteName: "Kleros Events", type: "website" },
-  twitter: { card: "summary_large_image", site: "@kleros_io" },
+  openGraph: { siteName: "Kleros Events", type: "website", images: [SHARE_IMAGE] },
+  twitter: { card: "summary_large_image", site: "@kleros_io", images: [SHARE_IMAGE.url] },
 };
 
 // A saved light or dark choice goes on <html> before the first paint. With none, CSS color-scheme follows the OS.

@@ -174,3 +174,16 @@ export function shareFallbackTree(): CoverNode {
   const logoH = 64;
   return frame(w, h, { size: 900, right: -170, top: -190, turn: -8, opacity: 0.14 }, lockup(80, (h - logoH) / 2, logoH));
 }
+
+/** The share image for the site's own pages (home, events, talks, people): the lockup and the site's line. */
+export function siteShareTree(): CoverNode {
+  const { width: w, height: h } = SHARE_SIZE;
+  const m = 80, logoH = 56;
+  return frame(w, h, { size: 900, right: -170, top: -190, turn: -8, opacity: 0.14 },
+    lockup(m, 92, logoH),
+    el("div", { style: { position: "absolute", left: m + "px", bottom: "150px", display: "flex", flexDirection: "column", fontFamily: SERIF, fontSize: "76px", lineHeight: 1.05, color: INK } },
+      line("Where Kleros shows up,"),
+      el("div", { style: { display: "flex", whiteSpace: "nowrap", color: ROLE } }, "and what was said there.".replace(/ /g, " "))),
+    el("div", { style: { position: "absolute", left: m + "px", bottom: "84px", display: "flex", fontFamily: SANS, fontSize: "28px", lineHeight: 1.3, color: META } },
+      line("Events, talks, slides and recordings · events.kleros.io")));
+}
