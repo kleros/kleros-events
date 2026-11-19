@@ -32,7 +32,7 @@ export function EventCover({ e, className = "" }: { e: EventRow; className?: str
         title={e.title}
         meta={`${fmtRange(e.starts_on, e.ends_on)} · ${place(e)}`}
         role={ROLE_LABEL[e.kleros_role]}
-        art={pick ? { src: fileUrl(pick.src), crop: pick.fit === "cover", position: pick.position, bg: pick.bg } : null}
+        art={pick ? { src: fileUrl(pick.src), crop: pick.fit === "cover", position: pick.position, bg: pick.bg, logo: pick.logo } : null}
         seed={e.slug}
       />
     </span>

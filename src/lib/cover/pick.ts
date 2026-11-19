@@ -15,6 +15,8 @@ export type Cover = {
   position?: string;
   /** a colour behind the picture, for a poster with a see-through background */
   bg?: string;
+  /** the organiser's own logo, laid over the middle of a backdrop that has no words on it */
+  logo?: string;
 };
 
 /**
@@ -46,8 +48,8 @@ export const OFFICIAL: Record<string, string | Cover | null> = {
   "who-judges-the-machines-buenos-aires-2026": "https://serv1.evento-simple.com/imagenes/productores/661/eventos/77/image_xl.png",
   "merge-madrid-2026": "https://www.mmerge.io/img/social_2026.jpg",
   "devcon-8-mumbai": "https://www.devcon.org/assets/images/new-og.jpg",
-  // the organiser's poster with the name, the 4 Seas and sponsor logos (X, 5 Nov 2026); the site itself only has the backdrop
-  "ethchiangmai-chiang-mai-2026": "https://pbs.twimg.com/media/HWWieEtWwAAlrOJ?format=jpg&name=large",
+  // the site's wide backdrop with the organiser's full logo over it (Wei Wei, 19 Nov: the backdrop alone is too empty)
+  "ethchiangmai-chiang-mai-2026": { src: "https://ethchiangmai.com/assets/bg-full-BA50xEUG.webp", logo: "https://ethchiangmai.com/assets/logo-long-C5f1zDbE.svg" },
   "ethcc-10-cannes-2027": { src: "https://ethcc.io/ethcc-10-og.png", bg: "#FFFFFF" },
 
   // a designed Kleros visual for the event (blog header, webinar poster)

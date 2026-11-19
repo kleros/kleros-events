@@ -57,6 +57,11 @@
 /* a square or tall poster: whole, over a soft blurred copy of itself */
 .kt-poster.whole { object-fit: contain; }
 .kt-blur { position: absolute; inset: -12%; width: 124%; height: 124%; object-fit: cover; filter: blur(22px) saturate(1.1) brightness(0.62); }
+/* a non-landscape poster's own edges, stretched out to the tile's sides (EventTile Edges) */
+.kt-edge { position: absolute; top: 0; bottom: 0; display: block; background-repeat: no-repeat; filter: blur(3px) saturate(1.05); transform: scale(1.04); }
+.kt-poster.whole { z-index: 1; }
+/* the organiser's logo over a backdrop without words */
+.kt-logo { position: absolute; z-index: 2; left: 50%; top: 50%; width: 64%; max-height: 40%; object-fit: contain; transform: translate(-50%, -50%); filter: drop-shadow(0 1px 10px rgb(255 255 255 / 0.55)); }
 /* no poster: a quiet Kleros ground with the wordmark */
 .kt.noart .kt-pic {
   background:
