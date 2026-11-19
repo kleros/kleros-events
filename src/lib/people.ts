@@ -24,12 +24,12 @@ export interface Person {
 
 export const PEOPLE: Person[] = [
   {
-    slug: "federico-ast", name: "Federico Ast", role: "Co-founder and CEO",
+    slug: "federico-ast", name: "Federico Ast", role: "Co-founder & CEO",
     bio: "Co-founded Kleros and speaks on decentralized justice, governance and the legal side of blockchains.",
     x: "federicoast", linkedin: "https://www.linkedin.com/in/federicoast/",
   },
   {
-    slug: "clement-lesaege", name: "Clément Lesaege", role: "Co-founder and CTO",
+    slug: "clement-lesaege", name: "Clément Lesaege", role: "Co-founder & CTO",
     bio: "Co-founded Kleros and leads its technology, from the court's game theory to prediction markets and AI agents.",
     x: "clesaege", aliases: ["Clement Lesaege"],
   },
