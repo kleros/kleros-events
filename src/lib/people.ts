@@ -24,7 +24,7 @@ export interface Person {
 
 export const PEOPLE: Person[] = [
   {
-    slug: "federico-ast", name: "Federico Ast", role: "Founder and CEO",
+    slug: "federico-ast", name: "Federico Ast", role: "Co-founder and CEO",
     bio: "Co-founded Kleros and speaks on decentralized justice, governance and the legal side of blockchains.",
     x: "federicoast", linkedin: "https://www.linkedin.com/in/federicoast/",
   },
@@ -53,11 +53,11 @@ export const PEOPLE: Person[] = [
     aliases: ["Juan Ramiro Garza Quintanilla", "Juan Ramiro Garza"], oldSlugs: ["juan-ramiro-garza"],
   },
   {
-    slug: "facundo-trotz", name: "Facundo Trotz", role: "Legal and Policy",
+    slug: "facundo-trotz", name: "Facundo Trotz", role: "Policy Writer",
     x: "facundo_trotz", linkedin: "https://www.linkedin.com/in/facundotrotz/",
   },
   {
-    slug: "lucia-bocalandro", name: "Lucía Bocalandro", role: "Business Development and Product",
+    slug: "lucia-bocalandro", name: "Lucía Bocalandro", role: "Business Development",
     x: "LuBocalandro", linkedin: "https://www.linkedin.com/in/luciabocalandro/", aliases: ["Lucia Bocalandro"],
   },
   {
@@ -65,7 +65,7 @@ export const PEOPLE: Person[] = [
     linkedin: "https://www.linkedin.com/in/parulyadav18/",
   },
   {
-    slug: "juan-samitier", name: "Juan Samitier", role: "Finance",
+    slug: "juan-samitier", name: "Juan Samitier", role: "Finance Manager",
     x: "JuanSamitier", linkedin: "https://www.linkedin.com/in/juan-samitier-47b4321a5/",
   },
   {
