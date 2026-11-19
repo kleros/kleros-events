@@ -6,7 +6,7 @@ import type { Material } from "@/lib/types";
 import { getEvent, eventCounts, listEvents, listMaterials } from "@/lib/data";
 import Related from "@/components/Related";
 import { eventProfile, related } from "@/lib/related";
-import { cleanDescription, excerpt, fmtRange, googleCalendarUrl, isLive, isPast, place, plural } from "@/lib/format";
+import { cleanDescription, excerpt, fmtRange, googleCalendarUrl, isLive, isPast, place, plural, safeHref } from "@/lib/format";
 import { ROLE_LABEL, SITE_URL, productsFor } from "@/lib/kleros";
 import { EventCover } from "@/components/EventCard";
 import { LinkList, MATERIAL_GROUPS, PhotoGrid, TalkCard, byTalkRank, isTalkLike, linkUrl, sourceOf, talkRank } from "@/components/MaterialRow";
@@ -107,7 +107,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const statusWord = isLive(e) ? <span className="st live">Happening now</span> : e.is_example ? <span className="st ex">Example</span> : null;
   const turnout = past ? (c.attended > 0 ? `${c.attended} attended` : "") : c.going > 0 ? `${c.going} going` : "";
   // before the event its link is the ticket button; after it, the official site
-  const site = past && e.url ? <a className="text-link" href={e.url} target="_blank" rel="noopener">{sourceOf(e.url) || "Official site"}<Ext /></a> : null;
+  const site = past && linkUrl(e.url) ? <a className="text-link" href={linkUrl(e.url)} target="_blank" rel="noopener">{sourceOf(e.url) || "Official site"}<Ext /></a> : null;
   const organiser = e.organizer || site ? (
     <p className="organiser">{e.organizer && <>Organised by {e.organizer}</>}{e.organizer && site && " · "}{site}</p>
   ) : null;
@@ -129,7 +129,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         {!hasAbout && organiser}
         <div className="ev-actions">
           {past && talks.length > 0 && <a className="btn primary" href="#talks">Watch {plural(talks.length, "talk")}</a>}
-          {e.url && !past && <a className="btn primary" href={e.url} target="_blank" rel="noopener">{ticketLabel}<Ext /></a>}
+          {linkUrl(e.url) && !past && <a className="btn primary" href={linkUrl(e.url)} target="_blank" rel="noopener">{ticketLabel}<Ext /></a>}
           <AttendanceButtons eventId={e.id} past={past} signedIn={!!user} slug={e.slug} calendarUrl={googleCalendarUrl(e, `${SITE_URL}/events/${e.slug}`)} />
           {canEdit && <ManageMenu slug={e.slug} eventId={e.id} isTeam={isTeam} hasBareRecordings={bareRecordings.length > 0} />}
         </div>
@@ -253,7 +253,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             <p>{past
               ? "Missed the team at this one? Send a request anyway. The team follows up on every one."
               : "Book time with the team to talk about integrating Kleros, becoming a juror, or partnering."}</p>
-            {booker?.calendar_url && <a className="btn primary" href={booker.calendar_url} target="_blank" rel="noopener">Pick a time with {booker.name.split(" ")[0]}<Ext /></a>}
+            {booker && safeHref(booker.calendar_url) && <a className="btn primary" href={safeHref(booker.calendar_url)} target="_blank" rel="noopener">Pick a time with {booker.name.split(" ")[0]}<Ext /></a>}
             {/* requests are read by the whole team; this section is not shown on a private event's page */}
             <MeetingForm eventId={e.id} />
             {products.length > 0 && (

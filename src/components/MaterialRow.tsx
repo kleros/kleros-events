@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Fragment } from "react";
 import type { EventRow, Material, MaterialKind } from "@/lib/types";
-import { fmtDur, fmtSize, plural } from "@/lib/format";
+import { fmtDur, fmtSize, plural, safeHref } from "@/lib/format";
 import Thumb from "./Thumb";
 import GenCover from "./Cover";
 import Ext from "./Ext";
@@ -33,7 +33,7 @@ const OLD_PUBLIC = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/pu
  */
 export function linkUrl(url: string | null | undefined): string {
   if (!url) return "";
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !url.startsWith(OLD_PUBLIC)) return url;
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !url.startsWith(OLD_PUBLIC)) return safeHref(url);
   try {
     return fileUrl(url.slice(OLD_PUBLIC.length).split(/[?#]/)[0].split("/").map(decodeURIComponent).join("/"));
   } catch {

@@ -30,8 +30,12 @@ export default function RecordingSlides({ m, canEdit }: { m: Rec; canEdit: boole
 
   function openSide() {
     const w = Math.round(window.screen.availWidth * 0.62), h = Math.round(window.screen.availHeight * 0.85);
-    const win = window.open(url, "kleros-slides", `popup,width=${w},height=${h},left=0,top=0`);
-    if (!win) window.open(url, "_blank", "noopener");
+    // the slides link can be any https page: open a blank window first and cut its opener before
+    // it loads, so that page cannot navigate this one (reverse tabnabbing); "noopener" in the
+    // features would make window.open return null and the fallback would open a second tab
+    const win = window.open("about:blank", "kleros-slides", `popup,width=${w},height=${h},left=0,top=0`);
+    if (win) { win.opener = null; win.location.href = url; }
+    else window.open(url, "_blank", "noopener");
   }
 
   async function saveLink(ev: React.FormEvent<HTMLFormElement>) {

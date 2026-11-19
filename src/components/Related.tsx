@@ -2,6 +2,7 @@ import type { Related as R } from "@/lib/related";
 import EventCard from "./EventCard";
 import { TalkCard } from "./MaterialRow";
 import Ext from "./Ext";
+import { safeHref } from "@/lib/format";
 
 const host = (u: string) => u.replace(/^https?:\/\/(www\.)?/, "").split("/")[0];
 
@@ -12,7 +13,7 @@ export function ReadList({ reads }: { reads: R["reads"] }) {
     <ul className="links reads">
       {reads.map(({ r, because }) => (
         <li key={r.id}>
-          <a className="link-row read-row" href={r.url} target="_blank" rel="noopener">
+          <a className="link-row read-row" href={safeHref(r.url) || undefined} target="_blank" rel="noopener">
             <span className="link-t">{r.title}</span>
             <span className="link-s">{r.kind} · {host(r.url)}<Ext /></span>
             <span className="read-d">{because ? `${because}. ` : ""}{r.blurb}</span>

@@ -6,6 +6,7 @@ import type { Segment, Summary } from "./types";
 import { cleanSegments, joinParts } from "./parse";
 import { SUMMARY_SCHEMA, SUMMARY_SYSTEM, chunkSegments, extractJson, mergeSummaries, normaliseSummary, userPrompt, type TalkInfo } from "./summary";
 import { isWebm, splitWebm } from "./webm";
+import { publicFetch, readCapped, TooLargeError, UnsafeUrlError } from "../publicFetch";
 
 const env = (k: string) => process.env[k]?.trim() || "";
 const MB = 1024 * 1024;
@@ -47,19 +48,31 @@ async function withRetry(label: string, fn: () => Promise<Response>, tries = 3):
 /** Content-Length of a public file, or 0 when the server does not say. */
 async function remoteSize(url: string): Promise<number> {
   try {
-    const r = await fetch(url, { method: "HEAD", cache: "no-store" });
+    // a recording can be any full URL an editor typed in: publicFetch refuses local and internal addresses
+    const r = await publicFetch(url, { method: "HEAD", signal: AbortSignal.timeout(15_000) });
     if (!r.ok) throw new ProviderError(`The recording could not be found at its storage address (${r.status}).`, 422);
     return Number(r.headers.get("content-length")) || 0;
   } catch (e) {
     if (e instanceof ProviderError) throw e;
+    if (e instanceof UnsafeUrlError) throw new ProviderError(`The recording's address cannot be fetched: ${e.message}`, 422);
     return 0;
   }
 }
 
+/** The most this server reads of a recording into memory to send it on in parts (TRANSCRIBE_DOWNLOAD_MAX_MB, default 500). */
+const downloadLimit = () => (Number(env("TRANSCRIBE_DOWNLOAD_MAX_MB")) || 500) * MB;
+
 async function download(url: string): Promise<{ bytes: Uint8Array; type: string }> {
-  const r = await fetch(url, { cache: "no-store" });
-  if (!r.ok) throw new ProviderError(`The recording could not be downloaded (${r.status}).`, 422);
-  return { bytes: new Uint8Array(await r.arrayBuffer()), type: r.headers.get("content-type") || "" };
+  const max = downloadLimit();
+  try {
+    const r = await publicFetch(url);
+    if (!r.ok) throw new ProviderError(`The recording could not be downloaded (${r.status}).`, 422);
+    return { bytes: await readCapped(r, max), type: r.headers.get("content-type") || "" };
+  } catch (e) {
+    if (e instanceof UnsafeUrlError) throw new ProviderError(`The recording's address cannot be fetched: ${e.message}`, 422);
+    if (e instanceof TooLargeError) throw new ProviderError(`The recording is above ${Math.round(max / MB)} MB, too large to transcribe here. Upload a transcript file (.srt, .vtt or .txt) instead.`, 413);
+    throw e;
+  }
 }
 
 // ---------------------------------------------------------------- transcription

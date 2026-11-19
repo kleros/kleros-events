@@ -21,7 +21,8 @@ create table if not exists talk_stats (
 );
 alter table talk_stats enable row level security;
 drop policy if exists "talk stats are public" on talk_stats;
-create policy "talk stats are public" on talk_stats for select using (true);
+-- Stats follow their talk: a private or draft recording's YouTube id stays hidden (security audit 2026-11-19).
+create policy "talk stats are public" on talk_stats for select using (material_visible(material_id));
 grant select on talk_stats to anon, authenticated;
 
 create table if not exists talk_stats_log (

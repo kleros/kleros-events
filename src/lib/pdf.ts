@@ -15,6 +15,7 @@ export function loadPdfJs(): Promise<PdfJs> {
 
 export async function openPdf(src: string | ArrayBuffer) {
   const pdfjs = await loadPdfJs();
-  return pdfjs.getDocument(typeof src === "string" ? { url: src } : { data: new Uint8Array(src) }).promise;
+  // isEvalSupported: false keeps pdf.js from compiling font code with new Function, which the CSP forbids
+  return pdfjs.getDocument({ ...(typeof src === "string" ? { url: src } : { data: new Uint8Array(src) }), isEvalSupported: false }).promise;
 }
 export type PdfDoc = Awaited<ReturnType<typeof openPdf>>;

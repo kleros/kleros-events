@@ -2,7 +2,8 @@ import { getEvent } from "@/lib/data";
 import { endOf, place } from "@/lib/format";
 import { ROLE_LABEL, SITE_URL } from "@/lib/kleros";
 
-const esc = (s: string) => s.replace(/[\\,;]/g, (m) => "\\" + m).replace(/\n/g, "\\n");
+// RFC 5545 TEXT: a bare CR counts as a line break to some readers, so it is escaped like LF (no injected properties)
+const esc = (s: string) => s.replace(/[\\,;]/g, (m) => "\\" + m).replace(/\r\n?|\n/g, "\\n");
 const plusDay = (d: string) => { const x = new Date(d + "T12:00:00Z"); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10); };
 
 export async function GET(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
@@ -24,5 +25,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
     `URL:${url}`,
     "END:VEVENT", "END:VCALENDAR",
   ].join("\r\n");
-  return new Response(body, { headers: { "Content-Type": "text/calendar; charset=utf-8", "Content-Disposition": `attachment; filename="${e.slug}.ics"` } });
+  return new Response(body, {
+    headers: {
+      "Content-Type": "text/calendar; charset=utf-8",
+      "Content-Disposition": `attachment; filename="${e.slug.replace(/[^a-z0-9-]/gi, "-")}.ics"`,
+      // read with the visitor's session, so a private event's or a draft's file must not be kept by a shared cache
+      "Cache-Control": "private, no-store",
+    },
+  });
 }

@@ -100,6 +100,19 @@ export function excerpt(e: Pick<EventRow, "title" | "description" | "recap" | "s
 export const plural = (n: number, one: string, many = one + "s") => `${n} ${n === 1 ? one : many}`;
 
 /**
+ * A stored address that is safe to put in href or src: http(s), mailto, or a path on this site.
+ * Anything else (javascript:, data:, vbscript:, a scheme hidden behind spaces or control
+ * characters) becomes "". React 19 already refuses javascript: URLs; this also stops data: and
+ * friends, from whichever writer (team, collaborators, the automated feed) stored them.
+ */
+export function safeHref(url: string | null | undefined): string {
+  const u = (url ?? "").trim();
+  if (!u || /[\x00-\x1f\x7f]/.test(u)) return "";
+  if (/^\/(?![/\\])/.test(u) || u.startsWith("#")) return u;
+  return /^(?:https?:\/\/|mailto:)/i.test(u) ? u : "";
+}
+
+/**
  * A same-site path to go to after sign-in, or /me. Rejects `//evil.com` and `/\evil.com`
  * (both leave the site) and control characters, which URL parsers strip (`/\t/evil.com`).
  */

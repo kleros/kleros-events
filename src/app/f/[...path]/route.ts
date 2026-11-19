@@ -17,6 +17,7 @@ export const dynamic = "force-dynamic";
 // paused and resumed. The redirect itself is kept for a few minutes, by this browser only.
 const SIGNED_FOR = 6 * 60 * 60;
 const REDIRECT_KEPT = 5 * 60;
+const ACTIVE = /\.(?:html?|xhtml|xht|svgz?|xml|xsl|js|mjs)$/i;
 
 export async function GET(req: Request, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params;
@@ -32,7 +33,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ path: st
   let signed: string | undefined;
   try {
     const sb = await supabaseServer();
-    const { data, error } = await sb.storage.from("materials").createSignedUrl(name, SIGNED_FOR);
+    // a file a browser would run as a page (HTML, SVG, XML) is sent as a download when opened directly, so it never
+    // runs on the storage origin; as <img> or a pdf.js/player source the disposition is ignored and nothing changes
+    const { data, error } = await sb.storage.from("materials").createSignedUrl(name, SIGNED_FOR, ACTIVE.test(name) ? { download: true } : undefined);
     // storage answers 400 for a file that does not exist or that this visitor may not see, and
     // 5xx (or nothing, a network error) when it is down: only the first is a "not found"
     if (error) return error.status && error.status < 500 ? notFound(req, name) : unavailable();

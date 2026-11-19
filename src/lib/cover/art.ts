@@ -1,4 +1,5 @@
 import type { ShareArt } from "./share";
+import { publicFetch, readCapped } from "../publicFetch";
 
 /** Pixel size and type of a PNG, GIF or JPEG from its first bytes; null for anything else (satori draws only these). */
 export function imageInfo(b: Buffer): { mime: string; width: number; height: number } | null {
@@ -31,10 +32,10 @@ export async function fetchArt(url: string | null): Promise<ShareArt | null> {
   try {
     const host = new URL(url).hostname;
     if (!host.includes(".") || /^[\d.]+$/.test(host) || host.includes(":") || host.endsWith(".local") || host.endsWith(".internal")) return null;
-    const r = await fetch(url, { signal: AbortSignal.timeout(3500), cache: "no-store", headers: { accept: "image/png,image/jpeg,image/gif;q=0.9" } });
-    if (!r.ok || Number(r.headers.get("content-length") ?? 0) > MAX_BYTES) return null;
-    const buf = Buffer.from(await r.arrayBuffer());
-    if (buf.length > MAX_BYTES) return null;
+    // publicFetch checks the host's addresses and every redirect; readCapped stops reading past MAX_BYTES
+    const r = await publicFetch(url, { signal: AbortSignal.timeout(3500), headers: { accept: "image/png,image/jpeg,image/gif;q=0.9" } });
+    if (!r.ok) return null;
+    const buf = Buffer.from(await readCapped(r, MAX_BYTES));
     const info = imageInfo(buf);
     if (!info || info.width < 64 || info.height < 64) return null;
     return { src: `data:${info.mime};base64,${buf.toString("base64")}`, width: info.width, height: info.height };
