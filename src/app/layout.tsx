@@ -28,7 +28,8 @@ export const metadata: Metadata = {
   title: { default: "Kleros Events", template: "%s · Kleros Events" },
   description: "Every event Kleros hosts or takes part in, with the talks, slides and recordings to match.",
   openGraph: { siteName: "Kleros Events", type: "website", images: [SHARE_IMAGE] },
-  twitter: { card: "summary_large_image", site: "@kleros_io", images: [SHARE_IMAGE.url] },
+  // no twitter image here: X falls back to og:image, and event pages keep their own (Next copies it over)
+  twitter: { card: "summary_large_image", site: "@kleros_io" },
 };
 
 // A saved light or dark choice goes on <html> before the first paint. With none, CSS color-scheme follows the OS.
