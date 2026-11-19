@@ -20,7 +20,7 @@ export default function SaveButton({ id, title, icon = false, next }: { id: stri
   if (!s.ready) {
     // signed out (no user) on the talk page: offer sign-in; while loading, or before 0016 runs, nothing
     if (icon || s.user || !next) return null;
-    return <Link className="btn ghost save-btn" href={`/login?next=${encodeURIComponent(next)}`}><Mark on={false} /><span>Save</span></Link>;
+    return <Link className="btn ghost act save-btn" href={`/login?next=${encodeURIComponent(next)}`}><Mark on={false} /><span>Save</span></Link>;
   }
   const on = s.ids.has(id);
   const click = async (e: React.MouseEvent) => {
@@ -39,7 +39,7 @@ export default function SaveButton({ id, title, icon = false, next }: { id: stri
   );
   return (
     <span className="save-wrap">
-      <button type="button" className={`btn ghost save-btn${on ? " on" : ""}`} aria-pressed={on} disabled={busy} onClick={click}>
+      <button type="button" className={`btn ghost act save-btn${on ? " is-on" : ""}`} aria-pressed={on} disabled={busy} onClick={click}>
         <Mark on={on} /><span>{label}</span>
       </button>
       {msg && <span className="muted small" role="status">{msg}{!on ? "" : <> · <Link href="/saved">Open Saved</Link></>}</span>}

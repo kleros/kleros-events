@@ -27,6 +27,8 @@ export interface EventRow {
   visibility: "public" | "private";
   created_by: string | null;
   is_example: boolean;
+  /** shows "Get tickets (free)" (0017); null when not known */
+  is_free?: boolean | null;
   updated_at?: string;
 }
 

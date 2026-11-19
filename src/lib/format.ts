@@ -107,3 +107,26 @@ export function safeNext(next: unknown, fallback = "/me"): string {
   if (typeof next !== "string") return fallback;
   return /^\/(?![\/\\])/.test(next) && !/[\x00-\x1f\x7f\\]/.test(next) ? next : fallback;
 }
+
+/**
+ * A Google Calendar "add event" link: one click opens the visitor's own calendar with the event filled in.
+ * All-day over the event's dates, or timed (two hours) when it has a start time and an IANA time zone.
+ */
+export function googleCalendarUrl(e: Pick<EventRow, "title" | "starts_on" | "ends_on" | "start_time" | "timezone" | "venue" | "city" | "country" | "slug">, pageUrl: string) {
+  const day = (d: string) => d.replace(/-/g, "");
+  const next = (d: string) => { const x = new Date(d + "T12:00:00Z"); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10); };
+  const p = new URLSearchParams({ action: "TEMPLATE", text: e.title });
+  const iana = !!e.timezone && e.timezone.includes("/");
+  if (e.start_time && iana && !e.ends_on) {
+    const [h, m] = e.start_time.split(":").map(Number);
+    const t = (hh: number) => `${String(hh).padStart(2, "0")}${String(m).padStart(2, "0")}00`;
+    p.set("dates", `${day(e.starts_on)}T${t(h)}/${day(e.starts_on)}T${t(Math.min(h + 2, 23))}`);
+    p.set("ctz", e.timezone!);
+  } else {
+    p.set("dates", `${day(e.starts_on)}/${day(next(e.ends_on ?? e.starts_on))}`);
+  }
+  const where = [e.venue, e.city, e.country].filter(Boolean).join(", ");
+  if (where) p.set("location", where);
+  p.set("details", pageUrl);
+  return `https://calendar.google.com/calendar/render?${p.toString()}`;
+}

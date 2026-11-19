@@ -14,9 +14,9 @@ import { visitorError } from "@/lib/visitorError";
 type Att = { event_id: string; status: string; note: string | null };
 type Prog = { material_id: string; position_seconds: number; finished: boolean };
 
-export default function MySpace({ profile, email, events, materials, attendance, progress, privateEvents = [], userId }: {
+export default function MySpace({ profile, email, events, materials, attendance, progress, privateEvents = [], userId, savedIds = [] }: {
   profile: Profile; email: string; events: EventRow[]; materials: Material[]; attendance: Att[]; progress: Prog[];
-  privateEvents?: EventRow[]; userId?: string;
+  privateEvents?: EventRow[]; userId?: string; savedIds?: string[];
 }) {
   const router = useRouter();
   const [p, setP] = useState(profile);
@@ -47,7 +47,7 @@ export default function MySpace({ profile, email, events, materials, attendance,
   const watched = new Set(progress.map((x) => x.material_id));
   const missed = materials.filter((m) => m.kind === "talk" && !watched.has(m.id) && evOf(m) && status[evOf(m)!.id] !== "attended")
     .map((m) => ({ m, s: scoreEvent(evOf(m)!, p).score })).filter((r) => r.s > 0 || !p.interests.length).sort((a, b) => b.s - a.s).slice(0, 5);
-  const mine = events.filter((e) => status[e.id] === tab).sort((a, b) => a.starts_on.localeCompare(b.starts_on));
+  const mine = events.filter((e) => tab === "saved" ? status[e.id] === "saved" || savedIds.includes(e.id) : status[e.id] === tab).sort((a, b) => a.starts_on.localeCompare(b.starts_on));
 
   return (
     <div className="wrap page me-grid">

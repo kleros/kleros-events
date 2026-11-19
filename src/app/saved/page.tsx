@@ -16,15 +16,18 @@ export default async function SavedPage() {
   const { user } = await currentUser();
   if (!user) redirect("/login?next=/saved");
   const sb = await supabaseServer();
-  const [events, materials, att, saves] = await Promise.all([
+  const [events, materials, att, saves, evSaves] = await Promise.all([
     listEvents(), listMaterials(),
     sb.from("attendance").select("event_id, status").eq("user_id", user.id),
     // the table comes with 0016; before that only events can be saved
     sb.from("material_saves").select("material_id, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
+    // saved events on their own (0017); before that, attendance 'saved' says it
+    sb.from("event_saves").select("event_id").eq("user_id", user.id),
   ]);
   const byId = Object.fromEntries(events.map((e) => [e.id, e]));
   const status = Object.fromEntries((att.data ?? []).map((a) => [a.event_id as string, a.status as string]));
-  const kept = events.filter((e) => status[e.id]);
+  const savedEv = new Set((evSaves.data ?? []).map((r) => r.event_id as string));
+  const kept = events.filter((e) => status[e.id] || savedEv.has(e.id));
   const ahead = kept.filter((e) => !isPast(e)).sort(soonestFirst);
   const behind = kept.filter(isPast).sort(latestFirst);
   const order = new Map((saves.data ?? []).map((s, i) => [s.material_id as string, i]));

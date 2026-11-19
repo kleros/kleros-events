@@ -1,6 +1,6 @@
 /* Kleros Events. Tokens first; components below use only tokens.
-   Calm light and dark palettes. Geist for everything, headings upright and semibold like kleros.io; Instrument Serif
-   only for a pulled quote in a transcript.
+   Calm light and dark palettes. Geist for text and section headings (upright, semibold); Instrument Serif for
+   page titles only (the hero and each page's h1), where an italic phrase is allowed.
    Page-specific rules live in styles/media.css (cards, home, talks) and styles/event-pages.css (events). */
 :root {
   color-scheme: light dark;   /* no saved choice: follow the OS, also with JS off */
@@ -83,11 +83,13 @@ p { margin: 0; }
 
 /* type */
 h1, h2, h3 { font-family: var(--font-body), system-ui, sans-serif; font-weight: 500; letter-spacing: -0.015em; text-wrap: balance; margin: 0; line-height: 1.25; color: var(--white); }
-h1 { font: 600 var(--t-h1)/1.1 var(--font-body), system-ui, sans-serif; letter-spacing: -0.02em; }
+/* page titles are the page's cover: Instrument Serif, with an italic phrase allowed; everything below stays upright sans */
+h1 { font: 400 var(--t-h1)/1.1 var(--font-display), Georgia, serif; letter-spacing: 0; }
 h2 { font-size: 1.25rem; }
 h3 { font-size: 1.02rem; line-height: 1.3; }
-/* a highlighted phrase in a title: colour, not italics (Kleros sites keep headings upright and plain) */
+/* a highlighted phrase: italic in a page title, colour only in section headings */
 .em, h1 em, h2 em { font-style: normal; color: var(--lavender); font-weight: inherit; }
+h1 em, .hero-title em { font-style: italic; }
 .mono { font-family: var(--font-mono), ui-monospace, monospace; font-variant-numeric: tabular-nums; }
 /* team tools only: public pages have no uppercase eyebrows */
 .eyebrow { font: 500 0.75rem/1 var(--font-body), sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }

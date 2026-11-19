@@ -88,3 +88,13 @@
   .ev-filters .check { min-height: 44px; }
   .person .who a { padding-block: 6px; margin-block: -6px; }
 }
+
+/* the event's own buttons: an icon that fills when it is on (Save, I'm going), not a highlighted box */
+.btn.act { gap: 6px; }
+.btn.act svg { flex: none; color: var(--muted); transition: color 0.15s; }
+.btn.act:hover svg { color: var(--fg); }
+.btn.act.is-on, .btn.act.is-on:hover { color: var(--white); }
+.btn.act.is-on svg { color: var(--accent); }
+.cal-pair { display: inline-flex; align-items: center; gap: 2px; }
+.cal-ics { font-size: var(--t-xs); color: var(--muted); text-decoration: none; padding: 4px; }
+.cal-ics:hover { color: var(--fg); text-decoration: underline; }

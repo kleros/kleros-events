@@ -47,7 +47,7 @@
 .feature:hover .cover > img, .feature:hover .cover > .gen, .feature:hover .cover > .kt { filter: brightness(1.06); }
 
 /* an event's tile (components/EventTile.tsx), like a ticket: the event's poster on top, edge to edge at the
-   share-image ratio, and a Kleros band below with Kleros's part, the name, dates and place, the Kleros symbol
+   share-image ratio, and a Kleros band below with the name, dates and place, the Kleros symbol
    large and faint at its edge. A picture, so it keeps its own colours in both themes. The tile is a size
    container and lengths are in cqw, so one layout fills a 240px card, a phone and the hero alike. */
 .cover:has(> .kt) { aspect-ratio: auto; }
@@ -67,9 +67,6 @@
   background: linear-gradient(120deg, #241933 0%, #1A1324 60%, #160F1F 100%); }
 .kt-sym { position: absolute; z-index: -1; width: 46cqw; max-width: none; aspect-ratio: 1; right: -12cqw; top: -10cqw; opacity: 0.08; transform: rotate(var(--kt-rot, -8deg)); }
 .kt-band > :not(.kt-sym) { position: relative; z-index: 1; }
-.kt-role { display: flex; align-items: center; gap: 0.5em; font: 500 max(10.5px, 2.5cqw)/1.2 var(--font-body), sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: #C9B8FF; min-width: 0; }
-.kt-role img { width: 1.25em; height: 1.25em; flex: none; opacity: 0.9; }
-.kt-role span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kt-title { font: 600 max(16px, 4.9cqw)/1.22 var(--font-body), system-ui, sans-serif; letter-spacing: -0.015em; text-wrap: balance; color: #FFFFFF;
   min-height: 2.44em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .kt-meta { font: 400 max(12.5px, 3cqw)/1.35 var(--font-body), sans-serif; color: rgb(236 231 243 / 0.72); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
@@ -96,7 +93,7 @@
 .hero-band { background: radial-gradient(60% 80% at 85% 0%, var(--wash), transparent 70%); }
 .hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: var(--s-8); align-items: center; padding-block: var(--s-9) 0; }
 .hero-copy { display: grid; gap: var(--s-5); align-content: center; min-width: 0; }
-.hero-title { font: 600 var(--t-display)/1.08 var(--font-body), system-ui, sans-serif; letter-spacing: -0.02em; max-width: 20ch; text-wrap: balance; }
+.hero-title { font: 400 var(--t-display)/1.08 var(--font-display), Georgia, serif; letter-spacing: 0; max-width: 20ch; text-wrap: balance; }
 .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3) var(--s-5); }
 .hero-stats { font-size: var(--t-sm); line-height: 1.45; color: var(--muted); font-variant-numeric: tabular-nums; }
 

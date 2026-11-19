@@ -62,7 +62,10 @@ export default function EventForm({ event, me, initialVisibility, then, copyOf }
     if (!event && visibility === "private" && emails.bad.length) { setErr(`Not an email address: ${emails.bad.join(", ")}`); return; }
     setBusy(true);
     const sb = supabaseBrowser();
-    const res = event ? await sb.from("events").update(row).eq("id", event.id).select("id, slug").single() : await sb.from("events").insert(row).select("id, slug").single();
+    const save = (r: typeof row & { is_free?: boolean | null }) => event ? sb.from("events").update(r).eq("id", event.id).select("id, slug").single() : sb.from("events").insert(r).select("id, slug").single();
+    let res = await save({ ...row, is_free: f.get("is_free") ? true : null });
+    // before 0017 there is no is_free column: save without it
+    if (res.error && /is_free/.test(res.error.message ?? "")) res = await save(row);
     if (res.error) { setBusy(false); setErr(saveError(res.error, visibility)); return; }
     // made public: the collaborator list goes (the database does this too from 0012)
     if (event?.visibility === "private" && visibility === "public") await sb.from("event_collaborators").delete().eq("event_id", event.id);
@@ -168,6 +171,7 @@ export default function EventForm({ event, me, initialVisibility, then, copyOf }
       </div>
       <div className="two">
         <div className="field"><label htmlFor="url">Event page (Luma, Eventbrite…)</label><input id="url" name="url" type="url" defaultValue={v?.url ?? ""} placeholder="https://" /></div>
+        <label className="small"><input type="checkbox" name="is_free" defaultChecked={!!v?.is_free} /> Free to attend (the button says &quot;Get tickets (free)&quot;)</label>
         <div className="field"><label htmlFor="cover_path">Cover image URL</label><input id="cover_path" name="cover_path" type="url" defaultValue={v?.cover_path ?? ""} placeholder="https://" aria-describedby="cover_path_hint" />
           <span id="cover_path_hint" className="small muted">The event&apos;s own poster or banner, from its website or Luma. Leave it empty and the site makes a Kleros cover. Pictures from X, YouTube or LinkedIn posts are not used.</span></div>
       </div>

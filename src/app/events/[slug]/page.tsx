@@ -4,8 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Material } from "@/lib/types";
 import { getEvent, eventCounts } from "@/lib/data";
-import { cleanDescription, excerpt, fmtRange, isLive, isPast, place, plural } from "@/lib/format";
-import { ROLE_LABEL, productsFor } from "@/lib/kleros";
+import { cleanDescription, excerpt, fmtRange, googleCalendarUrl, isLive, isPast, place, plural } from "@/lib/format";
+import { ROLE_LABEL, SITE_URL, productsFor } from "@/lib/kleros";
 import { EventCover } from "@/components/EventCard";
 import { LinkList, MATERIAL_GROUPS, PhotoGrid, TalkCard, byTalkRank, isTalkLike, linkUrl, sourceOf, talkRank } from "@/components/MaterialRow";
 import Ext from "@/components/Ext";
@@ -87,7 +87,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   // after the event, the date, time and ticket lines of a Luma description no longer help
   const description = past ? cleanDescription(e.description) : e.description;
   const hasAbout = !!(description || e.recap);
-  const ticketLabel = e.url && /luma\.com|lu\.ma/.test(e.url) ? "RSVP on Luma" : "Get tickets";
+  // one wording for every event; "(free)" when the team marked it free (0017 is_free)
+  const ticketLabel = e.is_free ? "Get tickets (free)" : "Get tickets";
 
   // one quiet line: whether it is on now, Kleros's part, the format and the turnout.
   // Draft and Private are said in the note under the buttons instead.
@@ -117,7 +118,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         <div className="ev-actions">
           {past && talks.length > 0 && <a className="btn primary" href="#talks">Watch {plural(talks.length, "talk")}</a>}
           {e.url && !past && <a className="btn primary" href={e.url} target="_blank" rel="noopener">{ticketLabel}<Ext /></a>}
-          <AttendanceButtons eventId={e.id} past={past} signedIn={!!user} slug={e.slug} />
+          <AttendanceButtons eventId={e.id} past={past} signedIn={!!user} slug={e.slug} calendarUrl={googleCalendarUrl(e, `${SITE_URL}/events/${e.slug}`)} />
           {canEdit && <ManageMenu slug={e.slug} eventId={e.id} isTeam={isTeam} hasBareRecordings={bareRecordings.length > 0} />}
         </div>
         {e.visibility === "private"
