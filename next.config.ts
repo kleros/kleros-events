@@ -29,13 +29,13 @@ const supabaseWs = `${supabase.protocol === "http:" ? "ws:" : "wss:"}//${supabas
 const csp = [
   "default-src 'self'",
   // YouTube IFrame API (components/transcript/MediaPlayers.tsx); Cloudflare Web Analytics if it is turned on
-  `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval'" : ""} https://www.youtube.com https://static.cloudflareinsights.com`,
+  `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval'" : ""} https://www.youtube.com https://static.cloudflareinsights.com https://challenges.cloudflare.com`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   "media-src 'self' blob: https:",
   `connect-src 'self' ${supabase.origin} ${supabaseWs} https://cloudflareinsights.com${dev ? " ws:" : ""}`,
-  "frame-src https://www.youtube-nocookie.com https://www.youtube.com https://drive.google.com https://docs.google.com",
+  "frame-src https://www.youtube-nocookie.com https://www.youtube.com https://drive.google.com https://docs.google.com https://challenges.cloudflare.com",
   // pdf.js worker (lib/pdf.ts) is a same-origin file; it falls back to a blob: worker
   "worker-src 'self' blob:",
   "manifest-src 'self'",

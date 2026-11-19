@@ -1,6 +1,7 @@
 "use client";
 import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { captchaToken } from "@/lib/turnstile";
 
 let client: SupabaseClient | null = null;
 
@@ -19,7 +20,7 @@ export async function ensureUser() {
   const sb = supabaseBrowser();
   const { data } = await sb.auth.getUser();
   if (data.user) return data.user;
-  const { data: anon, error } = await sb.auth.signInAnonymously();
+  const { data: anon, error } = await sb.auth.signInAnonymously({ options: { captchaToken: await captchaToken("guest") } });
   if (error || !anon.user) throw error ?? new Error("Couldn't start a guest session");
   return anon.user;
 }

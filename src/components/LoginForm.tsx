@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { AuthError } from "@supabase/supabase-js";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { captchaToken } from "@/lib/turnstile";
 
 // Supabase allows one link per address about every minute; the button waits the same time.
 const WAIT_MS = 60_000;
@@ -38,8 +39,12 @@ export default function LoginForm({ next }: { next: string }) {
 
   async function send() {
     setBusy(true); setErr("");
+    let token: string | undefined;
+    try { token = await captchaToken("sign_in"); }
+    catch (e) { setBusy(false); setErr((e as Error).message); return false; }
     const { error } = await supabaseBrowser().auth.signInWithOtp({
-      email: email.trim(), options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
+      email: email.trim(),
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`, captchaToken: token },
     });
     setBusy(false);
     if (error) { setErr(friendly(error)); return false; }
