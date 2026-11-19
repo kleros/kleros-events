@@ -11,7 +11,7 @@ export default function SpeakerNames({ speaker }: { speaker: string | null | und
   return (
     <span className="spk">
       {parts.map((p, i) => (p.person
-        ? <Link key={i} href={`/people/${p.person.slug}`}>{p.text}</Link>
+        ? <Link key={i} href={`/people/${p.person.slug}`}>{p.person.name}</Link>
         : <span key={i}>{p.text}</span>))}
     </span>
   );

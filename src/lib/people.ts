@@ -18,6 +18,8 @@ export interface Person {
   telegram?: string;
   /** other spellings used in speaker fields */
   aliases?: string[];
+  /** earlier page addresses, which redirect to the current one */
+  oldSlugs?: string[];
 }
 
 export const PEOPLE: Person[] = [
@@ -42,13 +44,13 @@ export const PEOPLE: Person[] = [
     aliases: ["Fortunato Andrea Cinquepalmi"],
   },
   {
-    slug: "alexandre", name: "Alexandre (0xAlex)", role: "Business Development Lead",
-    x: "alex__eth", aliases: ["0xAlex"],
+    slug: "0xalex", name: "0xAlex", role: "Business Development Lead",
+    x: "alex__eth", aliases: ["Alexandre (0xAlex)", "Alexandre"], oldSlugs: ["alexandre"],
   },
   {
-    slug: "juan-ramiro-garza", name: "Juan Ramiro Garza", role: "Oracle Lead, Business Development",
+    slug: "juanrah", name: "JuanRah", role: "Oracle Lead, Business Development",
     x: "JuanRah", linkedin: "https://www.linkedin.com/in/juan-ramiro-garza/",
-    aliases: ["Juan Ramiro Garza Quintanilla", "JuanRah"],
+    aliases: ["Juan Ramiro Garza Quintanilla", "Juan Ramiro Garza"], oldSlugs: ["juan-ramiro-garza"],
   },
   {
     slug: "facundo-trotz", name: "Facundo Trotz", role: "Legal and Policy",
@@ -56,7 +58,7 @@ export const PEOPLE: Person[] = [
   },
   {
     slug: "lucia-bocalandro", name: "Lucía Bocalandro", role: "Business Development and Product",
-    linkedin: "https://www.linkedin.com/in/luciabocalandro/", aliases: ["Lucia Bocalandro"],
+    x: "LuBocalandro", linkedin: "https://www.linkedin.com/in/luciabocalandro/", aliases: ["Lucia Bocalandro"],
   },
   {
     slug: "parul-yadav", name: "Parul Yadav", role: "Developer Relations",
@@ -67,13 +69,15 @@ export const PEOPLE: Person[] = [
     x: "JuanSamitier", linkedin: "https://www.linkedin.com/in/juan-samitier-47b4321a5/",
   },
   {
-    slug: "wei-wei-ooi", name: "Wei Wei Ooi", role: "Event Manager",
+    slug: "weiwei", name: "Weiwei", role: "Event Manager", aliases: ["Wei Wei Ooi", "Wei Wei"], oldSlugs: ["wei-wei-ooi"],
     bio: "Runs Kleros at events: booths, side events, workshops and the team's schedule on the ground. The person to talk to about bringing Kleros to your event.",
     x: "weiwei_ooi", linkedin: "https://www.linkedin.com/in/ooiweiwei/",
   },
 ];
 
-export const personBySlug = (slug: string) => PEOPLE.find((p) => p.slug === slug);
+export const personBySlug = (slug: string) => PEOPLE.find((p) => p.slug === decodeURIComponent(slug));
+/** the person an earlier address belonged to, for a redirect */
+export const personByOldSlug = (slug: string) => PEOPLE.find((p) => p.oldSlugs?.includes(decodeURIComponent(slug)));
 
 /** lower case without accents, one output character per input character so positions line up */
 const fold = (s: string) => Array.from(s, (c) => {

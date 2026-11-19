@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { listEvents, listMaterials, eventIdsOf } from "@/lib/data";
 import { supabaseConfigured, supabaseServer } from "@/lib/supabase/server";
 import { fmtRange, place } from "@/lib/format";
-import { peopleIn, personBySlug } from "@/lib/people";
+import { peopleIn, personByOldSlug, personBySlug } from "@/lib/people";
 import type { EventRow } from "@/lib/types";
 import PersonAvatar from "@/components/PersonAvatar";
 import PersonLinks from "@/components/PersonLinks";
@@ -27,8 +27,13 @@ async function agendaEventIds(slug: string): Promise<string[]> {
 }
 
 export default async function PersonPage({ params }: { params: Promise<{ slug: string }> }) {
-  const p = personBySlug((await params).slug);
-  if (!p) notFound();
+  const { slug } = await params;
+  const p = personBySlug(slug);
+  if (!p) {
+    const moved = personByOldSlug(slug);
+    if (moved) permanentRedirect(`/people/${moved.slug}`);
+    notFound();
+  }
   const [events, materials, agendaIds] = await Promise.all([listEvents(), listMaterials(), agendaEventIds(p.slug)]);
   // public, published events only, so a private or draft event never shows here
   const byId = new Map(events.filter((e) => !e.is_example).map((e) => [e.id, e]));
