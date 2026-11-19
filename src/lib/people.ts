@@ -39,9 +39,9 @@ export const PEOPLE: Person[] = [
     x: "williamhwgeorge", linkedin: "https://www.linkedin.com/in/william-george-128bab148/",
   },
   {
-    slug: "fortunato-cinquepalmi", name: "Fortunato Cinquepalmi", role: "Lead Product Manager",
+    slug: "fortunato", name: "Fortunato", role: "Lead Product Manager", oldSlugs: ["fortunato-cinquepalmi"],
     x: "fortuvp", linkedin: "https://www.linkedin.com/in/fortunato-andrea-cinquepalmi-52b57887/",
-    aliases: ["Fortunato Andrea Cinquepalmi"],
+    aliases: ["Fortunato Andrea Cinquepalmi", "Fortunato Cinquepalmi"],
   },
   {
     slug: "0xalex", name: "0xAlex", role: "Business Development Lead",
