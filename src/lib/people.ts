@@ -20,6 +20,10 @@ export interface Person {
   aliases?: string[];
   /** earlier page addresses, which redirect to the current one */
   oldSlugs?: string[];
+  /** how the page refers to them in sentences; the first word of the name when left out */
+  short?: string;
+  /** shows the "Partnerships & event invitations" form on the profile instead of the meet line */
+  partnerForm?: boolean;
 }
 
 export const PEOPLE: Person[] = [
@@ -70,7 +74,8 @@ export const PEOPLE: Person[] = [
   },
   {
     slug: "weiwei", name: "Wei Wei", role: "Event Manager", aliases: ["Wei Wei Ooi", "Weiwei"], oldSlugs: ["wei-wei-ooi"],
-    bio: "Runs Kleros at events: booths, side events, workshops and the team's schedule on the ground. The person to talk to about bringing Kleros to your event.",
+    bio: "Runs the Kleros presence at conferences and side events, from booths and community hubs to workshops, and works with organisers and partners on where Kleros shows up next.",
+    partnerForm: true, short: "Wei Wei",
     x: "weiwei_ooi", linkedin: "https://www.linkedin.com/in/ooiweiwei/",
   },
 ];

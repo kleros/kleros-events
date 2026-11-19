@@ -8,6 +8,7 @@ import { peopleIn, personByOldSlug, personBySlug } from "@/lib/people";
 import type { EventRow } from "@/lib/types";
 import PersonAvatar from "@/components/PersonAvatar";
 import PersonLinks from "@/components/PersonLinks";
+import PartnerForm from "@/components/PartnerForm";
 import { LinkList, TalkCard, isTalkLike, isWatchable } from "@/components/MaterialRow";
 
 export const revalidate = 300;
@@ -43,7 +44,7 @@ export default async function PersonPage({ params }: { params: Promise<{ slug: s
   const files = theirs.filter((m) => !isTalkLike(m));
   const evIds = new Set([...theirs.flatMap(eventIdsOf), ...agendaIds].filter((id) => byId.has(id)));
   const evs = [...evIds].map((id) => byId.get(id)!).sort((a, b) => b.starts_on.localeCompare(a.starts_on));
-  const first = p.name.replace(/\(.*?\)/, "").trim().split(" ")[0];
+  const first = p.short ?? p.name.replace(/\(.*?\)/, "").trim().split(" ")[0];
 
   return (
     <div className="wrap page stack person-page">
@@ -55,9 +56,27 @@ export default async function PersonPage({ params }: { params: Promise<{ slug: s
           <p className="lede">{p.role}, Kleros</p>
           {p.bio && <p className="pbio">{p.bio}</p>}
           <PersonLinks p={p} />
-          <p className="small muted pmeet">Want to meet {first} at an event? <Link href="/contact">Send a request</Link> and the team follows up.</p>
+          {!p.partnerForm && <p className="small muted pmeet">Want to meet {first} at an event? <Link href="/contact">Send a request</Link> and the team follows up.</p>}
         </div>
       </header>
+
+      {p.partnerForm && (
+        <section className="sec partner" id="partner">
+          <h2>Partnerships &amp; event invitations</h2>
+          <p>{first} handles where Kleros shows up. Send a request for:</p>
+          <ul>
+            <li>a talk, panel or workshop by the Kleros team at your event</li>
+            <li>sponsorship or a booth</li>
+            <li>co-hosting a side event</li>
+            <li>an event or community partnership</li>
+          </ul>
+          <p className="small muted">Requests outside these, such as sales pitches, paid promotion, listings or job applications, do not get a reply. Requests that fit get a reply by email.</p>
+          <details className="partner-open">
+            <summary className="btn sm">Start a request</summary>
+            <PartnerForm to={first} />
+          </details>
+        </section>
+      )}
 
       {talks.length > 0 && (
         <section className="sec">
