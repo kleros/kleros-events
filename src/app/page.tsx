@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { listEvents, listMaterials, eventCounts, eventIdsOf, materialCounts } from "@/lib/data";
+import { listEvents, listMaterials, eventCounts, eventIdsOf, materialCounts, talkStats } from "@/lib/data";
+import { mostWatched, statsLine } from "@/lib/popular";
 import { fmtRange, isLive, isPast, latestFirst, plural, place, soonestFirst } from "@/lib/format";
 import { LUMA_URL } from "@/lib/kleros";
 import EventCard, { EventCover, statusLabel } from "@/components/EventCard";
@@ -10,7 +11,7 @@ import Ext from "@/components/Ext";
 export const revalidate = 60;
 
 export default async function Home() {
-  const [events, materials, counts] = await Promise.all([listEvents(), listMaterials(), eventCounts()]);
+  const [events, materials, counts, ytStats] = await Promise.all([listEvents(), listMaterials(), eventCounts(), talkStats()]);
   const upcoming = events.filter((e) => !isPast(e)).sort(soonestFirst);
   const next = upcoming[0];
   // Coming up lists everything on now or ahead, the featured one too, so the row never hides an event
@@ -31,6 +32,8 @@ export default async function Home() {
     .sort((a, b) => latestFirst(shownWith(a), shownWith(b)) || Number(!videoThumb(a)) - Number(!videoThumb(b)) || b.created_at.localeCompare(a.created_at))
     .filter((m) => { const id = shownWith(m).id; if (seen.has(id)) return false; seen.add(id); return true; })
     .slice(0, 3);
+  // the talks with the most views and likes on YouTube, other than the latest ones above (0019 talk_stats)
+  const popular = mostWatched(talks, ytStats, 3, new Set(latestTalks.map((m) => m.id)));
   const cities = new Set(events.filter((e) => e.city).map((e) => e.city)).size;
   // With nothing coming up, the hero shows the latest event that has talks to watch.
   const featured = next ?? past.find((e) => talkCount(e.id) > 0) ?? past[0];
@@ -88,6 +91,13 @@ export default async function Home() {
             ? <div className="grid">{latestTalks.map((m) => <TalkCard key={m.id} m={m} event={shownWith(m)} />)}</div>
             : <p className="quiet-empty">Talks appear here with their slides once the team uploads them after an event.</p>}
         </section>
+
+        {popular.length >= 3 && (
+          <section className="block">
+            <div className="section-h"><h2>Most watched</h2><Link href="/talks#most-watched">More →</Link></div>
+            <div className="grid">{popular.map((m) => <TalkCard key={m.id} m={m} event={shownWith(m)} note={statsLine(ytStats[m.id])} />)}</div>
+          </section>
+        )}
 
         {recent.length > 0 && (
           <section className="block">

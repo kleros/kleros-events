@@ -137,7 +137,7 @@ const short = (t: string) => {
 };
 
 /** A talk's title without the bracketed notes, for spotting the same talk posted twice. */
-const sameTalk = (t: string) => t.toLowerCase().replace(/\([^)]*\)/g, "").replace(/[^a-z0-9áéíóúñü]+/g, " ").trim();
+export const sameTalk = (t: string) => t.toLowerCase().replace(/\([^)]*\)/g, "").replace(/[^a-z0-9áéíóúñü]+/g, " ").trim();
 
 const recommendable = (m: Material) => m.kind === "talk" || m.kind === "video" || (m.kind === "audio" && !!m.file_path);
 

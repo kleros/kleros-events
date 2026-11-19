@@ -59,6 +59,15 @@ export async function listMaterials(): Promise<Material[]> {
   return withEventIds((data ?? []) as Material[], links);
 }
 
+/** YouTube view and like counts per talk (0019 talk_stats, refreshed hourly in the database); {} before 0019 runs. */
+export async function talkStats(): Promise<Record<string, { views: number; likes: number | null }>> {
+  if (!supabaseConfigured) return {};
+  const sb = await supabaseServer();
+  const { data, error } = await sb.from("talk_stats").select("material_id, views, likes").not("views", "is", null);
+  if (error) return {};
+  return Object.fromEntries((data ?? []).map((r) => [r.material_id as string, { views: Number(r.views), likes: r.likes == null ? null : Number(r.likes) }]));
+}
+
 /** Talks and files per event, counting every event a material is linked to. */
 export function materialCounts(materials: Material[], isTalk: (m: Material) => boolean) {
   const talks: Record<string, number> = {};
