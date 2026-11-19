@@ -73,9 +73,11 @@ export default function TranscriptArea({ materialId, title, speaker, initial, is
 
   return (
     <>
-      {row?.summary && <SummaryCard s={row.summary} title={title} timed={timed} seekable={seekable} />}
+      {/* a short summary, then the video, then the key points and the rest (Wei Wei, 19 Nov) */}
+      {row?.summary?.tldr && <SummaryLead s={row.summary} />}
       {!row?.summary && busy && <div className="tx-pending" role="status"><span className="tx-spin" aria-hidden />{STATUS_LABEL[state.status]} The summary and transcript appear here when ready.</div>}
       {children}
+      {row?.summary && <SummaryCard s={row.summary} title={title} timed={timed} seekable={seekable} />}
       {team}
       {segs.length > 0 && <TranscriptBody segs={segs} title={title} speaker={speaker} timed={timed} seekable={seekable} language={row?.language} />}
     </>
@@ -104,6 +106,16 @@ function jump(t: number) {
   if (r.bottom < 60 || r.top > window.innerHeight - 60) p.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "center" });
 }
 
+/** Above the video: the summary in a sentence or two, nothing else. */
+function SummaryLead({ s }: { s: Summary }) {
+  return (
+    <section className="tx-lead" aria-label="Summary">
+      <p className="tx-tldr">{s.tldr}</p>
+    </section>
+  );
+}
+
+/** Under the video: the key points, chapters, action items, quotes and questions. */
 function SummaryCard({ s, title, timed, seekable }: { s: Summary; title: string; timed: boolean; seekable: boolean }) {
   const [copied, setCopied] = useState(false);
   const extra = s.quotes.length > 0 || (s.audience_questions?.length ?? 0) > 0;
@@ -113,18 +125,14 @@ function SummaryCard({ s, title, timed, seekable }: { s: Summary; title: string;
   return (
     <section className="tx-summary" aria-labelledby="tx-sum-h">
       <div className="tx-head">
-        <h2 id="tx-sum-h" className="eyebrow">Summary</h2>
+        <h2 id="tx-sum-h" className="eyebrow">Key points</h2>
         <button type="button" className="btn sm ghost" onClick={copy}>{copied ? "Copied" : "Copy summary"}</button>
       </div>
       <div className="tx-sum-grid">
         <div className="tx-sum-main">
-          <p className="tx-tldr">{s.tldr}</p>
-          {s.key_points.length > 0 && (
-            <>
-              <h3 className="tx-sub">Key points</h3>
-              <ul className="tx-points">{s.key_points.map((k, i) => <li key={i}>{k}</li>)}</ul>
-            </>
-          )}
+          {s.key_points.length > 0
+            ? <ul className="tx-points">{s.key_points.map((k, i) => <li key={i}>{k}</li>)}</ul>
+            : <p className="tx-tldr">{s.tldr}</p>}
         </div>
         {s.chapters.length > 0 && (
           <nav className="tx-chapters" aria-label="Chapters">

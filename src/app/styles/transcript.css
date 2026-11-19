@@ -118,3 +118,6 @@ div.tx-note { display: grid; gap: var(--s-2); }
   .tx-body .tx-unfold { display: inline-flex; margin-top: var(--s-3); max-width: 100%; white-space: normal; text-align: left; }
   .tx-head { align-items: flex-start; }
 }
+/* the summary in a sentence or two, above the video */
+.tx-lead { margin: 0; }
+.tx-lead .tx-tldr { margin: 0; max-width: 72ch; }
