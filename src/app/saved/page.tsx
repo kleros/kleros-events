@@ -5,7 +5,9 @@ import { currentUser, supabaseServer } from "@/lib/supabase/server";
 import { eventIdsOf, listEvents, listMaterials } from "@/lib/data";
 import { isPast, latestFirst, plural, soonestFirst } from "@/lib/format";
 import EventCard from "@/components/EventCard";
-import { LinkList, TalkCard, isWatchable } from "@/components/MaterialRow";
+import { LinkList, TalkCard, isWatchable, splitTitle } from "@/components/MaterialRow";
+import Related from "@/components/Related";
+import { eventProfile, materialProfile, related, startingReads, type Seed } from "@/lib/related";
 import type { EventRow } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Saved", robots: { index: false } };
@@ -37,6 +39,16 @@ export default async function SavedPage() {
   const evOf = (m: (typeof mats)[number]) => eventIdsOf(m).map((id) => byId[id]).find(Boolean) as EventRow | undefined;
   const word = (e: EventRow) => status[e.id] === "going" ? "You're going" : status[e.id] === "attended" ? "You were there" : undefined;
   const nothing = !kept.length && !mats.length;
+
+  // "Picked for you": what the saved events and talks have in common, matched against the rest of the site
+  // and Kleros's own pages (lib/related.ts, plain rules, no AI). Saving counts more than having been there.
+  const seeds: Seed[] = [
+    ...kept.map((e) => ({ id: e.id, label: e.title, profile: eventProfile(e), weight: savedEv.has(e.id) || status[e.id] === "going" ? 1 : 0.7 })),
+    ...mats.map((m) => ({ id: m.id, label: splitTitle(m.title).main, profile: materialProfile(m, byId) })),
+  ];
+  const picks = nothing
+    ? { talks: [], events: [], reads: startingReads(4) }
+    : related(seeds, events, materials, { exclude: new Set(seeds.map((x) => x.id)), talks: 6, events: 3, reads: 5, explain: true });
 
   return (
     <div className="wrap page">
@@ -73,6 +85,8 @@ export default async function SavedPage() {
           <div className="grid">{behind.map((e) => <EventCard key={e.id} e={e} mine={word(e)} />)}</div>
         </section>
       )}
+      <Related data={picks} id="picked" title={nothing ? "Start here" : "Picked for you"}
+        lede={nothing ? "New to Kleros? These explain how it works." : "Talks, events and Kleros reading related to what you saved. Save more and these get sharper."} />
     </div>
   );
 }

@@ -224,3 +224,10 @@ a.link-row:hover .link-s { color: var(--fg); }
 
 /* ---------- Saved page ---------- */
 .saved-tabs { margin-bottom: var(--s-6); }
+
+/* ---------- "You might also like" (components/Related.tsx) ---------- */
+.related .rel-group { display: grid; gap: var(--s-4); min-width: 0; }
+.related .rel-group + .rel-group { margin-top: var(--s-7); }
+.block.related .rel-lede { margin: calc(-1 * var(--s-3)) 0 var(--s-5); }
+.read-row .read-d { grid-column: 1 / -1; font-size: var(--t-sm); line-height: 1.5; color: var(--muted); }
+.reads .link-s { text-transform: none; }

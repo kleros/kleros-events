@@ -3,7 +3,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Material } from "@/lib/types";
-import { getEvent, eventCounts } from "@/lib/data";
+import { getEvent, eventCounts, listEvents, listMaterials } from "@/lib/data";
+import Related from "@/components/Related";
+import { eventProfile, related } from "@/lib/related";
 import { cleanDescription, excerpt, fmtRange, googleCalendarUrl, isLive, isPast, place, plural } from "@/lib/format";
 import { ROLE_LABEL, SITE_URL, productsFor } from "@/lib/kleros";
 import { EventCover } from "@/components/EventCard";
@@ -91,6 +93,14 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const hasAbout = !!(description || e.recap);
   // one wording for every event; "(free)" when the team marked it free (0017 is_free)
   const ticketLabel = e.is_free ? "Get tickets (free)" : "Get tickets";
+  // You might also like: talks from other events, events and Kleros reading on the same subject (lib/related.ts).
+  // An internal meeting's page gets none.
+  const pub = e.visibility !== "private";
+  const [allEvents, allMaterials] = pub ? await Promise.all([listEvents(), listMaterials()]) : [[], []];
+  const alsoLike = pub
+    ? related([{ id: e.id, label: e.title, profile: eventProfile(e) }], allEvents, allMaterials,
+      { exclude: new Set([e.id, ...materials.map((m) => m.id)]), talks: 3, events: 3, reads: 4 })
+    : { talks: [], events: [], reads: [] };
 
   // one quiet line: whether it is on now, Kleros's part, the format and the turnout.
   // Draft and Private are said in the note under the buttons instead.
@@ -230,6 +240,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         <h2>Comments</h2>
         <Comments eventId={e.id} signedIn={!!user} canModerate={canEdit} next={`/events/${e.slug}#comments`} displayName={profile?.display_name} />
       </section>
+
+      <Related data={alsoLike} variant="sec" />
 
       {/* an internal meeting's page has no sales blocks */}
       {e.visibility !== "private" && (

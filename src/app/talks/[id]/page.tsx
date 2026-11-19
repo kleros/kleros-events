@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { eventMaterials, getMaterial } from "@/lib/data";
+import { eventMaterials, getMaterial, listEvents, listMaterials } from "@/lib/data";
+import Related from "@/components/Related";
+import { materialProfile, related } from "@/lib/related";
 import { fmtDur, plural } from "@/lib/format";
 import type { Material } from "@/lib/types";
 import TalkPlayer from "@/components/TalkPlayer";
@@ -102,6 +104,16 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
   const more = siblings.filter((o) => o.id !== m.id && o.id !== fullSession?.id && isWatchable(o) && !clips.includes(o))
     .sort((a, b) => Number(!sharesSpeaker(a)) - Number(!sharesSpeaker(b)) || byTalkRank(a, b)).slice(0, 3);
 
+  // You might also like: talks from other events, events and Kleros reading on the same subject (lib/related.ts).
+  // A private event's talk is an internal meeting, so it gets none.
+  const pub = !!m.events && m.events.visibility !== "private";
+  const [allEvents, allMaterials] = pub ? await Promise.all([listEvents(), listMaterials()]) : [[], []];
+  const shown = new Set([m.id, fullSession?.id, ...clips.map((o) => o.id), ...more.map((o) => o.id), ...siblings.map((o) => o.id)].filter((x): x is string => !!x));
+  const evById = Object.fromEntries(allEvents.map((e) => [e.id, e]));
+  const alsoLike = pub
+    ? related([{ id: m.id, label: main, profile: materialProfile(m, evById) }], allEvents, allMaterials, { exclude: shown, talks: 3, events: 2, reads: 4 })
+    : { talks: [], events: [], reads: [] };
+
   return (
     <div className="wrap page stack">
       <div>
@@ -154,6 +166,7 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
           <div className="grid">{more.map((o) => <TalkCard key={o.id} m={o} showEvent={false} />)}</div>
         </section>
       )}
+      <Related data={alsoLike} />
     </div>
   );
 }
