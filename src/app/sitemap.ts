@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { listEvents, listMaterials } from "@/lib/data";
 import { SITE_URL } from "@/lib/kleros";
 import { coverImage } from "@/lib/cover/pick";
+import { PEOPLE } from "@/lib/people";
 
 // Every public page, for search engines: the listings, each published public event and each talk.
 export const revalidate = 3600;
@@ -16,6 +17,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/events`, changeFrequency: "daily", priority: 0.9 },
     { url: `${base}/talks`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${base}/kickback`, changeFrequency: "monthly", priority: 0.4 },
+    { url: `${base}/people`, changeFrequency: "monthly", priority: 0.6 },
+    ...PEOPLE.map((p) => ({ url: `${base}/people/${p.slug}`, changeFrequency: "weekly" as const, priority: 0.5 })),
     ...events.filter((e) => !e.is_example).map((e) => {
       // the event's own poster when it has one (lib/cover/pick.ts), never a social-post picture
       const image = coverImage(e);

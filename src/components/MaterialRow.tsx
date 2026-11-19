@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { Fragment } from "react";
 import type { EventRow, Material, MaterialKind } from "@/lib/types";
 import { fmtDur, fmtSize, plural } from "@/lib/format";
 import Thumb from "./Thumb";
 import GenCover from "./Cover";
 import Ext from "./Ext";
 import SaveButton from "./SaveButton";
+import SpeakerNames from "./SpeakerNames";
 
 const KIND: Record<string, string> = { talk: "TALK", slides: "PDF", audio: "AUD", video: "VID", doc: "DOC", image: "IMG", link: "URL", social: "POST" };
 // slides kept as a link (Google Slides, a claude.ai deck) are not a PDF
@@ -110,6 +112,16 @@ export const MATERIAL_GROUPS: { label: string; kinds: MaterialKind[] }[] = [
   { label: "Links and posts", kinds: ["link", "social"] },
 ];
 
+/**
+ * One quiet "a · b · c" line with the speaker in the middle, Kleros people linked to their
+ * profiles; null when every piece is empty.
+ */
+function withSpeaker(speaker: string | null, before: string[], after: string[]): React.ReactNode {
+  const items: React.ReactNode[] = [...before.filter(Boolean), ...(speaker ? [<SpeakerNames key="spk" speaker={speaker} />] : []), ...after.filter(Boolean)];
+  if (!items.length) return null;
+  return items.flatMap((x, i) => (i ? [<Fragment key={`d${i}`}> · </Fragment>, <Fragment key={`x${i}`}>{x}</Fragment>] : [<Fragment key={`x${i}`}>{x}</Fragment>]));
+}
+
 type EventRef = Pick<EventRow, "slug" | "title" | "starts_on">;
 
 /**
@@ -120,8 +132,7 @@ export function TalkCard({ m, event, note, showEvent = true }: { m: Material; ev
   const href = `/talks/${m.id}`;
   const verb = m.kind === "audio" ? "Listen" : "Watch";
   const { main } = splitTitle(m.title);
-  const meta = [isClip(m) ? "Clip" : "", m.speaker, m.duration_seconds ? fmtDur(m.duration_seconds) : "", showEvent && event ? event.title : ""]
-    .filter(Boolean).join(" · ");
+  const meta = withSpeaker(m.speaker, [isClip(m) ? "Clip" : ""], [m.duration_seconds ? fmtDur(m.duration_seconds) : "", showEvent && event ? event.title : ""]);
   return (
     <article className="card talk">
       <Link className="cover" href={href} aria-label={`${verb}: ${m.title}`} tabIndex={-1}>
@@ -226,7 +237,7 @@ export function ArchiveRow({ m, eventSlug }: { m: Material; eventSlug: string })
   const detail = isWatchable(m)
     ? [watchLabel(m), m.duration_seconds ? fmtDur(m.duration_seconds) : ""]
     : [m.url && !m.file_path ? sourceOf(m.url) : "", m.kind === "audio" && m.duration_seconds ? fmtDur(m.duration_seconds) : "", fmtSize(m.size_bytes)];
-  const sub = [m.speaker, ...detail].filter(Boolean).join(" · ");
+  const sub = withSpeaker(m.speaker, [], detail);
   const thumb = videoThumb(m);
   let action: React.ReactNode;
   if (isWatchable(m)) action = <Link className="btn sm primary" href={`/talks/${m.id}`}><span aria-hidden="true">▶</span> Watch</Link>;
@@ -255,10 +266,10 @@ export function ArchiveRow({ m, eventSlug }: { m: Material; eventSlug: string })
 /** A compact row for slides, audio, photos, documents, links and posts. */
 export default function MaterialRow({ m, eventTitle, eventSlug }: { m: Material; eventTitle?: string; eventSlug?: string }) {
   const href = linkUrl(m.url) || fileUrl(m.file_path);
-  const sub = [m.speaker,
+  const sub = withSpeaker(m.speaker, [], [
     m.kind === "talk" ? `${m.pages ?? "?"} slides${m.duration_seconds ? " · " + fmtDur(m.duration_seconds) : ""}` : "",
     m.kind !== "talk" ? fmtSize(m.size_bytes) : "",
-    m.url && !m.file_path && m.kind !== "talk" && m.kind !== "slides" ? sourceOf(m.url) : ""].filter(Boolean).join(" · ");
+    m.url && !m.file_path && m.kind !== "talk" && m.kind !== "slides" ? sourceOf(m.url) : ""]);
   return (
     <div className="mrow">
       {m.kind === "image" && m.file_path

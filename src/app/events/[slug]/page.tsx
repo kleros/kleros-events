@@ -9,6 +9,8 @@ import { ROLE_LABEL, SITE_URL, productsFor } from "@/lib/kleros";
 import { EventCover } from "@/components/EventCard";
 import { LinkList, MATERIAL_GROUPS, PhotoGrid, TalkCard, byTalkRank, isTalkLike, linkUrl, sourceOf, talkRank } from "@/components/MaterialRow";
 import Ext from "@/components/Ext";
+import SpeakerNames from "@/components/SpeakerNames";
+import { peopleIn } from "@/lib/people";
 import Linkify from "@/components/Linkify";
 import Comments from "@/components/Comments";
 import AttendanceButtons from "@/components/AttendanceButtons";
@@ -187,7 +189,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                 <span className="tm">{a.starts_at?.slice(0, 5)}</span>
                 <div>
                   <div className={a.is_kleros ? "k" : ""} style={{ fontWeight: 600 }}>{a.title}{a.is_kleros && " · Kleros"}</div>
-                  {a.speaker && <div className="muted small">{a.speaker}</div>}
+                  {a.speaker && <div className="muted small"><SpeakerNames speaker={a.speaker} /></div>}
                 </div>
               </div>
             ))}
@@ -202,12 +204,13 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           <div className="team">
             {team.filter((t) => t.team_members).map(({ team_members: m, part }) => {
               const handle = m.x_handle?.replace(/^@/, "");
+              const profile = peopleIn(m.name)[0];
               return (
                 <div key={m.id} className="person">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <span className="av">{m.avatar_url ? <img src={linkUrl(m.avatar_url)} alt="" /> : m.name[0]}</span>
                   <span className="who">
-                    <b>{m.name}</b>
+                    <b>{profile ? <Link href={`/people/${profile.slug}`}>{m.name}</Link> : m.name}</b>
                     {(part || m.title) && <span className="muted">{part || m.title}</span>}
                     {handle && <a href={`https://x.com/${handle}`} target="_blank" rel="noopener">@{handle}<Ext /></a>}
                   </span>

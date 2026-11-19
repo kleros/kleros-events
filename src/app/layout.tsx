@@ -9,6 +9,7 @@ import "./styles/studio.css";
 import "./styles/ask.css";
 import "./styles/media.css";
 import "./styles/event-pages.css";
+import "./styles/people.css";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import AskLauncher from "@/components/ask/AskLauncher";

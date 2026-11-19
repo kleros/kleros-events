@@ -19,6 +19,8 @@ import StartAt from "@/components/transcript/StartAt";
 import { MaterialEditButton } from "@/components/admin/MaterialEditor";
 import SaveButton from "@/components/SaveButton";
 import Comments from "@/components/Comments";
+import SpeakerNames from "@/components/SpeakerNames";
+import PersonChips from "@/components/PersonChips";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -89,7 +91,7 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
   const recorded = m.kind === "talk" || m.kind === "audio" || m.kind === "video";
   const canTranscribe = (m.kind === "talk" && !!m.audio_path) || ((m.kind === "audio" || m.kind === "video") && !!m.file_path);
   const { main, aside } = splitTitle(m.title);
-  const detail = [m.speaker, aside, (m.kind === "talk" || m.kind === "slides") && m.pages ? plural(m.pages, "slide") : "", m.duration_seconds ? fmtDur(m.duration_seconds) : ""].filter(Boolean).join(" · ");
+  const detailRest = [aside, (m.kind === "talk" || m.kind === "slides") && m.pages ? plural(m.pages, "slide") : "", m.duration_seconds ? fmtDur(m.duration_seconds) : ""].filter(Boolean).join(" · ");
 
   // What to watch next: the other talks of the same event, and for a clip, the session it comes from.
   const siblings: Material[] = m.events ? await eventMaterials(await supabaseServer(), m.events.id) : [];
@@ -107,7 +109,8 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
           ? <Link href={`/events/${m.events.slug}`} className="back">← {m.events.title}</Link>
           : <Link href="/admin/recordings" className="back">← Recordings library</Link>}
         <h1 className="talk-title">{main}</h1>
-        <div className="muted small">{detail}</div>
+        <div className="muted small">{m.speaker && <SpeakerNames speaker={m.speaker} />}{m.speaker && detailRest && " · "}{detailRest}</div>
+        <PersonChips speaker={m.speaker} />
         {m.events && <div className="talk-save"><SaveButton id={m.id} next={`/talks/${m.id}`} /></div>}
         {canRename && <div className="talk-edit"><MaterialEditButton m={{ id: m.id, title: m.title, speaker: m.speaker }} label="Edit title or speaker" /></div>}
         {m.linkedEvents.length > 1 && (
