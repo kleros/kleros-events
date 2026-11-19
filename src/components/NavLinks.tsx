@@ -56,6 +56,8 @@ export default function NavLinks({ signedIn, isTeam }: { signedIn: boolean; isTe
         <Link className="nav-link" href="/talks" aria-current={on("/talks")}>Talks</Link>
       </div>
       <div className="nav-end">
+        {/* everyone signed in keeps a Saved list; only @kleros.io accounts get the Team menu */}
+        {signedIn && <Link className="nav-link wide" href="/saved" aria-current={on("/saved")}>Saved</Link>}
         {isTeam ? (
           <details className="menu end acct wide" ref={team}>
             <summary className="nav-link">Team<span aria-hidden="true"> ▾</span></summary>
@@ -77,6 +79,7 @@ export default function NavLinks({ signedIn, isTeam }: { signedIn: boolean; isTe
           <div className="menu-panel" onClick={closeOnLink}>
             <Link href="/events" aria-current={on("/events")}>Events</Link>
             <Link href="/talks" aria-current={on("/talks")}>Talks</Link>
+            {signedIn && <Link href="/saved" aria-current={on("/saved")}>Saved</Link>}
             <Link href={account.href} aria-current={on(account.href)}>{account.label}</Link>
             {isTeam && <Link href="/admin" aria-current={on("/admin")}>Team desk</Link>}
             <ThemeChoice />

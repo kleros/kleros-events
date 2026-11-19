@@ -29,7 +29,7 @@ export default function AttendanceButtons({ eventId, past, signedIn, slug }: { e
       : await sb.from("attendance").delete().eq("user_id", data.user.id).eq("event_id", eventId);
     if (res.error) { setMsg("Not saved. " + visitorError(res.error, "Saving")); return; }
     setStatus(next);
-    setMsg(next ? "Saved to My events" : "Removed");
+    setMsg(next ? "Added to your Saved page" : "Removed");
   }
 
   // [status, glyph, label]: the glyph is decoration, so screen readers hear only the label

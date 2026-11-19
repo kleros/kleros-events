@@ -14,7 +14,7 @@
 
 .timeline { margin-top: var(--s-7); min-width: 0; }
 .timeline + .timeline { margin-top: var(--s-9); }
-.tl-h, .year-h { font: 400 var(--t-h2)/1.2 var(--font-display), Georgia, serif; letter-spacing: 0; color: var(--white); margin: 0 0 var(--s-5); }
+.tl-h, .year-h { font: 600 var(--t-h2)/1.2 var(--font-body), system-ui, sans-serif; letter-spacing: -0.02em; color: var(--white); margin: 0 0 var(--s-5); }
 .year + .year { margin-top: var(--s-8); }
 /* the calendar's list of the month's events */
 .timeline > .sub-h { margin: 0 0 var(--s-5); }
@@ -39,7 +39,7 @@
 .ev-actions > .stack > .field { max-width: 520px; }
 .ev-title > .note { justify-self: start; max-width: 60ch; }
 
-.cover.ev-cover { width: 100%; aspect-ratio: 4 / 3; border-radius: var(--r-lg); }
+.cover.ev-cover { width: 100%; border-radius: var(--r-lg); }
 
 /* the Manage menu (team tools); ManageMenu opens it leftwards near the right edge of the screen */
 .menu.manage > summary { gap: 6px; }
@@ -47,7 +47,7 @@
 
 .sections { display: grid; gap: var(--s-9); padding-top: var(--s-9); min-width: 0; }
 .sec { display: grid; gap: var(--s-5); align-content: start; min-width: 0; }
-.sec > h2 { font: 400 var(--t-h2)/1.2 var(--font-display), Georgia, serif; letter-spacing: 0; color: var(--white); }
+.sec > h2 { font: 600 var(--t-h2)/1.2 var(--font-body), system-ui, sans-serif; letter-spacing: -0.02em; color: var(--white); }
 .sec > .muted.small { margin-top: calc(-1 * var(--s-3)); }
 .ev-recap { display: grid; gap: var(--s-2); }
 .desc { white-space: pre-wrap; max-width: 68ch; overflow-wrap: anywhere; }

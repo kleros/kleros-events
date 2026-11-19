@@ -29,7 +29,7 @@ body:has(.scr-page) { overflow: hidden; }
 .con-back { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--fg); text-decoration: none; font-size: 1.4rem; line-height: 1; }
 .con-back:hover { border-color: var(--accent); }
 .con-heading { min-width: 0; flex: 1 1 260px; display: grid; gap: 4px; }
-.con-h1 { font: 400 1.65rem/1.1 var(--font-display), Georgia, serif; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.con-h1 { font: 600 1.65rem/1.1 var(--font-body), system-ui, sans-serif; letter-spacing: -0.02em; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .con-heading .eyebrow { font-size: 0.68rem; }
 .con-stats { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding-left: 16px; border-left: 1px solid var(--line); }
 .con-stats:empty { display: none; }
@@ -205,7 +205,7 @@ body:has(.scr-page) { overflow: hidden; }
 .scr-preview { height: auto; aspect-ratio: 16 / 9; }
 .scr-in { --u: min(1cqh, calc(0.5625 * 1cqw)); position: absolute; inset: 0; padding: calc(var(--u) * 6) calc(var(--u) * 7); }
 .scr-logo { height: calc(var(--u) * 3.6); width: auto; display: block; }
-.scr-title { font: 400 calc(var(--u) * 7)/1.06 var(--font-display), Georgia, serif; color: var(--white); margin: 0; letter-spacing: 0; text-wrap: balance; }
+.scr-title { font: 600 calc(var(--u) * 7)/1.06 var(--font-body), system-ui, sans-serif; letter-spacing: -0.02em; color: var(--white); margin: 0; letter-spacing: 0; text-wrap: balance; }
 .scr-title.sm { font-size: calc(var(--u) * 4.4); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .scr-eyebrow { font: 500 calc(var(--u) * 2.6)/1 var(--font-body), sans-serif; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
 .scr-by { display: block; font: 400 calc(var(--u) * 2.8)/1.3 var(--font-body), sans-serif; color: var(--muted); margin-top: calc(var(--u) * 0.6); }

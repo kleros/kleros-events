@@ -1,5 +1,6 @@
 /* Kleros Events. Tokens first; components below use only tokens.
-   Calm light and dark palettes, Geist for text, Instrument Serif only for page titles and section headings.
+   Calm light and dark palettes. Geist for everything, headings upright and semibold like kleros.io; Instrument Serif
+   only for a pulled quote in a transcript.
    Page-specific rules live in styles/media.css (cards, home, talks) and styles/event-pages.css (events). */
 :root {
   color-scheme: light dark;   /* no saved choice: follow the OS, also with JS off */
@@ -30,12 +31,13 @@
   --stage: #120F19; --stage-fg: #ECE7F3; --gold: #C4B5FD;   /* projector art: fixed in both themes */
   --wash:       light-dark(transparent, rgb(124 92 230 / 0.10));          /* the one hero glow, dark only */
   --shadow-c:   light-dark(rgb(22 18 29 / 0.12), rgb(0 0 0 / 0.45));     /* menus, dialogs, Ask panel */
+  --logo-a: 0.03;                                                      /* the faint Kleros symbol behind the page */
 
   /* spacing scale: use these, not ad hoc values */
   --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px; --s-9: 96px;
   --t-display: clamp(2.25rem, 1.35rem + 2.9vw, 3.25rem);  /* 36 to 52px */
   --t-h1:      clamp(2rem, 1.55rem + 1.5vw, 2.75rem);     /* 32 to 44px */
-  --t-h2: 1.75rem; --t-lg: 1.125rem; --t-base: 1rem; --t-sm: 0.875rem; --t-xs: 0.75rem;
+  --t-h2: 1.5rem; --t-lg: 1.125rem; --t-base: 1rem; --t-sm: 0.875rem; --t-xs: 0.75rem;
   --r-sm: 8px; --r: 12px; --r-lg: 16px;
   --wrap: 1200px; --gutter: clamp(16px, 4vw, 32px); --header-h: 64px;
 }
@@ -44,7 +46,7 @@
 /* host console and projector stay dark whatever the visitor chose */
 :root:has(.console), :root:has(.scr-page) { color-scheme: dark; }
 @media (max-width: 860px) { :root { --header-h: 56px; } }
-@media (max-width: 600px) { :root { --t-h2: 1.5rem; } }
+@media (max-width: 600px) { :root { --t-h2: 1.3rem; } }
 /* browsers without light-dark() (Safari < 17.5, Chrome < 123, Firefox < 120): the dark column as plain values.
    The theme controls do nothing there, so they are hidden. */
 @supports not (color: light-dark(#000, #fff)) {
@@ -66,6 +68,13 @@
 [hidden] { display: none !important; }
 html, body { margin: 0; }
 body { background: var(--bg); color: var(--fg); font: 16px/1.6 var(--font-body), system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+/* the Kleros symbol, very large and faint, half off the right edge behind every page; it stays put while the
+   page scrolls. Drawn in the text colour through a mask, so it suits both themes. */
+body::before { content: ""; position: fixed; z-index: -1; pointer-events: none; width: min(78vmax, 1100px); aspect-ratio: 1;
+  right: max(-24vmax, -340px); top: 50%; transform: translateY(-46%) rotate(-11deg);
+  background: var(--white); opacity: var(--logo-a);
+  -webkit-mask: url(/kleros-symbol.svg) center / contain no-repeat; mask: url(/kleros-symbol.svg) center / contain no-repeat; }
+:root:has(.console) body::before, :root:has(.scr-page) body::before { display: none; }
 a { color: var(--lavender); }
 button, input, select, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -74,10 +83,11 @@ p { margin: 0; }
 
 /* type */
 h1, h2, h3 { font-family: var(--font-body), system-ui, sans-serif; font-weight: 500; letter-spacing: -0.015em; text-wrap: balance; margin: 0; line-height: 1.25; color: var(--white); }
-h1 { font: 400 var(--t-h1)/1.1 var(--font-display), Georgia, serif; letter-spacing: 0; }
+h1 { font: 600 var(--t-h1)/1.1 var(--font-body), system-ui, sans-serif; letter-spacing: -0.02em; }
 h2 { font-size: 1.25rem; }
 h3 { font-size: 1.02rem; line-height: 1.3; }
-.em, h1 em, h2 em { font-style: italic; color: var(--lavender); font-weight: inherit; }
+/* a highlighted phrase in a title: colour, not italics (Kleros sites keep headings upright and plain) */
+.em, h1 em, h2 em { font-style: normal; color: var(--lavender); font-weight: inherit; }
 .mono { font-family: var(--font-mono), ui-monospace, monospace; font-variant-numeric: tabular-nums; }
 /* team tools only: public pages have no uppercase eyebrows */
 .eyebrow { font: 500 0.75rem/1 var(--font-body), sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
@@ -97,7 +107,7 @@ h3 { font-size: 1.02rem; line-height: 1.3; }
 .block { margin-top: var(--s-9); }
 .section-h { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); margin: var(--s-8) 0 var(--s-5); flex-wrap: wrap; }
 .block > .section-h, .section-h.first { margin-top: 0; }
-.section-h h2 { font: 400 var(--t-h2)/1.2 var(--font-display), Georgia, serif; letter-spacing: 0; }
+.section-h h2 { font: 600 var(--t-h2)/1.2 var(--font-body), system-ui, sans-serif; letter-spacing: -0.02em; }
 .section-h a:not(.btn) { font: 500 var(--t-sm)/1.4 var(--font-body), sans-serif; color: var(--lavender); text-decoration: none; }
 .section-h a:not(.btn):hover { text-decoration: underline; }
 .quiet-empty { color: var(--muted); font-size: var(--t-base); padding: var(--s-4) 0; }
@@ -118,7 +128,7 @@ h3 { font-size: 1.02rem; line-height: 1.3; }
 .top .wrap { display: flex; align-items: center; gap: var(--s-6); height: var(--header-h); }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--white); text-decoration: none; flex: none; }
 .brand-logo { height: 22px; width: auto; display: block; }
-.brand-word { font: 400 1.25rem/1 var(--font-display), Georgia, serif; }
+.brand-word { font: 500 1.125rem/1 var(--font-body), system-ui, sans-serif; letter-spacing: -0.01em; }
 .nav { flex: 1; display: flex; align-items: center; gap: var(--s-5); min-width: 0; }
 .nav-main { display: flex; gap: var(--s-5); }
 .nav-end { margin-left: auto; display: flex; align-items: center; gap: var(--s-4); }
@@ -430,3 +440,4 @@ html { scroll-padding-top: calc(var(--header-h) + var(--s-4)); scroll-padding-bo
 label.btn:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* the calendar's month name is a section heading (h2) with the size it had as an h3 */
 .month-nav h2 { font-size: 1.02rem; line-height: 1.3; }
+.talk-save { margin-top: var(--s-3); }

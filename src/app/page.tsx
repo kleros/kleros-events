@@ -13,7 +13,8 @@ export default async function Home() {
   const [events, materials, counts] = await Promise.all([listEvents(), listMaterials(), eventCounts()]);
   const upcoming = events.filter((e) => !isPast(e)).sort(soonestFirst);
   const next = upcoming[0];
-  const later = upcoming.slice(1, 4);
+  // Coming up lists everything on now or ahead, the featured one too, so the row never hides an event
+  const later = upcoming.slice(0, 6);
   const perEvent = materialCounts(materials, isWatchable);
   const talkCount = (id: string) => perEvent.talks[id] ?? 0;
   const itemCount = (id: string) => perEvent.items[id] ?? 0;

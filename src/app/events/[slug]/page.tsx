@@ -10,6 +10,7 @@ import { EventCover } from "@/components/EventCard";
 import { LinkList, MATERIAL_GROUPS, PhotoGrid, TalkCard, byTalkRank, isTalkLike, linkUrl, sourceOf, talkRank } from "@/components/MaterialRow";
 import Ext from "@/components/Ext";
 import Linkify from "@/components/Linkify";
+import Comments from "@/components/Comments";
 import AttendanceButtons from "@/components/AttendanceButtons";
 import AskTheSpeaker from "@/components/AskTheSpeaker";
 import MeetingForm from "@/components/MeetingForm";
@@ -219,6 +220,11 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
       <section id="ask" className="sec">
         <h2>{past ? "Questions for the speakers" : "Ask the speaker"}</h2>
         <AskTheSpeaker eventId={e.id} signedIn={!!user} isTeam={canEdit} displayName={profile?.display_name ?? ""} slug={e.slug} past={past} isPrivate={e.visibility === "private"} />
+      </section>
+
+      <section id="comments" className="sec">
+        <h2>Comments</h2>
+        <Comments eventId={e.id} signedIn={!!user} canModerate={canEdit} next={`/events/${e.slug}#comments`} displayName={profile?.display_name} />
       </section>
 
       {/* an internal meeting's page has no sales blocks */}

@@ -17,6 +17,8 @@ import TranscriptArea from "@/components/transcript/TranscriptArea";
 import { MediaPlayer, YouTubePlayer } from "@/components/transcript/MediaPlayers";
 import StartAt from "@/components/transcript/StartAt";
 import { MaterialEditButton } from "@/components/admin/MaterialEditor";
+import SaveButton from "@/components/SaveButton";
+import Comments from "@/components/Comments";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -106,6 +108,7 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
           : <Link href="/admin/recordings" className="back">← Recordings library</Link>}
         <h1 className="talk-title">{main}</h1>
         <div className="muted small">{detail}</div>
+        {m.events && <div className="talk-save"><SaveButton id={m.id} next={`/talks/${m.id}`} /></div>}
         {canRename && <div className="talk-edit"><MaterialEditButton m={{ id: m.id, title: m.title, speaker: m.speaker }} label="Edit title or speaker" /></div>}
         {m.linkedEvents.length > 1 && (
           <div className="talk-events">
@@ -125,6 +128,12 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
           {player}
         </TranscriptArea>
       ) : player}
+      {m.events && (
+        <section className="block" id="comments">
+          <div className="section-h"><h2>Comments</h2></div>
+          <Comments materialId={m.id} signedIn={!!user} canModerate={canRename} next={`/talks/${m.id}#comments`} displayName={profile?.display_name} />
+        </section>
+      )}
       {fullSession && (
         <p className="full-session-line">
           <Link className="full-session" href={`/talks/${fullSession.id}`}>From the full session: <b>{splitTitle(fullSession.title).main}</b> →</Link>
