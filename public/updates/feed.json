@@ -958,6 +958,25 @@
       "title": "Podcast interview: Pree and Wei Wei Ooi of Kleros with Sam at the Token Rights Community Hub (Devcon 8, full recording)",
       "speaker": "Wei Wei Ooi and Pree",
       "url": "https://drive.google.com/file/d/1ya_sqDBj9LGe6sv3Xa8IJIBDGpR4MPQl/view"
+    },
+    {
+      "id": "2026-11-20-yt-R__Dul2VaLo",
+      "kind": "material",
+      "source": "https://www.youtube.com/watch?v=R__Dul2VaLo",
+      "event_slug": "onchain-legal-summit-devcon-india",
+      "material_kind": "video",
+      "title": "Who Gets Sued When an AI Agent Makes a Mistake? Panel with Facundo Trotz, Fortunato Cinquepalmi and Husam Abboud (Entity.ID recording)",
+      "speaker": "Facundo Trotz, Fortunato Cinquepalmi and Husam Abboud",
+      "url": "https://www.youtube.com/watch?v=R__Dul2VaLo"
+    },
+    {
+      "id": "2026-11-20-yt-PLUbcTBPgTu5U",
+      "kind": "material",
+      "source": "https://www.youtube.com/playlist?list=PLUbcTBPgTu5U",
+      "event_slug": "onchain-legal-summit-devcon-india",
+      "material_kind": "link",
+      "title": "YouTube playlist: full sessions from the Entity Onchain Legal Summit in Mumbai (4 Nov), including the Federico Ast fireside (Entity.ID channel)",
+      "url": "https://www.youtube.com/playlist?list=PLUbcTBPgTu5U"
     }
   ]
 }
