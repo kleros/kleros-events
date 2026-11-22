@@ -977,6 +977,30 @@
       "material_kind": "link",
       "title": "YouTube playlist: full sessions from the Entity Onchain Legal Summit in Mumbai (4 Nov), including the Federico Ast fireside (Entity.ID channel)",
       "url": "https://www.youtube.com/playlist?list=PLUbcTBPgTu5U"
+    },
+    {
+      "id": "2026-11-22-web-fbwhgfjl",
+      "kind": "event",
+      "source": "https://luma.com/fbwhgfjl",
+      "event": {
+        "slug": "ethereum-greece-dispute-resolution-online-2026",
+        "title": "Decentralized Dispute Resolution with Kleros (Ethereum Greece)",
+        "kleros_role": "speaking",
+        "organizer": "Ethereum Greece",
+        "event_type": "Online talk / Space",
+        "starts_on": "2026-05-26",
+        "start_time": "19:00",
+        "timezone": "GMT+3",
+        "city": "Online",
+        "region": "Online",
+        "venue": "Google Meet",
+        "url": "https://luma.com/fbwhgfjl",
+        "description": "An online session in English for Ethereum Greece, hosted by Ioannis Tzannetos. Juan Ramiro Garza of Kleros introduced decentralized arbitration and why onchain systems need open, neutral, community-run courts for subjective disputes, covered the challenges of designing and running such courts, and closed with a live demo of a dispute being created, processed and resolved on the Kleros protocol.",
+        "topics": [
+          "Arbitration",
+          "Decentralized justice"
+        ]
+      }
     }
   ]
 }
