@@ -5,11 +5,18 @@ import { usePathname } from "next/navigation";
 import { KICKBACK_SITE } from "@/lib/kleros";
 import Ext from "./Ext";
 import ThemeToggle, { ThemeChoice } from "./ThemeToggle";
+import { useAccount } from "@/lib/useAccount";
 
 /** Header navigation. Desktop: Events and Talks, then account, theme and Kickback on the right.
- *  Phones: Kickback and a Menu sheet that holds the rest. */
-export default function NavLinks({ signedIn, isTeam }: { signedIn: boolean; isTeam: boolean }) {
+ *  Phones: Kickback and a Menu sheet that holds the rest.
+ *  The account links are filled in by the browser (lib/useAccount.ts), so every page can be sent ready-made. */
+export default function NavLinks() {
   const path = usePathname();
+  const acct = useAccount();
+  const signedIn = !!acct;
+  const isTeam = !!acct?.team;
+  // until the browser has checked, the account link keeps its place but is not shown
+  const checking = acct === undefined;
   const on = (href: string) => (path === href || path.startsWith(href + "/") ? "page" : undefined);
   const team = useRef<HTMLDetailsElement>(null);
   const sheet = useRef<HTMLDetailsElement>(null);
@@ -68,7 +75,7 @@ export default function NavLinks({ signedIn, isTeam }: { signedIn: boolean; isTe
             </div>
           </details>
         ) : (
-          <Link className="nav-link wide" href={account.href} aria-current={on(account.href)}>{account.label}</Link>
+          <Link className="nav-link wide" href={account.href} aria-current={on(account.href)} style={checking ? { visibility: "hidden" } : undefined}>{account.label}</Link>
         )}
         <ThemeToggle className="wide" />
         <a className="btn sm nav-kickback" href={KICKBACK_SITE} target="_blank" rel="noopener">Kickback<Ext /></a>
