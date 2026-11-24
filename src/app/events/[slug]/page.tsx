@@ -48,13 +48,13 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const { slug } = await params;
   const [data, counts, { user, profile }] = await Promise.all([getEvent(slug), eventCounts(), currentUser()]);
   if (!data) {
-    // a private event is only readable once signed in with an invited email; the same page shows for
+    // a private event is only readable once signed in with a Kleros team account or an invited email; the same page shows for
     // every unknown address, so it says nothing about whether this one exists
     if (!user) return (
       <div className="wrap page con-gate">
         <div className="eyebrow">Event</div>
         <h1>This event is not available</h1>
-        <p className="muted">The link may be old or mistyped. If someone shared a private event with you, sign in with the email address they used and it opens.</p>
+        <p className="muted">The link may be old or mistyped. If this is an internal Kleros event, sign in with your Kleros email. If someone added you as a guest, sign in with the email address they used.</p>
         <div className="row-flex">
           <Link className="btn primary" href="/events">All events</Link>
           <Link className="btn" href={`/login?next=${encodeURIComponent(`/events/${slug}`)}`}>Sign in</Link>
@@ -66,7 +66,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const { event: e, agenda, team, materials } = data;
   const past = isPast(e);
   const isTeam = !!profile?.is_team;
-  // a private event only reaches this page for its creator and collaborators, who may edit it
+  // a private event only reaches this page for the team and its invited guests, who may edit it
   const canEdit = isTeam || (!!user && e.visibility === "private");
   // talks with slides, videos, and recordings (audio files) are all listed under Talks:
   // full talks first, then clips, then previews and other videos with no speaker
@@ -134,7 +134,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           {canEdit && <ManageMenu slug={e.slug} eventId={e.id} isTeam={isTeam} hasBareRecordings={bareRecordings.length > 0} />}
         </div>
         {e.visibility === "private"
-          ? <div className="note">Private. Only its creator and the collaborators they added can see this event, its materials and its questions.</div>
+          ? <div className="note">Private. Internal to the Kleros team: only team members and the guests added to it can see this event, its materials and its questions.</div>
           : e.status === "draft" && <div className="note">Draft. Only the Kleros team can see this event until it is published.</div>}
       </div>
       <EventCover e={e} className="ev-cover" />
