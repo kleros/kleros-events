@@ -55,7 +55,7 @@ export default async function Home() {
           <div className="hero-copy">
             <SetupNotice />
             <h1 className="hero-title">Where Kleros shows up, <em>and what was said there.</em></h1>
-            <p className="lede">{KLEROS_TAGLINE} These are the events it hosts, sponsors and speaks at, with the talks from each one.</p>
+            <p className="lede">{KLEROS_TAGLINE}</p>
             <div className="hero-actions">
               <Link className="btn primary" href="/talks">Watch the talks</Link>
               <a className="text-link" href={LUMA_URL} target="_blank" rel="noopener">Upcoming events on Luma<Ext /></a>
