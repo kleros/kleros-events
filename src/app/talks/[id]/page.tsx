@@ -45,7 +45,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function TalkPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [m, { user, profile }, transcript] = await Promise.all([getMaterial(id), currentUser(), getTranscript(id)]);
+  // the public lists for "You might also like" load alongside (kept for a minute on the server)
+  const [m, { user, profile }, transcript, publicEvents, publicMaterials] = await Promise.all([
+    getMaterial(id), currentUser(), getTranscript(id), listEvents("public"), listMaterials("public"),
+  ]);
   if (!m && !user) return (
     <div className="wrap page con-gate">
       <h1>This talk is not available</h1>
@@ -108,7 +111,7 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
   // You might also like: talks from other events, events and Kleros reading on the same subject (lib/related.ts).
   // A private event's talk is an internal meeting, so it gets none.
   const pub = !!m.events && m.events.visibility !== "private";
-  const [allEvents, allMaterials] = pub ? await Promise.all([listEvents(), listMaterials()]) : [[], []];
+  const [allEvents, allMaterials] = pub ? [publicEvents, publicMaterials] : [[], []];
   const shown = new Set([m.id, fullSession?.id, ...clips.map((o) => o.id), ...more.map((o) => o.id), ...siblings.map((o) => o.id)].filter((x): x is string => !!x));
   const evById = Object.fromEntries(allEvents.map((e) => [e.id, e]));
   const alsoLike = pub
