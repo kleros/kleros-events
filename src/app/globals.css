@@ -31,7 +31,8 @@
   --stage: #120F19; --stage-fg: #ECE7F3; --gold: #C4B5FD;   /* projector art: fixed in both themes */
   --wash:       light-dark(transparent, rgb(124 92 230 / 0.10));          /* the one hero glow, dark only */
   --shadow-c:   light-dark(rgb(22 18 29 / 0.12), rgb(0 0 0 / 0.45));     /* menus, dialogs, Ask panel */
-  --logo-a: 0.03;                                                      /* the faint Kleros symbol behind the page */
+  --logo-ink:   light-dark(rgb(22 18 29 / 0.03), rgb(214 202 255 / 0.065)); /* the faint Kleros symbol behind the page:
+                 dark ink in light mode, a soft lavender-white in dark mode (the text colour at 3% vanished there) */
 
   /* spacing scale: use these, not ad hoc values */
   --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px; --s-9: 96px;
@@ -57,7 +58,7 @@
     --accent: #A78BFA; --accent-ink: #15121B; --accent-soft: rgb(167 139 250 / 0.14); --lavender: #C4B5FD; --stroke: #A78BFA;
     --cyan: #7DD3E8; --blue: #7DD3E8; --blue-soft: rgb(125 211 232 / 0.12);
     --good: #86D9B4; --good-soft: rgb(134 217 180 / 0.12); --warn: #F0C08A; --warn-soft: rgb(240 192 138 / 0.12); --rec: #F07A8A;
-    --wash: rgb(124 92 230 / 0.10); --shadow-c: rgb(0 0 0 / 0.45);
+    --wash: rgb(124 92 230 / 0.10); --shadow-c: rgb(0 0 0 / 0.45); --logo-ink: rgb(214 202 255 / 0.065);
   }
   .theme-toggle, .theme-choice { display: none !important; }
 }
@@ -69,10 +70,10 @@
 html, body { margin: 0; }
 body { background: var(--bg); color: var(--fg); font: 16px/1.6 var(--font-body), system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
 /* the Kleros symbol, very large and faint, half off the right edge behind every page; it stays put while the
-   page scrolls. Drawn in the text colour through a mask, so it suits both themes. */
+   page scrolls. Drawn through a mask in --logo-ink, which has its own strength per theme. */
 body::before { content: ""; position: fixed; z-index: -1; pointer-events: none; width: min(78vmax, 1100px); aspect-ratio: 1;
   right: max(-24vmax, -340px); top: 50%; transform: translateY(-46%) rotate(-11deg);
-  background: var(--white); opacity: var(--logo-a);
+  background: var(--logo-ink);
   -webkit-mask: url(/kleros-symbol.svg) center / contain no-repeat; mask: url(/kleros-symbol.svg) center / contain no-repeat; }
 :root:has(.console) body::before, :root:has(.scr-page) body::before { display: none; }
 a { color: var(--lavender); }
