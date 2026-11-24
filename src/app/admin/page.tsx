@@ -39,7 +39,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     ((counts.data ?? []) as { event_id: string; going: number }[]).map((c) => [c.event_id, c.going]),
   );
 
-  // private events reach this list only for their creator and collaborators (RLS, 0010)
+  // private events reach this list for the team and their invited guests (RLS, 0021)
   const pub = events.filter((e) => e.visibility !== "private");
   const published = pub.filter((e) => e.status === "published");
   const lists = {
@@ -107,7 +107,7 @@ const EMPTY: Record<Exclude<Tab, "requests">, [string, string]> = {
   upcoming: ["No upcoming events", "Published events and private events with a future date show up here."],
   past: ["No past events yet", "Events move here the day after they end."],
   drafts: ["No drafts", "Events saved as draft stay hidden from the public site until published."],
-  private: ["No private events", "Private events are seen only by their creator and the collaborators they add. Choose Private when adding an event."],
+  private: ["No private events", "Private events are internal: the whole Kleros team sees them, the public does not. Choose Private when adding an event."],
 };
 
 function EventList({ events, tab, matCount, going }: {
