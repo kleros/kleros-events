@@ -2,7 +2,7 @@ import Link from "next/link";
 import { listEvents, listMaterials, eventCounts, eventIdsOf, materialCounts, talkStats } from "@/lib/data";
 import { mostWatched, statsLine } from "@/lib/popular";
 import { fmtRange, isLive, isPast, latestFirst, plural, place, soonestFirst } from "@/lib/format";
-import { LUMA_URL } from "@/lib/kleros";
+import { KLEROS_TAGLINE, LUMA_URL } from "@/lib/kleros";
 import EventCard, { EventCover, statusLabel } from "@/components/EventCard";
 import { TalkCard, isClip, isWatchable, talkRank, videoThumb } from "@/components/MaterialRow";
 import SetupNotice from "@/components/SetupNotice";
@@ -55,7 +55,7 @@ export default async function Home() {
           <div className="hero-copy">
             <SetupNotice />
             <h1 className="hero-title">Where Kleros shows up, <em>and what was said there.</em></h1>
-            <p className="lede">The events Kleros hosts, sponsors and speaks at, with the talks from each one.</p>
+            <p className="lede">{KLEROS_TAGLINE} These are the events it hosts, sponsors and speaks at, with the talks from each one.</p>
             <div className="hero-actions">
               <Link className="btn primary" href="/talks">Watch the talks</Link>
               <a className="text-link" href={LUMA_URL} target="_blank" rel="noopener">Upcoming events on Luma<Ext /></a>
