@@ -66,8 +66,8 @@ export default function MySpace({ profile, email, events, materials, attendance,
       </aside>
       <div>
         {privateEvents.length > 0 && (<>
-          <div className="section-h first"><div><div className="eyebrow">Private</div><h2>Private events you can open</h2></div></div>
-          <div className="grid">{privateEvents.map((e) => <EventCard key={e.id} e={e} mine={e.created_by === userId ? "You created this" : "Shared with you"} />)}</div>
+          <div className="section-h first"><div><div className="eyebrow">Private</div><h2>Internal Kleros events</h2></div></div>
+          <div className="grid">{privateEvents.map((e) => <EventCard key={e.id} e={e} mine={e.created_by === userId ? "You created this" : profile?.is_team ? "Kleros team" : "Shared with you"} />)}</div>
         </>)}
         {watching.length > 0 && (<>
           <div className={privateEvents.length ? "section-h" : "section-h first"}><h2>Continue watching</h2></div>
