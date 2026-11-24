@@ -7,8 +7,8 @@ import { parseEmails } from "./EventForm";
 type Row = { email: string; created_at: string };
 
 /**
- * People who can see and edit a private event besides its creator (0010 event_collaborators).
- * Anyone on the list can add or remove others. Access follows the email: it works once that
+ * Guests from outside Kleros who can see and edit a private event (0010 event_collaborators). The
+ * whole Kleros team has access already (0021). The team and anyone on the list can add or remove others. Access follows the email: it works once that
  * person signs in with it, Kleros account or not. Nobody is emailed, so the invite message is
  * copied here and sent by hand.
  */
@@ -67,15 +67,15 @@ export default function CollaboratorsEditor({ eventId, slug, title, creatorEmail
             <button className="btn sm ghost" type="button" onClick={() => remove(r.email)} aria-label={`Remove ${r.email}`}>Remove</button>
           </li>
         ))}
-        {!list.length && <li className="muted small">No collaborators yet. Only the creator can see this event.</li>}
+        {!list.length && <li className="muted small">No guests yet. Only the Kleros team can see this event.</li>}
       </ul>
       <form className="row-flex" onSubmit={add}>
-        <input className="collab-input" value={text} onChange={(e) => setText(e.target.value)} placeholder="name@kleros.io, partner@example.org" aria-label="Collaborator emails" />
+        <input className="collab-input" value={text} onChange={(e) => setText(e.target.value)} placeholder="partner@example.org" aria-label="Guest emails" />
         <button className="btn" type="submit" disabled={busy || !text.trim()}>{busy ? "Adding…" : "Add"}</button>
       </form>
       {err && <div className="note">{err}</div>}
       <div className="collab-invite">
-        <p className="muted small" style={{ margin: 0 }}>Collaborators see the event, its talks, files and questions, and can edit it, once they sign in with the email listed here. Nobody is notified automatically: copy the invite message and paste it into an email or chat to each person.</p>
+        <p className="muted small" style={{ margin: 0 }}>The Kleros team already sees this event. Guests added here see it too, with its talks, files and questions, and can edit it, once they sign in with the email listed here. Nobody is notified automatically: copy the invite message and paste it into an email or chat to each person.</p>
         <button className="btn sm" type="button" onClick={copyInvite} aria-live="polite">{copied ? "Copied" : "Copy invite message"}</button>
       </div>
       {manual && (
