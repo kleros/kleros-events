@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Talks" };
 export const revalidate = 60;
 
 export default async function TalksPage() {
-  const [events, materials, stats] = await Promise.all([listEvents(), listMaterials(), talkStats()]);
+  const [events, materials, stats] = await Promise.all([listEvents("public"), listMaterials("public"), talkStats()]);
   // the talks with the most views and likes on YouTube (0019 talk_stats, refreshed hourly), from events on the site
   const byId = Object.fromEntries(events.map((e) => [e.id, e]));
   const shownWith = (m: (typeof materials)[number]) => eventIdsOf(m).map((id) => byId[id]).filter(Boolean).sort(latestFirst)[0];
