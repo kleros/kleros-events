@@ -9,7 +9,7 @@ export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = SITE_URL.replace(/\/$/, "");
-  const [events, materials] = await Promise.all([listEvents(), listMaterials()]);
+  const [events, materials] = await Promise.all([listEvents("public"), listMaterials("public")]);
   const publicIds = new Set(events.filter((e) => !e.is_example).map((e) => e.id));
   const day = (s: string | null | undefined) => (s ? new Date(s) : undefined);
   return [
