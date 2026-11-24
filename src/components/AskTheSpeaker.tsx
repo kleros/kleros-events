@@ -85,7 +85,7 @@ export default function AskTheSpeaker({ eventId, signedIn, isTeam, displayName, 
         );
       })}
       {!list.length && <p className="quiet-empty">{isPrivate
-        ? "No questions yet. Only the people who can open this event see the questions left here."
+        ? "No questions yet. This event is internal: only the Kleros team and the guests added to it see the questions left here."
         : past
           ? "No questions yet. The Kleros team reads every question left here. Answers are not posted on this page, so to hear back by email, use Request a meeting under Meet Kleros."
           : "No questions yet. Questions work during the talk and after it, and the speakers see them all."}</p>}
