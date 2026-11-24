@@ -1,13 +1,14 @@
 // Server-side reads of transcripts, for pages (public; RLS allows anyone to read).
 import { cache } from "react";
 import { supabaseServer, supabaseConfigured } from "@/lib/supabase/server";
+import { visitorDb } from "@/lib/data";
 import type { TranscriptRow } from "./types";
 
 /** The transcript row for one material, or null (also when the 0005 migration is not applied yet). */
 // cached per request, so the talk page and its metadata share one read
-export const getTranscript = cache(async (materialId: string): Promise<TranscriptRow | null> => {
+export const getTranscript = cache(async (materialId: string, as: "session" | "public" = "session"): Promise<TranscriptRow | null> => {
   if (!supabaseConfigured) return null;
-  const sb = await supabaseServer();
+  const sb = as === "public" ? visitorDb() : await supabaseServer();
   const { data, error } = await sb.from("transcripts").select("*").eq("material_id", materialId).maybeSingle();
   return error ? null : (data as TranscriptRow | null);
 });
