@@ -8,7 +8,7 @@ import { supabaseServer, supabaseConfigured } from "./supabase/server";
  * Public pages (home, Events, Talks, People) use it, which lets the host build each of them once and
  * hand the same copy to everyone, instead of building it again on every click.
  */
-function visitorDb(): SupabaseClient {
+export function visitorDb(): SupabaseClient {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -141,6 +141,16 @@ async function readCounts(sb: SupabaseClient): Promise<Counts> {
 
 /** Materials of one event: linked ones (0006), or by materials.event_id before the migration. */
 export async function eventMaterials(sb: SupabaseClient, eventId: string): Promise<Material[]> {
+  // one trip: each material with every event it is linked to
+  type Linked = Material & { material_events?: { event_id: string; created_at: string }[] };
+  const one = await sb.from("material_events").select("materials(*, material_events(event_id, created_at))").eq("event_id", eventId);
+  if (!one.error) {
+    const list = ((one.data ?? []) as unknown as { materials: Linked | null }[]).map((r) => r.materials).filter((m): m is Linked => !!m)
+      .sort((a, b) => a.created_at.localeCompare(b.created_at));
+    const links = list.flatMap((m) => (m.material_events ?? []).map((l) => ({ material_id: m.id, ...l })))
+      .sort((a, b) => a.created_at.localeCompare(b.created_at));
+    return withEventIds(list.map(({ material_events: _, ...m }) => m as Material), links);
+  }
   const linked = await sb.from("material_events").select("materials(*)").eq("event_id", eventId);
   let list: Material[];
   if (linked.error) {
@@ -170,11 +180,34 @@ export async function getPublicEvent(slug: string): Promise<EventRow | null> {
 }
 
 /** One event with its agenda, team and materials, read with the visitor's session. Shared by the page and its metadata. */
-export const getEvent = cache(async (slug: string) => {
+export const getEvent = cache(async (slug: string, as: As = "session") => {
   if (!supabaseConfigured) return null;
-  const sb = await supabaseServer();
-  const { data: event, error } = await sb.from("events").select("*").eq("slug", slug).maybeSingle();
+  const sb = as === "public" ? visitorDb() : await supabaseServer();
+  // One trip to the database (it is in Ireland, so each trip counts): the event with its agenda, team and
+  // materials, each material with every event it is linked to. Only what the caller may see comes back.
+  const { data, error } = await sb.from("events")
+    .select("*, agenda_items(*), event_team(part, team_members(*)), material_events(materials(*, material_events(event_id, created_at)))")
+    .eq("slug", slug).maybeSingle();
+  // an older database without these links: the step-by-step reads below
+  if (error && error.code === "PGRST200") return getEventStepByStep(sb, slug);
   // a database failure must not read as "this event does not exist"
+  if (error) { console.error("getEvent", error.message); throw new Error("The event could not be loaded."); }
+  if (!data) return null;
+  type Linked = Material & { material_events?: { event_id: string; created_at: string }[] };
+  const { agenda_items, event_team, material_events, ...event } = data as EventRow & {
+    agenda_items: AgendaItem[] | null; event_team: EventTeamRow[] | null; material_events: { materials: Linked | null }[] | null;
+  };
+  const agenda = [...(agenda_items ?? [])].sort((a, b) => (a.starts_at ?? "\uffff").localeCompare(b.starts_at ?? "\uffff"));
+  const list = (material_events ?? []).map((r) => r.materials).filter((m): m is Linked => !!m)
+    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const links = list.flatMap((m) => (m.material_events ?? []).map((l) => ({ material_id: m.id, ...l })))
+    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const materials = withEventIds(list.map(({ material_events: _, ...m }) => m as Material), links);
+  return { event: event as EventRow, agenda, team: (event_team ?? []) as unknown as EventTeamRow[], materials };
+});
+
+async function getEventStepByStep(sb: SupabaseClient, slug: string) {
+  const { data: event, error } = await sb.from("events").select("*").eq("slug", slug).maybeSingle();
   if (error) { console.error("getEvent", error.message); throw new Error("The event could not be loaded."); }
   if (!event) return null;
   const [agenda, team, materials] = await Promise.all([
@@ -188,7 +221,7 @@ export const getEvent = cache(async (slug: string) => {
     team: (team.data ?? []) as unknown as EventTeamRow[],
     materials,
   };
-});
+}
 
 export type LiveEvent = Pick<EventRow, "id" | "slug" | "title" | "starts_on" | "ends_on" | "venue" | "city" | "status">;
 
@@ -211,19 +244,20 @@ export type EventRef = Pick<EventRow, "id" | "slug" | "title" | "starts_on" | "e
  * `events` is the primary event, or the first visible linked one; null for a team-only
  * recording that is not linked to any event yet.
  */
-export const getMaterial = cache(async (id: string) => {
+export const getMaterial = cache(async (id: string, as: As = "session") => {
   if (!supabaseConfigured) return null;
-  const sb = await supabaseServer();
+  const sb = as === "public" ? visitorDb() : await supabaseServer();
   // materials and events are related twice (event_id, and material_events), so name the key
-  const { data, error } = await sb.from("materials").select("*, events!materials_event_id_fkey(id, slug, title, starts_on, ends_on, city, status, visibility)").eq("id", id).maybeSingle();
+  // one trip: the material, its primary event and every event it is linked to (that the caller can see)
+  const ref = "id, slug, title, starts_on, ends_on, city, status, visibility";
+  const { data, error } = await sb.from("materials")
+    .select(`*, events!materials_event_id_fkey(${ref}), material_events(event_id, created_at, events(${ref}))`).eq("id", id).maybeSingle();
   // a mistyped address (not a valid id, 22P02) is simply not found; anything else is a failure
   if (error && error.code !== "22P02") { console.error("getMaterial", error.message); throw new Error("The talk could not be loaded."); }
   if (!data) return null;
-  const m = data as Material & { events: EventRef | null };
-  const linked = await sb.from("material_events").select("event_id, events(id, slug, title, starts_on, ends_on, city, status, visibility)").eq("material_id", id).order("created_at");
-  let all: EventRef[] = linked.error
-    ? (m.events ? [m.events] : [])
-    : ((linked.data ?? []) as unknown as { events: EventRef | null }[]).map((r) => r.events).filter((e): e is EventRef => !!e);
+  const { material_events: linked, ...m } = data as Material & { events: EventRef | null; material_events: { created_at: string; events: EventRef | null }[] | null };
+  let all: EventRef[] = [...(linked ?? [])].sort((a, b) => a.created_at.localeCompare(b.created_at))
+    .map((r) => r.events).filter((e): e is EventRef => !!e);
   if (m.events && !all.some((e) => e.id === m.events!.id)) all = [m.events, ...all];
   all.sort((a, b) => (a.id === m.event_id ? -1 : b.id === m.event_id ? 1 : b.starts_on.localeCompare(a.starts_on)));
   return { ...m, events: all[0] ?? null, linkedEvents: all, event_ids: all.map((e) => e.id) };
