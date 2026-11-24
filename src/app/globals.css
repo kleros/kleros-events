@@ -31,8 +31,8 @@
   --stage: #120F19; --stage-fg: #ECE7F3; --gold: #C4B5FD;   /* projector art: fixed in both themes */
   --wash:       light-dark(transparent, rgb(124 92 230 / 0.10));          /* the one hero glow, dark only */
   --shadow-c:   light-dark(rgb(22 18 29 / 0.12), rgb(0 0 0 / 0.45));     /* menus, dialogs, Ask panel */
-  --logo-ink:   light-dark(rgb(107 70 217 / 0.10), rgb(214 202 255 / 0.065)); /* the faint Kleros symbol behind the page:
-                 Kleros purple in light mode, a soft lavender-white in dark mode */
+  --logo-ink:   light-dark(rgb(107 70 217 / 0.10), rgb(139 102 245 / 0.14));  /* the faint Kleros symbol behind the page:
+                 Kleros purple in both themes, a little stronger on dark */
 
   /* spacing scale: use these, not ad hoc values */
   --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px; --s-9: 96px;
@@ -58,7 +58,7 @@
     --accent: #A78BFA; --accent-ink: #15121B; --accent-soft: rgb(167 139 250 / 0.14); --lavender: #C4B5FD; --stroke: #A78BFA;
     --cyan: #7DD3E8; --blue: #7DD3E8; --blue-soft: rgb(125 211 232 / 0.12);
     --good: #86D9B4; --good-soft: rgb(134 217 180 / 0.12); --warn: #F0C08A; --warn-soft: rgb(240 192 138 / 0.12); --rec: #F07A8A;
-    --wash: rgb(124 92 230 / 0.10); --shadow-c: rgb(0 0 0 / 0.45); --logo-ink: rgb(214 202 255 / 0.065);
+    --wash: rgb(124 92 230 / 0.10); --shadow-c: rgb(0 0 0 / 0.45); --logo-ink: rgb(139 102 245 / 0.14);
   }
   .theme-toggle, .theme-choice { display: none !important; }
 }
