@@ -49,7 +49,7 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
   if (!m && !user) return (
     <div className="wrap page con-gate">
       <h1>This talk is not available</h1>
-      <p className="muted">The link may be old or mistyped. If someone shared a private event&apos;s talk with you, sign in with the email address they used and it opens.</p>
+      <p className="muted">The link may be old or mistyped. If this is an internal Kleros talk, sign in with your Kleros email. If someone added you as a guest, sign in with the email address they used.</p>
       <div className="row-flex">
         <Link className="btn primary" href="/talks">All talks</Link>
         <Link className="btn" href={`/login?next=${encodeURIComponent(`/talks/${id}`)}`}>Sign in</Link>
