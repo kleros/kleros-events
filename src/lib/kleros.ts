@@ -28,9 +28,10 @@ export const REGIONS = ["Europe", "North America", "Latin America", "Asia", "Afr
 export const VISITOR_ROLES = ["Builder / developer", "Juror", "Researcher / academic", "Legal professional", "Founder / BD partner", "Investor", "Community member"];
 
 // The one-paragraph story of Kleros, shown in the footer, the "New to Kleros?" strip and event pages.
-// Federico Ast's wording (Devcon 8 messaging, July 2026).
+// Wei Wei's narrative brief (Nov 2026): Kleros as justice and governance infrastructure for the agentic era.
+export const KLEROS_TAGLINE = "Kleros is justice and governance infrastructure for the agentic era.";
 export const KLEROS_ABOUT =
-  "Code is deterministic. Disputes are not. Kleros is arbitration at protocol speed, for oracles, prediction markets, enterprise and the agentic economy.";
+  "Kleros is justice and governance infrastructure for the agentic era: fair outcomes that no single party controls, across dispute resolution, reputation, prediction markets, agent governance and enterprise.";
 export const KLEROS_AI_URL = "https://ai.kleros.io";
 
 export interface Product {
