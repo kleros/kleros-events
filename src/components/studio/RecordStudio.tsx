@@ -34,7 +34,7 @@ export default function RecordStudio() {
           </ol>
           <p className="muted small">Until it is linked to a published event, a recording is visible to the Kleros team only.</p>
           <div className="note rs-private">
-            <b>Recording a private meeting?</b> For a general assembly or anything only some people should hear, create a private event first and record from its page. The recording then stays with the people you invite.
+            <b>Recording an internal meeting?</b> For a general assembly or anything only for the Kleros team, create a private event first and record from its page. The recording then stays internal: the team and any guests you add can play it, the public cannot.
             <div className="row-flex"><Link className="btn sm" href="/admin/events/new?visibility=private&then=record">Create a private event and record</Link></div>
           </div>
         </aside>
