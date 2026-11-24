@@ -30,8 +30,7 @@ export const VISITOR_ROLES = ["Builder / developer", "Juror", "Researcher / acad
 // The one-paragraph story of Kleros, shown in the footer, the "New to Kleros?" strip and event pages.
 // Wei Wei's narrative brief (Nov 2026): Kleros as justice and governance infrastructure for the agentic era.
 export const KLEROS_TAGLINE = "Kleros is justice and governance infrastructure for the agentic era.";
-export const KLEROS_ABOUT =
-  "Kleros is justice and governance infrastructure for the agentic era: fair outcomes that no single party controls, across dispute resolution, reputation, prediction markets, agent governance and enterprise.";
+export const KLEROS_ABOUT = KLEROS_TAGLINE;
 export const KLEROS_AI_URL = "https://ai.kleros.io";
 
 export interface Product {
