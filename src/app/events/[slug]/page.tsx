@@ -46,7 +46,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function EventPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const [data, counts, { user, profile }] = await Promise.all([getEvent(slug), eventCounts(), currentUser()]);
+  // everything at once: the event itself, who is looking, and the public lists for "You might also like"
+  // (kept for a minute on the server, so usually no trip to the database)
+  const [data, publicCounts, { user, profile }, allEvents, allMaterials] = await Promise.all([
+    getEvent(slug), eventCounts(), currentUser(), listEvents("public"), listMaterials("public"),
+  ]);
   if (!data) {
     // a private event is only readable once signed in with a Kleros team account or an invited email; the same page shows for
     // every unknown address, so it says nothing about whether this one exists
@@ -83,6 +87,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const matLabel = has("Slides") ? "Slides and links" : has("Photos") ? "Photos and posts" : has("Audio") || has("Documents") ? "Files and links" : "Links and posts";
   // recordings saved without slides, for "Attach slides to a recording"
   const bareRecordings = materials.filter((m) => m.kind === "audio" && !!m.file_path);
+  // a private event's totals are only counted for its members
+  const counts = e.visibility === "private" ? await eventCounts("session") : publicCounts;
   const c = counts[e.id] ?? { going: 0, attended: 0 };
   const products = productsFor(e.topics);
   const booker = team.map((t) => t.team_members).find((m) => m?.calendar_url);
@@ -96,7 +102,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   // You might also like: talks from other events, events and Kleros reading on the same subject (lib/related.ts).
   // An internal meeting's page gets none.
   const pub = e.visibility !== "private";
-  const [allEvents, allMaterials] = pub ? await Promise.all([listEvents(), listMaterials()]) : [[], []];
   const alsoLike = pub
     ? related([{ id: e.id, label: e.title, profile: eventProfile(e) }], allEvents, allMaterials,
       { exclude: new Set([e.id, ...materials.map((m) => m.id)]), talks: 3, events: 3, reads: 4 })
