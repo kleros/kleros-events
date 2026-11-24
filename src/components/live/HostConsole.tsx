@@ -63,7 +63,7 @@ export default function HostConsole({ event, agenda, joinUrl, isTeam = true }: {
           <h1 className="con-h1">{event.title}</h1>
           <div className="muted small">{[when, event.venue, event.city].filter(Boolean).join(" · ")}</div>
           {event.visibility === "private" ? (
-            <div className="note" role="status" style={{ marginTop: 8 }}>This event is private. The phone and big screen pages open only for its creator and collaborators, signed in; guests scanning the QR code cannot ask questions.</div>
+            <div className="note" role="status" style={{ marginTop: 8 }}>This event is private. The phone and big screen pages open only for the Kleros team and the guests added to it, signed in; people scanning the QR code without that cannot ask questions.</div>
           ) : event.status === "draft" && (
             <div className="note" role="status" style={{ marginTop: 8 }}>This event is a draft. The phone and big screen pages still work.</div>
           )}
