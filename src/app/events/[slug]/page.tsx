@@ -7,7 +7,7 @@ import { getEvent, eventCounts, listEvents, listMaterials } from "@/lib/data";
 import Related from "@/components/Related";
 import { eventProfile, related } from "@/lib/related";
 import { cleanDescription, excerpt, fmtRange, googleCalendarUrl, isLive, isPast, place, plural, safeHref } from "@/lib/format";
-import { ROLE_LABEL, SITE_URL, productsFor } from "@/lib/kleros";
+import { KLEROS_ABOUT, ROLE_LABEL, SITE_URL, productsFor } from "@/lib/kleros";
 import { EventCover } from "@/components/EventCard";
 import { LinkList, MATERIAL_GROUPS, PhotoGrid, TalkCard, byTalkRank, isTalkLike, linkUrl, sourceOf, talkRank } from "@/components/MaterialRow";
 import Ext from "@/components/Ext";
@@ -249,10 +249,10 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           <h2>Meet Kleros</h2>
           <div className="meet">
             {/* visitors often land here from a QR code or a post, so say what Kleros is */}
-            <p>Kleros is a decentralized court: randomly drawn jurors review the evidence and settle disputes on-chain, with appeals to larger juries.</p>
+            <p>{KLEROS_ABOUT}</p>
             <p>{past
               ? "Missed the team at this one? Send a request anyway. The team follows up on every one."
-              : "Book time with the team to talk about integrating Kleros, becoming a juror, or partnering."}</p>
+              : "Book time with the team to talk about integrating Kleros, trust for your AI agents, or partnering."}</p>
             {booker && safeHref(booker.calendar_url) && <a className="btn primary" href={safeHref(booker.calendar_url)} target="_blank" rel="noopener">Pick a time with {booker.name.split(" ")[0]}<Ext /></a>}
             {/* requests are read by the whole team; this section is not shown on a private event's page */}
             <MeetingForm eventId={e.id} />
