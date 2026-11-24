@@ -16,10 +16,11 @@ export function parseEmails(text: string) {
 }
 
 /**
- * Create or edit an event. `me` describes the editor. Only the team creates events. Switching an
- * existing event between public and private is its creator's call (the database enforces it in
- * 0010); an older event with no creator can only be made private by the admin. Only the creator
- * deletes a private event; the team deletes public ones.
+ * Create or edit an event. `me` describes the editor. Only the team creates events. Public events
+ * are for the general public; private events are internal to the Kleros team (everyone on the
+ * team, admins included, plus guests added by email; 0021). Switching an existing event between
+ * public and private, and deleting a private event, is for its creator or an admin (the database
+ * enforces it); the team deletes public ones.
  */
 export default function EventForm({ event, me, initialVisibility, then, copyOf }: {
   event?: EventRow; me?: { isTeam: boolean; isAdmin?: boolean; userId: string };
@@ -39,9 +40,10 @@ export default function EventForm({ event, me, initialVisibility, then, copyOf }
   const [collabs, setCollabs] = useState("");
   const isTeam = me?.isTeam ?? true;
   const isCreator = !!event?.created_by && event.created_by === me?.userId;
-  const canMakePublic = isTeam && (!event || event.visibility === "public" || isCreator);
-  const canMakePrivate = !event || event.visibility === "private" || isCreator || (!event.created_by && !!me?.isAdmin);
-  const canDelete = event ? (event.visibility === "private" ? event.created_by === me?.userId : isTeam) : false;
+  const isAdmin = !!me?.isAdmin;
+  const canMakePublic = isTeam && (!event || event.visibility === "public" || isCreator || isAdmin);
+  const canMakePrivate = !event || event.visibility === "private" || isCreator || isAdmin;
+  const canDelete = event ? (event.visibility === "private" ? isCreator || isAdmin : isTeam) : false;
 
   async function submit(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault(); setErr("");
@@ -71,7 +73,7 @@ export default function EventForm({ event, me, initialVisibility, then, copyOf }
     if (event?.visibility === "private" && visibility === "public") await sb.from("event_collaborators").delete().eq("event_id", event.id);
     if (!event && visibility === "private" && emails.ok.length) {
       const { error } = await sb.from("event_collaborators").insert(emails.ok.map((email) => ({ event_id: res.data.id, email })));
-      if (error) { setBusy(false); setErr(`The event was created, but the collaborators were not added. ${friendlyError(error)}`); router.push(`/admin/events/${res.data.id}#collaborators`); return; }
+      if (error) { setBusy(false); setErr(`The event was created, but the guests were not added. ${friendlyError(error)}`); router.push(`/admin/events/${res.data.id}#collaborators`); return; }
     }
     setBusy(false);
     if (!event) router.push(then === "record" ? `/events/${res.data.slug}#record` : `/admin/events/${res.data.id}`);
@@ -96,7 +98,7 @@ export default function EventForm({ event, me, initialVisibility, then, copyOf }
     }
     const { data, error } = await sb.from("events").delete().eq("id", event.id).select("id");
     if (error) { setErr(friendlyError(error)); return; }
-    if (!data?.length) { setErr("Only the person who created this private event can delete it."); setConfirmDel(false); return; }
+    if (!data?.length) { setErr("Only the person who created this private event, or an admin, can delete it."); setConfirmDel(false); return; }
     router.push("/admin");
   }
 
@@ -107,7 +109,7 @@ export default function EventForm({ event, me, initialVisibility, then, copyOf }
   const lockedPublic = !canMakePublic && visibility !== "public";
   const privateReason = !event?.created_by
     ? "This event was imported from Luma or added before private events existed, so only an admin can make it private."
-    : "A teammate created this event, so only they can make it private.";
+    : "A teammate created this event, so only they or an admin can make it private.";
   return (
     <form className="panel" onSubmit={submit}>
       <div className="field"><label htmlFor="title">Event name</label><input id="title" name="title" required defaultValue={v?.title} placeholder={visibility === "private" ? "General assembly, November 2026" : "Kleros Court Day Lisbon"} /></div>
@@ -115,33 +117,33 @@ export default function EventForm({ event, me, initialVisibility, then, copyOf }
         <legend className="lbl">Who can see it</legend>
         <label className="vis-opt" data-on={visibility === "public"} aria-disabled={lockedPublic}>
           <input type="radio" name="visibility" value="public" checked={visibility === "public"} disabled={lockedPublic} onChange={() => setVisibility("public")} />
-          <span><b>Public</b><span className="muted small">Listed on the site once published. The whole Kleros team can see and edit it.</span></span>
+          <span><b>Public</b><span className="muted small">For the general public. Listed on the site once published, and the whole Kleros team can edit it.</span></span>
         </label>
         <label className="vis-opt" data-on={visibility === "private"} aria-disabled={lockedPrivate}>
           <input type="radio" name="visibility" value="private" checked={visibility === "private"} disabled={lockedPrivate} onChange={() => setVisibility("private")} />
-          <span><b>Private</b><span className="muted small">Only {event && event.created_by && event.created_by !== me?.userId ? "its creator" : "you"} and the people you add can see it, its recordings and its questions. Other team members and admins cannot.</span></span>
+          <span><b>Private</b><span className="muted small">Internal to Kleros. Everyone on the Kleros team (signed in with a Kleros email, admins included) can see and edit it, its recordings and its questions. It never shows on the public site.</span></span>
         </label>
       </fieldset>
       {lockedPrivate && event && (
         <div className="note vis-why">
-          {privateReason} To record something private, make a private copy: it keeps these details, and this public event stays as it is.
+          {privateReason} To record something for the team only, make a private copy: it keeps these details, and this public event stays as it is.
           <div className="row-flex"><a className="btn sm" href={`/admin/events/new?visibility=private&from=${event.id}`}>Make a private copy</a></div>
         </div>
       )}
       {lockedPublic && (
-        <div className="note vis-why">{isCreator ? "Making an event public needs a Kleros team account." : "Only the person who created this private event can make it public."}</div>
+        <div className="note vis-why">{isCreator || isAdmin ? "Making an event public needs a Kleros team account." : "Only the person who created this private event, or an admin, can make it public."}</div>
       )}
       {visibility === "private" && !event && (
-        <div className="field"><label htmlFor="collabs">People to add (optional)</label>
-          <textarea id="collabs" value={collabs} onChange={(e) => setCollabs(e.target.value)} placeholder={"name@kleros.io, partner@example.org"} style={{ minHeight: 60 }} />
-          <span className="muted small">Email addresses, separated by commas or new lines. They see the event once they sign in with that email. Nobody is emailed automatically. More can be added later.</span>
+        <div className="field"><label htmlFor="collabs">Guests from outside Kleros (optional)</label>
+          <textarea id="collabs" value={collabs} onChange={(e) => setCollabs(e.target.value)} placeholder={"partner@example.org, speaker@example.com"} style={{ minHeight: 60 }} />
+          <span className="muted small">The Kleros team already has access. Add anyone else who should see and edit this event, such as a partner or a speaker: email addresses, separated by commas or new lines. They see it once they sign in with that email. Nobody is emailed automatically. More can be added later.</span>
         </div>
       )}
       {visibility === "private" && event?.visibility === "public" && (
-        <p className="note" style={{ margin: 0 }}>Saving makes this event private: it leaves the public site, and other team members lose access to it, its talks and files, and its questions. {!event.created_by && "You become its creator."}</p>
+        <p className="note" style={{ margin: 0 }}>Saving makes this event private: it leaves the public site and becomes internal to the Kleros team, with its talks, files and questions. {!event.created_by && "You become its creator."}</p>
       )}
       {visibility === "public" && event?.visibility === "private" && (
-        <p className="note" style={{ margin: 0 }}>Saving makes this event public: the whole Kleros team can see and edit it, its talks and files, and its questions. It stays off the public site until its status is set to Published. The collaborator list is cleared.</p>
+        <p className="note" style={{ margin: 0 }}>Saving makes this event public, for the general public. It stays off the public site until its status is set to Published. Guests added from outside Kleros lose access.</p>
       )}
       <div className="two">
         <div className="field"><label htmlFor="kleros_role">Kleros&apos; role</label><select id="kleros_role" name="kleros_role" defaultValue={v?.kleros_role ?? "host"}>{Object.entries(ROLE_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></div>
@@ -196,7 +198,7 @@ function saveError(error: { message: string }, visibility: "public" | "private")
   if (/Only the person who created this event|needs a Kleros team account/.test(msg)) return msg;
   if (/row-level security/i.test(msg)) {
     return visibility === "private"
-      ? "This account cannot save this private event."
+      ? "This account cannot save this private event. Private events are for the Kleros team and the guests added to them."
       : "Only Kleros team members can create or edit public events.";
   }
   if (/0 rows|no rows|multiple \(or no\) rows/i.test(msg)) return "This account cannot edit this event.";
