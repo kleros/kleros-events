@@ -27,14 +27,26 @@ export default function EventBrowser({ events, counts, initialWhen = "all", init
   const [showFilters, setShowFilters] = useState(false);
   const [month, setMonth] = useState(() => { const [y, m] = initialMonth.split("-").map(Number); return new Date(y, m - 1, 1, 12); });
 
+  // The page is the same for everyone (built ahead), so ?when= and ?view= are read here, once,
+  // before the address is kept in step with the buttons below.
+  const [fromUrl, setFromUrl] = useState(false);
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const w = p.get("when"), v = p.get("view");
+    if (w === "upcoming" || w === "past") setWhen(w);
+    if (v === "calendar") setView("calendar");
+    setFromUrl(true);
+  }, []);
+
   // Keep the address shareable without reloading the page.
   useEffect(() => {
+    if (!fromUrl) return;
     const u = new URL(window.location.href);
     if (when === "all") u.searchParams.delete("when"); else u.searchParams.set("when", when);
     if (view === "list") u.searchParams.delete("view"); else u.searchParams.set("view", view);
     u.searchParams.delete("role");
     window.history.replaceState(null, "", u.pathname + u.search);
-  }, [when, view]);
+  }, [when, view, fromUrl]);
 
   const topics = useMemo(() => [...new Set([...TOPICS, ...events.flatMap((e) => e.topics)])].sort(), [events]);
   const types = useMemo(() => [...new Set([...EVENT_TYPES, ...events.map((e) => e.event_type)])], [events]);
