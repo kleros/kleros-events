@@ -27,6 +27,13 @@ export const TOPICS = ["Arbitration", "Jurors", "AI agents", "Prediction markets
 export const REGIONS = ["Europe", "North America", "Latin America", "Asia", "Africa", "Middle East", "Oceania", "Online"];
 export const VISITOR_ROLES = ["Builder / developer", "Juror", "Researcher / academic", "Legal professional", "Founder / BD partner", "Investor", "Community member"];
 
+// The one-paragraph story of Kleros, shown in the footer, the "New to Kleros?" strip and event pages.
+// Follows kleros.io and ai.kleros.io ("Trust at Machine Speed"), November 2026.
+export const KLEROS_ABOUT =
+  "Kleros is the arbitration protocol for the internet economy. As AI agents buy, sell and decide in seconds, Kleros verifies who they are, protects what they pay and settles disputes when they happen. AI clears the obvious cases, and human jurors keep the final say on the hard ones.";
+export const KLEROS_AI_URL = "https://ai.kleros.io";
+export const KLEROS_BUSINESS_URL = "https://kleros.io/enterprise";
+
 export interface Product {
   name: string;
   pitch: string;
@@ -37,8 +44,8 @@ export interface Product {
 
 // Shown on each event page, picked by the event's topics.
 export const PRODUCTS: Product[] = [
-  { name: "Kleros Court", pitch: "Decentralized arbitration with randomly drawn, incentivized jurors.", url: "https://court.kleros.io", cta: "Become a juror", topics: ["Arbitration", "Jurors", "Legal tech", "Governance"] },
-  { name: "Arbitration for AI agents", pitch: "Disputes between AI agents go to independent jurors, with an appeal window where humans can step in.", url: "https://kleros.io", cta: "See how it works", topics: ["AI agents", "Research"] },
+  { name: "Kleros Court", pitch: "Disputes settled by AI triage first, with human jurors deciding the hard cases.", url: "https://kleros.io/earn-become-a-juror", cta: "Become a juror", topics: ["Arbitration", "Jurors", "Legal tech", "Governance"] },
+  { name: "Kleros for AI agents", pitch: "Verified agents, protected payments and a court agents can call, at machine speed.", url: "https://ai.kleros.io", cta: "Explore Kleros AI", topics: ["AI agents", "Research"] },
   { name: "Reality.eth + Kleros", pitch: "Optimistic oracle answers backed by Kleros arbitration, used by prediction markets.", url: "https://reality.eth.limo", cta: "Explore the oracle", topics: ["Prediction markets", "Oracles", "DeFi"] },
   { name: "Kleros Escrow", pitch: "Pay for work and goods with a court behind the deal.", url: "https://escrow.kleros.io", cta: "Open an escrow", topics: ["DeFi", "Smart contracts"] },
   { name: "Kleros Curate", pitch: "Community-curated lists and registries, with disputes going to Kleros Court.", url: "https://curate.kleros.io", cta: "Browse registries", topics: ["Content moderation", "Governance", "Community"] },
