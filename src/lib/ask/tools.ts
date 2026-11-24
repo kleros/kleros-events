@@ -93,7 +93,7 @@ function dates(e: { starts_on: string; ends_on?: string | null; start_time?: str
 }
 
 function flags(e: { status?: string; visibility?: string }) {
-  return [e.visibility === "private" ? "private (only its members can see it)" : "", e.status === "draft" ? "draft (team only, not published)" : ""].filter(Boolean);
+  return [e.visibility === "private" ? "private (internal, Kleros team only)" : "", e.status === "draft" ? "draft (team only, not published)" : ""].filter(Boolean);
 }
 
 const ROLE: Record<string, string> = {
