@@ -1,5 +1,25 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { unstable_cache } from "next/cache";
+import { cache } from "react";
 import { supabaseServer, supabaseConfigured } from "./supabase/server";
+
+/**
+ * The database as a signed-out visitor sees it: the public key and no session, so no cookie is read.
+ * Public pages (home, Events, Talks, People) use it, which lets the host build each of them once and
+ * hand the same copy to everyone, instead of building it again on every click.
+ */
+function visitorDb(): SupabaseClient {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
+/** Which access a listing reads with: the visitor's own session, or the public view everyone gets. */
+export type As = "session" | "public";
+
+// The public lists change a few times a day; they are kept for a minute so pages that show them for
+// "You might also like" or counts need no trip to the database (which is in Ireland) on most clicks.
+const PUBLIC_TTL = 60;
 import type { AgendaItem, EventRow, EventTeamRow, Material } from "./types";
 
 /**
@@ -8,9 +28,13 @@ import type { AgendaItem, EventRow, EventTeamRow, Material } from "./types";
  * its own query that includes them, and getEvent opens a draft's or private event's page
  * directly for those who may see it.
  */
-export async function listEvents(): Promise<EventRow[]> {
+export async function listEvents(as: As = "session"): Promise<EventRow[]> {
   if (!supabaseConfigured) return [];
-  const sb = await supabaseServer();
+  if (as === "public") return publicEvents();
+  return readEvents(await supabaseServer());
+}
+const publicEvents = unstable_cache(() => readEvents(visitorDb()), ["public-events"], { revalidate: PUBLIC_TTL, tags: ["events"] });
+async function readEvents(sb: SupabaseClient): Promise<EventRow[]> {
   const { data, error } = await sb.from("events").select("*").eq("status", "published").eq("visibility", "public").order("starts_on", { ascending: true });
   // an outage must not read as "No events on record yet": app/error.tsx says it plainly instead
   if (error) {
@@ -45,9 +69,13 @@ export function withEventIds<T extends Material>(materials: T[], links: Link[] |
 /** The events a material belongs to (event_ids when the helpers filled it, else the primary). */
 export const eventIdsOf = (m: Pick<Material, "event_id" | "event_ids">) => m.event_ids ?? (m.event_id ? [m.event_id] : []);
 
-export async function listMaterials(): Promise<Material[]> {
+export async function listMaterials(as: As = "session"): Promise<Material[]> {
   if (!supabaseConfigured) return [];
-  const sb = await supabaseServer();
+  if (as === "public") return publicMaterials();
+  return readMaterials(await supabaseServer());
+}
+const publicMaterials = unstable_cache(() => readMaterials(visitorDb()), ["public-materials"], { revalidate: PUBLIC_TTL, tags: ["materials"] });
+async function readMaterials(sb: SupabaseClient): Promise<Material[]> {
   const [{ data, error }, links] = await Promise.all([
     sb.from("materials").select("*").order("created_at", { ascending: false }),
     listLinks(sb),
@@ -62,11 +90,14 @@ export async function listMaterials(): Promise<Material[]> {
 /** YouTube view and like counts per talk (0019 talk_stats, refreshed hourly in the database); {} before 0019 runs. */
 export async function talkStats(): Promise<Record<string, { views: number; likes: number | null }>> {
   if (!supabaseConfigured) return {};
-  const sb = await supabaseServer();
+  return publicTalkStats();
+}
+const publicTalkStats = unstable_cache(async () => {
+  const sb = visitorDb();
   const { data, error } = await sb.from("talk_stats").select("material_id, views, likes").not("views", "is", null);
   if (error) return {};
   return Object.fromEntries((data ?? []).map((r) => [r.material_id as string, { views: Number(r.views), likes: r.likes == null ? null : Number(r.likes) }]));
-}
+}, ["talk-stats"], { revalidate: 300 });
 
 /** Talks and files per event, counting every event a material is linked to. */
 export function materialCounts(materials: Material[], isTalk: (m: Material) => boolean) {
@@ -81,9 +112,25 @@ export function materialCounts(materials: Material[], isTalk: (m: Material) => b
   return { talks, items };
 }
 
-export async function eventCounts(): Promise<Record<string, { going: number; attended: number }>> {
+/** Every agenda line that names a speaker, as a visitor sees them (for People profiles). */
+export async function agendaSpeakers(): Promise<{ event_id: string; speaker: string }[]> {
+  if (!supabaseConfigured) return [];
+  return publicAgendaSpeakers();
+}
+const publicAgendaSpeakers = unstable_cache(async () => {
+  const { data } = await visitorDb().from("agenda_items").select("event_id, speaker").not("speaker", "is", null);
+  return (data ?? []) as { event_id: string; speaker: string }[];
+}, ["agenda-speakers"], { revalidate: 300 });
+
+type Counts = Record<string, { going: number; attended: number }>;
+/** Going and attended per event (view event_counts). "public" leaves out private events' totals. */
+export async function eventCounts(as: As = "public"): Promise<Counts> {
   if (!supabaseConfigured) return {};
-  const sb = await supabaseServer();
+  return as === "public" ? publicEventCounts() : readCounts(await supabaseServer());
+}
+// the same totals for every visitor; kept for 30 s, as the event pages were
+const publicEventCounts = unstable_cache(() => readCounts(visitorDb()), ["event-counts"], { revalidate: 30 });
+async function readCounts(sb: SupabaseClient): Promise<Counts> {
   const { data, error } = await sb.from("event_counts").select("*");
   if (error) {
     console.error("eventCounts", error.message);
@@ -122,7 +169,8 @@ export async function getPublicEvent(slug: string): Promise<EventRow | null> {
   return (data as EventRow | null) ?? null;
 }
 
-export async function getEvent(slug: string) {
+/** One event with its agenda, team and materials, read with the visitor's session. Shared by the page and its metadata. */
+export const getEvent = cache(async (slug: string) => {
   if (!supabaseConfigured) return null;
   const sb = await supabaseServer();
   const { data: event, error } = await sb.from("events").select("*").eq("slug", slug).maybeSingle();
@@ -140,7 +188,7 @@ export async function getEvent(slug: string) {
     team: (team.data ?? []) as unknown as EventTeamRow[],
     materials,
   };
-}
+});
 
 export type LiveEvent = Pick<EventRow, "id" | "slug" | "title" | "starts_on" | "ends_on" | "venue" | "city" | "status">;
 
@@ -163,7 +211,7 @@ export type EventRef = Pick<EventRow, "id" | "slug" | "title" | "starts_on" | "e
  * `events` is the primary event, or the first visible linked one; null for a team-only
  * recording that is not linked to any event yet.
  */
-export async function getMaterial(id: string) {
+export const getMaterial = cache(async (id: string) => {
   if (!supabaseConfigured) return null;
   const sb = await supabaseServer();
   // materials and events are related twice (event_id, and material_events), so name the key
@@ -179,4 +227,4 @@ export async function getMaterial(id: string) {
   if (m.events && !all.some((e) => e.id === m.events!.id)) all = [m.events, ...all];
   all.sort((a, b) => (a.id === m.event_id ? -1 : b.id === m.event_id ? 1 : b.starts_on.localeCompare(a.starts_on)));
   return { ...m, events: all[0] ?? null, linkedEvents: all, event_ids: all.map((e) => e.id) };
-}
+});
