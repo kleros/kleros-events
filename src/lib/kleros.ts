@@ -28,11 +28,10 @@ export const REGIONS = ["Europe", "North America", "Latin America", "Asia", "Afr
 export const VISITOR_ROLES = ["Builder / developer", "Juror", "Researcher / academic", "Legal professional", "Founder / BD partner", "Investor", "Community member"];
 
 // The one-paragraph story of Kleros, shown in the footer, the "New to Kleros?" strip and event pages.
-// Follows kleros.io and ai.kleros.io ("Trust at Machine Speed"), November 2026.
+// Federico Ast's wording (Devcon 8 messaging, July 2026).
 export const KLEROS_ABOUT =
-  "Kleros is the arbitration protocol for the internet economy. As AI agents buy, sell and decide in seconds, Kleros verifies who they are, protects what they pay and settles disputes when they happen. AI clears the obvious cases, and human jurors keep the final say on the hard ones.";
+  "Code is deterministic. Disputes are not. Kleros is arbitration at protocol speed, for oracles, prediction markets, enterprise and the agentic economy.";
 export const KLEROS_AI_URL = "https://ai.kleros.io";
-export const KLEROS_BUSINESS_URL = "https://kleros.io/enterprise";
 
 export interface Product {
   name: string;
