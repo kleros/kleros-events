@@ -36,8 +36,8 @@ export default async function NewEventPage({ searchParams }: { searchParams: Pro
           <Link href="/admin" className="small muted ed-back">← Team desk</Link>
           <h1>{isPrivate ? "Add a private event" : "Add an event"}</h1>
           <p className="muted">{isPrivate
-            ? "Only you and the people you add can see a private event, its recordings and its questions. Use it for internal meetings such as a general assembly."
-            : "Public events can be saved as a draft to keep them off the site until ready. Private events are only for you and the people you add."}
+            ? "A private event is internal to Kleros: everyone on the team, admins included, can see it, its recordings and its questions, and the public cannot. Use it for internal meetings such as a general assembly."
+            : "Public events can be saved as a draft to keep them off the site until ready. Private events are for the Kleros team only."}
             {then === "record" ? " After saving, the recorder opens on the new event's page." : " Agenda, team, talks and files can be added after saving."}</p>
         </div>
       </header>
