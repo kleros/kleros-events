@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SOCIALS } from "@/lib/kleros";
+import { KLEROS_ABOUT, KLEROS_AI_URL, KLEROS_BUSINESS_URL, SOCIALS } from "@/lib/kleros";
 import Ext from "./Ext";
 import KlerosLogo from "./KlerosLogo";
 import { ThemeChoice } from "./ThemeToggle";
@@ -12,14 +12,15 @@ export default function SiteFooter() {
       <div className="wrap">
         <div className="about">
           <KlerosLogo className="brand-logo" />
-          <p>Kleros is a decentralized court: randomly drawn jurors review the evidence and settle disputes on-chain, with appeals to larger juries.</p>
+          <p>{KLEROS_ABOUT}</p>
           <p className="foot-links">
-            <a href="https://kleros.io" target="_blank" rel="noopener">How it works<Ext /></a> · <a href="https://court.kleros.io" target="_blank" rel="noopener">Become a juror<Ext /></a>
+            <a href={KLEROS_AI_URL} target="_blank" rel="noopener">Kleros for AI agents<Ext /></a> · <a href={KLEROS_BUSINESS_URL} target="_blank" rel="noopener">For business<Ext /></a>
           </p>
         </div>
         <div>
           <h2 className="foot-h">Kleros</h2>
           <a href="https://kleros.io" target="_blank" rel="noopener">kleros.io{NEW_TAB}</a>
+          <a href={KLEROS_AI_URL} target="_blank" rel="noopener">Kleros AI{NEW_TAB}</a>
           <a href="https://court.kleros.io" target="_blank" rel="noopener">Court{NEW_TAB}</a>
           <a href="https://docs.kleros.io" target="_blank" rel="noopener">Docs{NEW_TAB}</a>
           <a href="https://blog.kleros.io" target="_blank" rel="noopener">Blog{NEW_TAB}</a>
