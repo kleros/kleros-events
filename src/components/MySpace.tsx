@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { EventRow, Material, Profile } from "@/lib/types";
-import { REGIONS, TOPICS, VISITOR_ROLES } from "@/lib/kleros";
+import { REGIONS, TOPICS, VISITOR_ROLES, topicLabel } from "@/lib/kleros";
 import { isPast, fmtDur } from "@/lib/format";
 import { scoreEvent } from "@/lib/recommend";
 import { supabaseBrowser } from "@/lib/supabase/client";
@@ -60,7 +60,7 @@ export default function MySpace({ profile, email, events, materials, attendance,
         <div className="field"><label htmlFor="region">Home region</label>
           <select id="region" value={p.region ?? ""} onChange={(e) => update({ region: e.target.value || null })}><option value="">Anywhere</option>{REGIONS.filter((r) => r !== "Online").map((r) => <option key={r}>{r}</option>)}</select></div>
         <div className="field"><span className="lbl">Topics I follow</span>
-          <div className="chips" style={{ margin: 0 }}>{TOPICS.map((t) => <button key={t} className="chip" aria-pressed={p.interests.includes(t)} onClick={() => update({ interests: p.interests.includes(t) ? p.interests.filter((x) => x !== t) : [...p.interests, t] })}>{t}</button>)}</div></div>
+          <div className="chips" style={{ margin: 0 }}>{TOPICS.map((t) => <button key={t} className="chip" aria-pressed={p.interests.includes(t)} onClick={() => update({ interests: p.interests.includes(t) ? p.interests.filter((x) => x !== t) : [...p.interests, t] })}>{topicLabel(t)}</button>)}</div></div>
         <label className="small"><input type="checkbox" checked={p.include_online} onChange={(e) => update({ include_online: e.target.checked })} /> Include online events</label>
         <div className="row-flex"><span className="muted small" role="status">{saved}</span><span style={{ flex: 1 }} /><button className="btn sm ghost" onClick={signOut}>Sign out</button></div>
       </aside>

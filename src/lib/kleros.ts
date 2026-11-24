@@ -23,6 +23,22 @@ export const ROLE_SHORT: Record<KlerosRole, string> = {
 export const KLEROS_HOSTED: KlerosRole[] = ["host", "co_host"];
 
 export const EVENT_TYPES = ["Conference", "Side event", "Meetup", "Hackathon", "Workshop", "Panel", "Online talk / Space", "Academic", "Juror training", "Other"];
+/**
+ * How a topic is shown: every word capitalised ("Prediction Markets", "AI Agents"), with the usual spelling of
+ * names such as DeFi kept. Topics are stored as they are written in TOPICS (and in the database), so matching
+ * and saved choices are unchanged; only the label changes.
+ */
+const SPELLED = new Map(["AI", "DeFi", "DAO", "DAOs", "NFT", "NFTs", "ODR", "RWA", "ZK", "DePIN", "Web3", "UX"].map((w) => [w.toLowerCase(), w]));
+const SMALL = new Set(["and", "of", "for", "in", "on", "the", "to", "a"]);
+export function topicLabel(topic: string): string {
+  return topic.split(/(\s+|-|\/)/).map((w, i) => {
+    const lower = w.toLowerCase();
+    if (SPELLED.has(lower)) return SPELLED.get(lower)!;
+    if (i > 0 && SMALL.has(lower)) return lower;
+    return w ? w[0].toUpperCase() + w.slice(1) : w;
+  }).join("");
+}
+
 export const TOPICS = ["Arbitration", "Jurors", "AI agents", "Prediction markets", "Oracles", "DeFi", "Smart contracts", "Governance", "Legal tech", "Content moderation", "Research", "Community"];
 export const REGIONS = ["Europe", "North America", "Latin America", "Asia", "Africa", "Middle East", "Oceania", "Online"];
 export const VISITOR_ROLES = ["Builder / developer", "Juror", "Researcher / academic", "Legal professional", "Founder / BD partner", "Investor", "Community member"];

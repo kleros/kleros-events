@@ -1,12 +1,12 @@
 import type { EventRow, Profile } from "./types";
-import { KLEROS_HOSTED } from "./kleros";
+import { KLEROS_HOSTED, topicLabel } from "./kleros";
 
 // Simple, explainable scoring: shared topics, region, format fit for the visitor's role.
 export function scoreEvent(e: EventRow, p: Pick<Profile, "interests" | "region" | "visitor_role" | "include_online">) {
   let s = 0;
   const why: string[] = [];
   const hits = e.topics.filter((t) => p.interests.includes(t));
-  if (hits.length) { s += 3 * hits.length; why.push(hits.slice(0, 2).join(" & ")); }
+  if (hits.length) { s += 3 * hits.length; why.push(hits.slice(0, 2).map(topicLabel).join(" & ")); }
   if (p.region && e.region === p.region) { s += 2; why.push("near you"); }
   if (!e.city) { if (p.include_online) { s += 1; if (!why.length) why.push("online"); } else s -= 5; }
   const r = p.visitor_role ?? "";

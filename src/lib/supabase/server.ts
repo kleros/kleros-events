@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { cache } from "react";
+import type { User } from "@supabase/supabase-js";
 
 export const supabaseConfigured = Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -27,34 +28,34 @@ export async function supabaseServer() {
 }
 
 /**
- * The signed-in user and their profile (select * includes is_team and is_admin).
- * Anonymous sessions (QR guests asking a question) count as signed out.
+ * Who is signed in, from the session cookie: getClaims checks the sign-in token here, against the project's public
+ * signing key (fetched once and kept), so there is no trip to the auth server on every page. A token signed the old
+ * way is still checked with the auth server. The database checks every read and write itself either way.
+ * Anonymous sessions (QR guests asking a question) count as signed out. Cached per request.
+ */
+export const sessionUser = cache(async (): Promise<User | null> => {
+  if (!supabaseConfigured) return null;
+  const sb = await supabaseServer();
+  const { data } = await sb.auth.getClaims();
+  const c = data?.claims;
+  if (!c?.sub || c.is_anonymous) return null;
+  // the fields the site reads (id, email, is_anonymous), from the checked token
+  return {
+    id: c.sub, email: typeof c.email === "string" ? c.email : undefined, is_anonymous: false,
+    aud: typeof c.aud === "string" ? c.aud : "authenticated", role: typeof c.role === "string" ? c.role : undefined,
+    app_metadata: (c.app_metadata ?? {}) as User["app_metadata"], user_metadata: (c.user_metadata ?? {}) as User["user_metadata"],
+    created_at: "",
+  } as User;
+});
+
+/**
+ * The signed-in user and their profile (select * includes is_team and is_admin), one read from the database.
  * Cached per request, so the header, admin layout and page share one lookup.
  */
 export const currentUser = cache(async () => {
-  if (!supabaseConfigured) return { user: null, profile: null };
+  const user = await sessionUser();
+  if (!user) return { user: null, profile: null };
   const sb = await supabaseServer();
-  // The profile is asked for at the same time as the user check (one trip to the database instead of two), using
-  // the id in the session cookie. It counts only if the auth server confirms that same user.
-  const claimed = sessionUserId((await sb.auth.getSession()).data.session?.access_token);
-  const [{ data }, early] = await Promise.all([
-    sb.auth.getUser(),
-    claimed ? sb.from("profiles").select("*").eq("id", claimed).maybeSingle() : Promise.resolve(null),
-  ]);
-  // Guests who scanned a QR to ask a question get an anonymous session; they aren't "signed in".
-  if (!data.user || data.user.is_anonymous) return { user: null, profile: null };
-  const { data: profile } = early && claimed === data.user.id
-    ? early
-    : await sb.from("profiles").select("*").eq("id", data.user.id).maybeSingle();
-  return { user: data.user, profile };
+  const { data: profile } = await sb.from("profiles").select("*").eq("id", user.id).maybeSingle();
+  return { user, profile };
 });
-
-/** The user id (sub) inside a sign-in token, unchecked: only used to start a lookup that getUser then confirms. */
-function sessionUserId(token: string | undefined): string | null {
-  if (!token) return null;
-  try {
-    const part = token.split(".")[1];
-    const sub = JSON.parse(Buffer.from(part.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8")).sub;
-    return typeof sub === "string" ? sub : null;
-  } catch { return null; }
-}

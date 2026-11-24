@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { EventRow } from "@/lib/types";
 import EventCard from "./EventCard";
-import { EVENT_TYPES, LUMA_URL, TOPICS } from "@/lib/kleros";
+import { EVENT_TYPES, LUMA_URL, TOPICS, topicLabel } from "@/lib/kleros";
 import { endOf, isPast, latestFirst, matchesWords, plural, soonestFirst, todayIso } from "@/lib/format";
 
 export type When = "all" | "upcoming" | "past";
@@ -88,7 +88,7 @@ export default function EventBrowser({ events, counts, initialWhen = "all", init
       {showFilters && (
         <div id="ev-filters" className="ev-filters">
           <select className="f" value={topic} onChange={(e) => setTopic(e.target.value)} aria-label="Topic">
-            <option value="">All topics</option>{topics.map((t) => <option key={t}>{t}</option>)}
+            <option value="">All topics</option>{topics.map((t) => <option key={t} value={t}>{topicLabel(t)}</option>)}
           </select>
           <select className="f" value={type} onChange={(e) => setType(e.target.value)} aria-label="Event type">
             <option value="">All formats</option>{types.map((t) => <option key={t}>{t}</option>)}

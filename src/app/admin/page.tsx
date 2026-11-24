@@ -17,19 +17,20 @@ const TABS = ["upcoming", "past", "drafts", "private", "requests"] as const;
 type Tab = (typeof TABS)[number];
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
-  const { isTeam } = await requireTeam();
-  if (!isTeam) return <NotTeam />;
-  const { tab: rawTab } = await searchParams;
-  const tab: Tab = (TABS as readonly string[]).includes(rawTab ?? "") ? (rawTab as Tab) : "upcoming";
-
+  // the desk's lists are asked for at the same time as the team check (the database shows them only to the team)
   const sb = await supabaseServer();
-  const [ev, mats, reqs, counts, sync] = await Promise.all([
+  const lists0 = Promise.all([
     sb.from("events").select("*").order("starts_on", { ascending: true }),
     sb.from("material_events").select("event_id"),
     sb.from("meeting_requests").select("*, events(title, slug)").order("created_at", { ascending: false }).limit(200),
     sb.from("event_counts").select("*"),
     sb.from("luma_sync_log").select("ran_at, checked, updated, added, errors").order("ran_at", { ascending: false }).limit(1),
   ]);
+  const { isTeam } = await requireTeam();
+  if (!isTeam) return <NotTeam />;
+  const { tab: rawTab } = await searchParams;
+  const tab: Tab = (TABS as readonly string[]).includes(rawTab ?? "") ? (rawTab as Tab) : "upcoming";
+  const [ev, mats, reqs, counts, sync] = await lists0;
   const events = (ev.data ?? []) as EventRow[];
   // links (0006); before that migration, count by materials.event_id
   const linkRows = mats.error ? (await sb.from("materials").select("event_id")).data : mats.data;

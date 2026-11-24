@@ -9,10 +9,11 @@ export const metadata: Metadata = { title: "People on event pages" };
 export const dynamic = "force-dynamic";
 
 export default async function TeamPage() {
+  // the roster is asked for at the same time as the team check
+  const roster = supabaseServer().then((sb) => sb.from("team_members").select("*").eq("active", true).order("sort"));
   const { isTeam } = await requireTeam("/admin/team");
   if (!isTeam) return <NotTeam />;
-  const sb = await supabaseServer();
-  const { data } = await sb.from("team_members").select("*").eq("active", true).order("sort");
+  const { data } = await roster;
   return (
     <div className="wrap page stack adm-page">
       <header className="adm-head">

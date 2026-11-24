@@ -1,28 +1,30 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { currentUser, supabaseServer } from "@/lib/supabase/server";
-import { eventIdsOf, listEvents, listMaterials } from "@/lib/data";
+import { sessionUser, supabaseServer } from "@/lib/supabase/server";
+import { eventIdsOf, listEvents, listMaterials, withEventIds } from "@/lib/data";
 import { isPast, latestFirst, plural, soonestFirst } from "@/lib/format";
 import EventCard from "@/components/EventCard";
 import { LinkList, TalkCard, isWatchable, splitTitle } from "@/components/MaterialRow";
 import Related from "@/components/Related";
 import { eventProfile, materialProfile, related, startingReads, type Seed } from "@/lib/related";
-import type { EventRow } from "@/lib/types";
+import type { EventRow, Material } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Saved", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
 /** Everything a signed-in visitor kept: events they saved or are going to, and talks, slides and links. */
 export default async function SavedPage() {
-  const { user } = await currentUser();
+  // who is signed in comes from the session cookie (no trip); everything else is read in one round
+  const user = await sessionUser();
   if (!user) redirect("/login?next=/saved");
   const sb = await supabaseServer();
   const [events, materials, att, saves, evSaves] = await Promise.all([
-    listEvents(), listMaterials(),
+    // the public lists are kept for a minute on the server ("You might also like" reads them)
+    listEvents("public"), listMaterials("public"),
     sb.from("attendance").select("event_id, status").eq("user_id", user.id),
-    // the table comes with 0016; before that only events can be saved
-    sb.from("material_saves").select("material_id, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
+    // the table comes with 0016; before that only events can be saved. Each saved item comes with its events.
+    sb.from("material_saves").select("material_id, created_at, materials(*, material_events(event_id, created_at))").eq("user_id", user.id).order("created_at", { ascending: false }),
     // saved events on their own (0017); before that, attendance 'saved' says it
     sb.from("event_saves").select("event_id").eq("user_id", user.id),
   ]);
@@ -32,8 +34,11 @@ export default async function SavedPage() {
   const kept = events.filter((e) => status[e.id] || savedEv.has(e.id));
   const ahead = kept.filter((e) => !isPast(e)).sort(soonestFirst);
   const behind = kept.filter(isPast).sort(latestFirst);
-  const order = new Map((saves.data ?? []).map((s, i) => [s.material_id as string, i]));
-  const mats = materials.filter((m) => order.has(m.id)).sort((a, b) => order.get(a.id)! - order.get(b.id)!);
+  // newest saved first; an item you can no longer see (removed, or a private event you left) drops out
+  type Linked = Material & { material_events?: { event_id: string; created_at: string }[] };
+  const savedMats = ((saves.data ?? []) as unknown as { materials: Linked | null }[]).map((s) => s.materials).filter((m): m is Linked => !!m);
+  const links = savedMats.flatMap((m) => (m.material_events ?? []).map((l) => ({ material_id: m.id, ...l }))).sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const mats = withEventIds(savedMats.map(({ material_events: _, ...m }) => m as Material), links);
   const talks = mats.filter(isWatchable);
   const files = mats.filter((m) => !isWatchable(m));
   const evOf = (m: (typeof mats)[number]) => eventIdsOf(m).map((id) => byId[id]).find(Boolean) as EventRow | undefined;

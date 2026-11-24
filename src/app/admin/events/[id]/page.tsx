@@ -30,23 +30,27 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function EditEventPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string }> }) {
   const { id } = await params;
   const saved = (await searchParams).saved === "1";
-  const { user, isTeam, isAdmin } = await requireTeam(`/admin/events/${id}`);
   const sb = await supabaseServer();
-  // the team edits every event; a private event's invited guests edit it too
-  const { data: event } = await sb.from("events").select("*").eq("id", id).maybeSingle();
-  if (!event) return isTeam ? notFound() : <NotTeam />;
-  const { data: canEdit } = await sb.rpc("can_edit_event", { p_event: id });
-  if (!canEdit) return <NotTeam />;
-  const e = event as EventRow;
-  const isPrivate = e.visibility === "private";
-  const [agenda, team, roster, materials, collabs, creator] = await Promise.all([
+  // Everything in one round, at the same time as the account check: the database shows each part only to those
+  // allowed, and nothing is used before the checks below pass. Guests and the creator matter for private events only.
+  const [{ user, isTeam, isAdmin }, { data: event }, { data: canEdit }, agenda, team, roster, materials, collabs0, creator0] = await Promise.all([
+    requireTeam(`/admin/events/${id}`),
+    // the team edits every event; a private event's invited guests edit it too
+    sb.from("events").select("*").eq("id", id).maybeSingle(),
+    sb.rpc("can_edit_event", { p_event: id }),
     sb.from("agenda_items").select("*").eq("event_id", id).order("starts_at"),
     sb.from("event_team").select("team_member_id, part").eq("event_id", id),
     sb.from("team_members").select("*").eq("active", true).order("sort"),
     eventMaterials(sb, id),
-    isPrivate ? sb.from("event_collaborators").select("email, created_at").eq("event_id", id).order("created_at") : Promise.resolve({ data: [] }),
-    isPrivate ? sb.rpc("event_creator_email", { p_event: id }) : Promise.resolve({ data: null }),
+    sb.from("event_collaborators").select("email, created_at").eq("event_id", id).order("created_at"),
+    sb.rpc("event_creator_email", { p_event: id }),
   ]);
+  if (!event) return isTeam ? notFound() : <NotTeam />;
+  if (!canEdit) return <NotTeam />;
+  const e = event as EventRow;
+  const isPrivate = e.visibility === "private";
+  const collabs = isPrivate ? collabs0 : { data: [] };
+  const creator = isPrivate ? creator0 : { data: null };
   const sections = [
     { id: "details", label: "Details" },
     ...(isPrivate ? [{ id: "collaborators", label: "Guests" }] : []),

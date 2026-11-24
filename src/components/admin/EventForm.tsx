@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { removeFiles } from "@/lib/materials-client";
 import { friendlyError } from "@/lib/friendlyError";
-import { EVENT_TYPES, REGIONS, ROLE_LABEL, TOPICS } from "@/lib/kleros";
+import { EVENT_TYPES, REGIONS, ROLE_LABEL, TOPICS, topicLabel } from "@/lib/kleros";
 import { slugify } from "@/lib/format";
 import type { EventRow, KlerosRole } from "@/lib/types";
 
@@ -178,7 +178,7 @@ export default function EventForm({ event, me, initialVisibility, then, copyOf }
           <span id="cover_path_hint" className="small muted">The event&apos;s own poster or banner, from its website or Luma. Leave it empty and the site makes a Kleros cover. Pictures from X, YouTube or LinkedIn posts are not used.</span></div>
       </div>
       <div className="field"><span className="lbl">Topics (drive recommendations and the product promos shown)</span>
-        <div className="chips" style={{ margin: 0 }}>{TOPICS.map((t) => <button type="button" key={t} className="chip" aria-pressed={topics.includes(t)} onClick={() => setTopics(topics.includes(t) ? topics.filter((x) => x !== t) : [...topics, t])}>{t}</button>)}</div></div>
+        <div className="chips" style={{ margin: 0 }}>{TOPICS.map((t) => <button type="button" key={t} className="chip" aria-pressed={topics.includes(t)} onClick={() => setTopics(topics.includes(t) ? topics.filter((x) => x !== t) : [...topics, t])}>{topicLabel(t)}</button>)}</div></div>
       <div className="field"><label htmlFor="description">Description</label><textarea id="description" name="description" defaultValue={v?.description ?? ""} /></div>
       <div className="field"><label htmlFor="recap">Recap (after the event)</label><textarea id="recap" name="recap" defaultValue={v?.recap ?? ""} placeholder="What happened, who attended, key takeaways" /></div>
       <div className="field"><label htmlFor="slug">Web address (the end of the link)</label><input id="slug" name="slug" defaultValue={v?.slug ?? ""} placeholder={event ? "Keeps the current address if empty" : "Made from the name if empty"} /></div>
