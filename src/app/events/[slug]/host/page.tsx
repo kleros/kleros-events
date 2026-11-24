@@ -21,7 +21,7 @@ export default async function HostPage({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const { user, profile } = await currentUser();
   const next = encodeURIComponent(`/events/${slug}/host`);
-  // the team runs public events; a private event's creator and collaborators run it
+  // the team runs every event; a private event's invited guests run it too
   const data = user ? await getEvent(slug) : null;
   if (user && !data) notFound();
   const canRun = !!data && !!(await (await supabaseServer()).rpc("can_edit_event", { p_event: data.event.id })).data;
@@ -36,12 +36,12 @@ export default async function HostPage({ params }: { params: Promise<{ slug: str
         <h1>Team or invited people only</h1>
         {user ? (
           <>
-            {/* a private event shows only to its members, so anyone stopped here is signed in without team access */}
+            {/* a private event shows only to the team and its guests, so anyone stopped here is signed in without team access */}
             <p>{user.email ? <>Signed in as <b>{user.email}</b>, which does not have team access.</> : "This account does not have team access."}</p>
-            <p className="muted">This page runs the questions, the big screen and the recording for an event. It opens for the Kleros events team, who use @kleros.io emails, and, on a private event, for the people its creator invited.</p>
+            <p className="muted">This page runs the questions, the big screen and the recording for an event. It opens for the Kleros team, who use @kleros.io emails, and, on a private event, for the guests added to it.</p>
           </>
         ) : (
-          <p className="muted">This page runs the questions, the big screen and the recording for an event. Sign in with a Kleros team account, or, for a private event, with the email address its creator invited.</p>
+          <p className="muted">This page runs the questions, the big screen and the recording for an event. Sign in with a Kleros team account, or, for a private event, with the email address you were added with.</p>
         )}
         <div className="row-flex">
           {user ? <SwitchAccount next={`/events/${slug}/host`} /> : <Link className="btn primary" href={`/login?next=${next}`}>Sign in</Link>}
