@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { currentUser } from "@/lib/supabase/server";
 import KlerosLogo from "./KlerosLogo";
 import NavLinks from "./NavLinks";
 
-export default async function SiteHeader() {
-  const { user, profile } = await currentUser();
+// The same for every visitor: NavLinks fills in the account links in the browser.
+export default function SiteHeader() {
   return (
     <header className="top">
       <div className="wrap">
@@ -12,7 +11,7 @@ export default async function SiteHeader() {
           <KlerosLogo className="brand-logo" />
           <span className="brand-word">Events</span>
         </Link>
-        <NavLinks signedIn={!!user} isTeam={!!profile?.is_team} />
+        <NavLinks />
       </div>
     </header>
   );
