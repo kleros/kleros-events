@@ -1001,6 +1001,25 @@
           "Decentralized justice"
         ]
       }
+    },
+    {
+      "id": "2026-11-24-x-2121289757561122915",
+      "kind": "material",
+      "source": "https://x.com/preegee/status/2121289757561122915",
+      "event_slug": "legal-governance-hub-devcon-8-2026",
+      "material_kind": "image",
+      "title": "Pree's recap of the Legal & Governance Hub with 11 photos: the hub opened with Token Rights 101, given by Wei Wei Ooi and Husam Abboud, then a Hindi run of the same session",
+      "speaker": "Pree",
+      "url": "https://x.com/preegee/status/2121289757561122915"
+    },
+    {
+      "id": "2026-11-24-linkedin-7524924132384493568",
+      "kind": "material",
+      "source": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7524924132384493568/",
+      "event_slug": "devcon-8-mumbai",
+      "material_kind": "social",
+      "title": "Entity.ID's Devcon 8 recap: five points on who stands behind an AI agent, from Husam Abboud's sessions with Federico Ast, Wei Wei Ooi, Pree, Fortunato Cinquepalmi and Facundo Trotz (LinkedIn, with an 11-page document)",
+      "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7524924132384493568/"
     }
   ]
 }

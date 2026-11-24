@@ -22,6 +22,7 @@ Each day the check:
    - new uploads on the Kleros YouTube channel (`UCEjwygFVVrSXhPNEKfweypA`);
    - blog.kleros.io;
    - Slack channels: #general-event-organisation, #comms-and-marketing, #communication-team, #announcements, plus any event channel such as #devcon-2026-mumbay or #ethcc-2027.
+   - In Chrome, nothing plays out loud: Wei Wei works on the same computer while the check runs. Videos are read without playing them where possible (YouTube oEmbed, the channel's video lists). When a page with a video has to be opened, the video is muted with the player's own mute and paused as soon as it loads. The computer's volume is never touched.
 3. Appends new items to `feed.json`, then commits and pushes the change to main. The database reads the file at minute 17 of every hour (see [Where the feed is read from](#where-the-feed-is-read-from)), so a new item reaches the site within about an hour.
 
 ### What gets in
