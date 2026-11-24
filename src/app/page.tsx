@@ -11,7 +11,7 @@ import Ext from "@/components/Ext";
 export const revalidate = 60;
 
 export default async function Home() {
-  const [events, materials, counts, ytStats] = await Promise.all([listEvents(), listMaterials(), eventCounts(), talkStats()]);
+  const [events, materials, counts, ytStats] = await Promise.all([listEvents("public"), listMaterials("public"), eventCounts(), talkStats()]);
   const upcoming = events.filter((e) => !isPast(e)).sort(soonestFirst);
   const next = upcoming[0];
   // Coming up lists everything on now or ahead, the featured one too, so the row never hides an event
