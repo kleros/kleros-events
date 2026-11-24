@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useAccount } from "@/lib/useAccount";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import AnswerText, { normalUrl } from "./AnswerText";
@@ -28,8 +29,16 @@ function suggestions(path: string) {
  * pages (and a reload, within the tab), and belongs to one account: signing out or switching
  * accounts starts a new one, so nobody sees answers drawn from someone else's access.
  */
-export default function AskWidget({ ai, signedIn, account }: { ai: boolean; signedIn: boolean; account: string }) {
+/** Who gets Claude's written answers (AskLauncher); everyone else gets the search. */
+export type AiFor = { team: boolean; signedIn: boolean; visitor: boolean };
+
+export default function AskWidget({ aiFor }: { aiFor: AiFor }) {
   const path = usePathname();
+  const acct = useAccount();
+  const signedIn = !!acct;
+  // null until the browser has checked who is signed in: no conversation is loaded or dropped before then
+  const account = acct === undefined ? null : acct?.id ?? "visitor";
+  const ai = acct?.team || acct?.admin ? aiFor.team : acct ? aiFor.signedIn : aiFor.visitor;
   const [open, setOpen] = useState(false);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [draft, setDraft] = useState("");
@@ -53,6 +62,7 @@ export default function AskWidget({ ai, signedIn, account }: { ai: boolean; sign
 
   // keep this account's conversation for the tab, and drop any other account's
   useEffect(() => {
+    if (!account) return;
     current.current = key;
     abort.current?.abort();
     let saved: Turn[] = [];
@@ -66,7 +76,7 @@ export default function AskWidget({ ai, signedIn, account }: { ai: boolean; sign
     } catch { /* storage off */ }
     setTurns(Array.isArray(saved) ? saved : []); setDraft(""); setStatus(""); setBusy(false);
     setLoaded(key);
-  }, [key]);
+  }, [key, account]);
   useEffect(() => {
     if (loaded !== key) return;
     try { sessionStorage.setItem(key, JSON.stringify(turns.slice(-30))); } catch { /* storage off */ }
