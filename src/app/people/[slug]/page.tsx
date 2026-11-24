@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
-import { listEvents, listMaterials, eventIdsOf } from "@/lib/data";
-import { supabaseConfigured, supabaseServer } from "@/lib/supabase/server";
+import { agendaSpeakers, listEvents, listMaterials, eventIdsOf } from "@/lib/data";
 import { fmtRange, place } from "@/lib/format";
-import { peopleIn, personByOldSlug, personBySlug } from "@/lib/people";
+import { PEOPLE, peopleIn, personByOldSlug, personBySlug } from "@/lib/people";
 import type { EventRow } from "@/lib/types";
 import PersonAvatar from "@/components/PersonAvatar";
 import PersonLinks from "@/components/PersonLinks";
@@ -12,6 +11,11 @@ import PartnerForm from "@/components/PartnerForm";
 import { LinkList, TalkCard, isTalkLike, isWatchable } from "@/components/MaterialRow";
 
 export const revalidate = 300;
+
+// every profile is built ahead and kept ready; an old address still redirects when it is first opened
+export function generateStaticParams() {
+  return PEOPLE.map((p) => ({ slug: p.slug }));
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const p = personBySlug((await params).slug);
@@ -21,10 +25,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 /** Events where the person is on the agenda (agenda_items.speaker), as event ids. */
 async function agendaEventIds(slug: string): Promise<string[]> {
-  if (!supabaseConfigured) return [];
-  const sb = await supabaseServer();
-  const { data } = await sb.from("agenda_items").select("event_id, speaker").not("speaker", "is", null);
-  return (data ?? []).filter((a) => peopleIn(a.speaker).some((p) => p.slug === slug)).map((a) => a.event_id as string);
+  return (await agendaSpeakers()).filter((a) => peopleIn(a.speaker).some((p) => p.slug === slug)).map((a) => a.event_id as string);
 }
 
 export default async function PersonPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -35,7 +36,7 @@ export default async function PersonPage({ params }: { params: Promise<{ slug: s
     if (moved) permanentRedirect(`/people/${moved.slug}`);
     notFound();
   }
-  const [events, materials, agendaIds] = await Promise.all([listEvents(), listMaterials(), agendaEventIds(p.slug)]);
+  const [events, materials, agendaIds] = await Promise.all([listEvents("public"), listMaterials("public"), agendaEventIds(p.slug)]);
   // public, published events only, so a private or draft event never shows here
   const byId = new Map(events.filter((e) => !e.is_example).map((e) => [e.id, e]));
   const theirs = materials.filter((m) => peopleIn(m.speaker).some((x) => x.slug === p.slug) && eventIdsOf(m).some((id) => byId.has(id)));
