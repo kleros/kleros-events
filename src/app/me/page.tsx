@@ -16,7 +16,7 @@ export default async function MePage() {
     listEvents(), listMaterials(),
     sb.from("attendance").select("event_id, status, note").eq("user_id", user.id),
     sb.from("talk_progress").select("material_id, position_seconds, finished").eq("user_id", user.id),
-    // RLS returns only the private events this person created or was added to
+    // RLS returns private events to the team and to guests added to them
     sb.from("events").select("*").eq("visibility", "private").order("starts_on", { ascending: false }),
     sb.from("event_saves").select("event_id").eq("user_id", user.id),
   ]);
