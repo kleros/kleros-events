@@ -1,7 +1,7 @@
-import { currentUser, supabaseConfigured } from "@/lib/supabase/server";
+import { supabaseConfigured } from "@/lib/supabase/server";
 import { sharedLimits, visitorsOff } from "@/lib/ask/limit";
 import { askMode } from "@/lib/ask/mode";
-import AskWidget from "./AskWidget";
+import AskWidget, { type AiFor } from "./AskWidget";
 
 /**
  * The Ask button, on every page. By default it is a smart search of the site, free and with no
@@ -9,14 +9,16 @@ import AskWidget from "./AskWidget";
  * at once and everyone else once their question counts can be kept in the database
  * (SUPABASE_SERVICE_ROLE_KEY and ask_take from migration 0013 or 0014); until then they get the
  * search. ASK_PUBLIC=off keeps Claude answers to signed-in accounts.
+ *
+ * Nothing here depends on who is looking (the widget works that out in the browser), so pages stay
+ * the same for everyone and can be served ready-made. /api/ask decides again for every question.
  */
 export default async function AskLauncher() {
   if (!supabaseConfigured) return null;
-  const { user, profile } = await currentUser();
-  let ai = false;
+  let aiFor: AiFor = { team: false, signedIn: false, visitor: false };
   if (askMode() === "claude") {
-    const isTeam = !!(profile?.is_team || profile?.is_admin);
-    ai = isTeam || ((!!user || !visitorsOff()) && (await sharedLimits()) === "ok");
+    const shared = (await sharedLimits()) === "ok";
+    aiFor = { team: true, signedIn: shared, visitor: shared && !visitorsOff() };
   }
-  return <AskWidget ai={ai} signedIn={!!user} account={user?.id ?? "visitor"} />;
+  return <AskWidget aiFor={aiFor} />;
 }
