@@ -32,7 +32,7 @@ export default async function EditEventPage({ params, searchParams }: { params: 
   const saved = (await searchParams).saved === "1";
   const { user, isTeam, isAdmin } = await requireTeam(`/admin/events/${id}`);
   const sb = await supabaseServer();
-  // the team edits public events; a private event's creator and collaborators edit it, team or not
+  // the team edits every event; a private event's invited guests edit it too
   const { data: event } = await sb.from("events").select("*").eq("id", id).maybeSingle();
   if (!event) return isTeam ? notFound() : <NotTeam />;
   const { data: canEdit } = await sb.rpc("can_edit_event", { p_event: id });
@@ -49,7 +49,7 @@ export default async function EditEventPage({ params, searchParams }: { params: 
   ]);
   const sections = [
     { id: "details", label: "Details" },
-    ...(isPrivate ? [{ id: "collaborators", label: "Collaborators" }] : []),
+    ...(isPrivate ? [{ id: "collaborators", label: "Guests" }] : []),
     { id: "agenda", label: "Agenda" },
     { id: "team", label: "Who is going for Kleros" },
     { id: "materials", label: "Talks, files and links" },
@@ -84,7 +84,7 @@ export default async function EditEventPage({ params, searchParams }: { params: 
           <div className="ed-sec-h"><h2>Details</h2><p className="muted small">Title, dates, place, description and the recap shown after the event.</p></div>
           {saved && (
             <div className="ok" role="status">
-              Saved. {isPrivate ? "This event is private: only you and the people you added can see it." : e.status === "published" ? "The changes are live on the event page." : "It is still a draft, so only the team can see it."}
+              Saved. {isPrivate ? "This event is private: only the Kleros team and the guests added to it can see it." : e.status === "published" ? "The changes are live on the event page." : "It is still a draft, so only the team can see it."}
             </div>
           )}
           {/* keyed so a saved change (a new address, a switch) resets the form instead of keeping old values */}
@@ -92,7 +92,7 @@ export default async function EditEventPage({ params, searchParams }: { params: 
         </section>
         {isPrivate && (
           <section id="collaborators" className="ed-sec">
-            <div className="ed-sec-h"><h2>Collaborators</h2><p className="muted small">Who besides the creator can see and edit this private event.</p></div>
+            <div className="ed-sec-h"><h2>Guests</h2><p className="muted small">People from outside Kleros who can also see and edit this private event. The whole Kleros team has access already.</p></div>
             <CollaboratorsEditor eventId={id} slug={e.slug} title={e.title} creatorEmail={(creator.data as string | null) ?? null} initial={(collabs.data ?? []) as { email: string; created_at: string }[]} />
           </section>
         )}
