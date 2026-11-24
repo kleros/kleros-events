@@ -95,7 +95,7 @@ export default function RecordingsLibrary({ materials, events, txStatus, linksRe
       <header className="adm-head">
         <div>
           <h1>All recordings</h1>
-          <p className="muted">Every talk, recording and video in one place, with its transcript and the events it belongs to. It lives in the team area because a new recording stays with the team until you link it to an event. Linked to a published event, it shows on that event&apos;s page for everyone. Linked only to private events, only their creator and collaborators can play it.</p>
+          <p className="muted">Every talk, recording and video in one place, with its transcript and the events it belongs to. It lives in the team area because a new recording stays with the team until you link it to an event. Linked to a published event, it shows on that event&apos;s page for everyone. Linked only to private events, it stays internal: only the Kleros team and those events' guests can play it.</p>
         </div>
         <Link className="btn primary" href="/record"><span className="dot" aria-hidden /> Record a session</Link>
       </header>
