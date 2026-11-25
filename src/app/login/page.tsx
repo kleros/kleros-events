@@ -20,7 +20,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <div className="note" role="alert">That sign-in link did not work. It may have expired, been used already, or been opened in a different browser. Enter your email again for a new link, and open it on this same device.</div>
       )}
       <p className="muted small">
-        Use your @kleros.io address, the address you were given team access with, or, as a guest, the address you were added to the event with. You get a sign-in link by email, no password needed.
+        Use your @kleros.io address, the address you were given team access with, or, as a guest, the address you were added to the event with. If the team gave you a password, enter it too. Otherwise leave it empty and you get a sign-in link by email.
         {isHost(next) && " Invited to run an internal event? Use the email address that was invited."}
       </p>
       <LoginForm next={next} />

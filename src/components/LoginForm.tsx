@@ -17,6 +17,9 @@ function friendly(error: AuthError) {
 
 export default function LoginForm({ next }: { next: string }) {
   const [email, setEmail] = useState("");
+  // a teammate added by hand in Supabase (Add user > Create new user, Auto Confirm) signs in with the password
+  // they were given; no email is sent. Left empty, the form emails a sign-in link as before.
+  const [password, setPassword] = useState("");
   const [sent, setSent] = useState(false);
   const [resent, setResent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -52,8 +55,23 @@ export default function LoginForm({ next }: { next: string }) {
     setSentAt(t); setNow(t);
     return true;
   }
+  async function withPassword() {
+    setBusy(true); setErr("");
+    let token: string | undefined;
+    try { token = await captchaToken("sign_in"); }
+    catch (e) { setBusy(false); setErr((e as Error).message); return; }
+    const { error } = await supabaseBrowser().auth.signInWithPassword({ email: email.trim(), password, options: { captchaToken: token } });
+    if (error) {
+      setBusy(false);
+      setErr(/invalid login credentials/i.test(error.message) ? "That email and password do not match. Check both, or leave the password empty to get a sign-in link by email." : friendly(error));
+      return;
+    }
+    // a full load, so the server pages see the new session cookie
+    window.location.assign(next);
+  }
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (password) { await withPassword(); return; }
     if (await send()) { setSent(true); setResent(false); }
   }
   async function again() {
@@ -88,8 +106,14 @@ export default function LoginForm({ next }: { next: string }) {
         <label htmlFor="email">Email</label>
         <input ref={input} id="email" type="email" autoComplete="email" enterKeyHint="send" required value={email} onChange={(e) => setEmail(e.target.value)} />
       </div>
+      <div className="field">
+        <label htmlFor="password">Password <span className="muted">(only if the team gave you one)</span></label>
+        <input id="password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      </div>
       {err && <div className="note" role="alert">{err}</div>}
-      <button className="btn primary" type="submit" disabled={busy}>{busy ? "Sending…" : "Email me a sign-in link"}</button>
+      <button className="btn primary" type="submit" disabled={busy}>
+        {password ? (busy ? "Signing in…" : "Sign in") : busy ? "Sending…" : "Email me a sign-in link"}
+      </button>
     </form>
   );
 }
