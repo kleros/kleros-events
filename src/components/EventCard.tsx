@@ -39,12 +39,12 @@ export function EventCover({ e, className = "" }: { e: EventRow; className?: str
   );
 }
 
-export default function EventCard({ e, talks = 0, materials = 0, going = 0, why, mine, showExcerpt = false }: {
-  e: EventRow; talks?: number; materials?: number; going?: number; why?: string; mine?: string; showExcerpt?: boolean;
+export default function EventCard({ e, talks = 0, materials = 0, why, mine, showExcerpt = false }: {
+  e: EventRow; talks?: number; materials?: number; why?: string; mine?: string; showExcerpt?: boolean;
 }) {
   const status = statusLabel(e);
   // say what there is to open: talks to watch first, else slides, photos and posts
-  const count = talks ? plural(talks, "talk") : materials ? `${materials} ${materials === 1 ? "file or link" : "files and links"}` : going ? `${going} going` : "";
+  const count = talks ? plural(talks, "talk") : materials ? `${materials} ${materials === 1 ? "file or link" : "files and links"}` : "";
   const text = showExcerpt ? excerpt(e) : "";
   // The tile already shows the name, dates, place and Kleros's part, so the text under it only adds what is
   // new: the status, what there is to open, the summary. The title is still the one link, read out by screen

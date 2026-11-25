@@ -8,7 +8,7 @@ import { endOf, isPast, latestFirst, matchesWords, plural, soonestFirst, todayIs
 
 export type When = "all" | "upcoming" | "past";
 export type View = "list" | "calendar";
-type Counts = { talks: Record<string, number>; materials: Record<string, number>; going: Record<string, number> };
+type Counts = { talks: Record<string, number>; materials: Record<string, number> };
 
 const LUMA_NOTE = <>No upcoming events announced yet. New ones are posted on <a href={LUMA_URL} target="_blank" rel="noopener">Luma</a> first.</>;
 
@@ -141,7 +141,7 @@ function Timeline({ title, list, counts, empty, byYear = false, limit }: {
 }) {
   const [all, setAll] = useState(false);
   const shown = limit && !all ? list.slice(0, limit) : list;
-  const card = (e: EventRow) => <EventCard key={e.id} e={e} talks={counts.talks[e.id]} materials={counts.materials[e.id]} going={isPast(e) ? 0 : counts.going[e.id]} />;
+  const card = (e: EventRow) => <EventCard key={e.id} e={e} talks={counts.talks[e.id]} materials={counts.materials[e.id]} />;
   const years = byYear ? [...new Set(shown.map((e) => e.starts_on.slice(0, 4)))] : [];
   return (
     <section className="timeline">
@@ -175,7 +175,7 @@ function MonthList({ month, events, counts }: { month: Date; events: EventRow[];
       <h3 className="sub-h">{list.length ? `${plural(list.length, "event")} in ${label}` : `Nothing on record for ${label}`}</h3>
       {list.length > 0 && (
         <div className="grid">
-          {list.map((e) => <EventCard key={e.id} e={e} talks={counts.talks[e.id]} materials={counts.materials[e.id]} going={isPast(e) ? 0 : counts.going[e.id]} />)}
+          {list.map((e) => <EventCard key={e.id} e={e} talks={counts.talks[e.id]} materials={counts.materials[e.id]} />)}
         </div>
       )}
     </section>

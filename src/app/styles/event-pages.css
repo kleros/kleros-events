@@ -32,11 +32,8 @@
 .when-where span + span { color: var(--muted); }
 .role-line { font-size: var(--t-sm); line-height: 1.45; color: var(--muted); font-variant-numeric: tabular-nums; }
 .ev-title > .organiser { margin-top: calc(-1 * var(--s-2)); }
+.ev-actions:empty { display: none; }
 .ev-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); margin-top: var(--s-2); }
-/* the attendance buttons join the row; the private notes field and the saved line go below it */
-.ev-actions > .stack, .ev-actions > .stack > .row-flex { display: contents; }
-.ev-actions > .stack > :not(.row-flex) { order: 1; flex-basis: 100%; }
-.ev-actions > .stack > .field { max-width: 520px; }
 .ev-title > .note { justify-self: start; max-width: 60ch; }
 
 .cover.ev-cover { width: 100%; border-radius: var(--r-lg); }
@@ -89,12 +86,10 @@
   .person .who a { padding-block: 6px; margin-block: -6px; }
 }
 
-/* the event's own buttons: an icon that fills when it is on (Save, I'm going), not a highlighted box */
+/* the event's own buttons (Add to calendar): a quiet icon beside the label */
 .btn.act { gap: 6px; }
 .btn.act svg { flex: none; color: var(--muted); transition: color 0.15s; }
 .btn.act:hover svg { color: var(--fg); }
-.btn.act.is-on, .btn.act.is-on:hover { color: var(--white); }
-.btn.act.is-on svg { color: var(--accent); }
 .cal-pair { display: inline-flex; align-items: center; gap: 2px; }
 .cal-ics { font-size: var(--t-xs); color: var(--muted); text-decoration: none; padding: 4px; }
 .cal-ics:hover { color: var(--fg); text-decoration: underline; }

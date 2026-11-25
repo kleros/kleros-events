@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { listEvents, listMaterials, eventCounts, eventIdsOf, materialCounts, talkStats } from "@/lib/data";
+import { listEvents, listMaterials, eventIdsOf, materialCounts, talkStats } from "@/lib/data";
 import { mostWatched, statsLine } from "@/lib/popular";
 import { fmtRange, isLive, isPast, latestFirst, plural, place, soonestFirst } from "@/lib/format";
 import { KLEROS_ABOUT, LUMA_URL } from "@/lib/kleros";
@@ -11,7 +11,7 @@ import Ext from "@/components/Ext";
 export const revalidate = 60;
 
 export default async function Home() {
-  const [events, materials, counts, ytStats] = await Promise.all([listEvents("public"), listMaterials("public"), eventCounts(), talkStats()]);
+  const [events, materials, ytStats] = await Promise.all([listEvents("public"), listMaterials("public"), talkStats()]);
   const upcoming = events.filter((e) => !isPast(e)).sort(soonestFirst);
   const next = upcoming[0];
   // Coming up lists everything on now or ahead, the featured one too, so the row never hides an event
@@ -82,7 +82,7 @@ export default async function Home() {
         {later.length > 0 && (
           <section className="block">
             <div className="section-h"><h2>Coming up</h2><Link href="/events?when=upcoming">All upcoming →</Link></div>
-            <div className="grid">{later.map((e) => <EventCard key={e.id} e={e} talks={talkCount(e.id)} materials={itemCount(e.id)} going={counts[e.id]?.going} showExcerpt />)}</div>
+            <div className="grid">{later.map((e) => <EventCard key={e.id} e={e} talks={talkCount(e.id)} materials={itemCount(e.id)} showExcerpt />)}</div>
           </section>
         )}
         <section className="block">

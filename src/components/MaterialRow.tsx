@@ -5,7 +5,6 @@ import { fmtDur, fmtSize, plural, safeHref } from "@/lib/format";
 import Thumb from "./Thumb";
 import GenCover from "./Cover";
 import Ext from "./Ext";
-import SaveButton from "./SaveButton";
 import SpeakerNames from "./SpeakerNames";
 
 const KIND: Record<string, string> = { talk: "TALK", slides: "PDF", audio: "AUD", video: "VID", doc: "DOC", image: "IMG", link: "URL", social: "POST" };
@@ -142,7 +141,6 @@ export function TalkCard({ m, event, note, showEvent = true }: { m: Material; ev
           </GenCover>
         } />
       </Link>
-      <SaveButton icon id={m.id} title={main} />
       <div className="body">
         <h3 title={m.title}><Link className="stretch" href={href}>{main}</Link></h3>
         {meta && <p className="card-meta">{meta}</p>}
@@ -183,7 +181,7 @@ function LinkRow({ m }: { m: Material }) {
 export function LinkList({ items, first = 6 }: { items: Material[]; first?: number }) {
   if (!items.length) return null;
   const head = items.slice(0, first), tail = items.slice(first);
-  const rows = (list: Material[]) => <ul className="links">{list.map((m) => <li key={m.id}><LinkRow m={m} /><SaveButton icon id={m.id} title={m.title} /></li>)}</ul>;
+  const rows = (list: Material[]) => <ul className="links">{list.map((m) => <li key={m.id}><LinkRow m={m} /></li>)}</ul>;
   return (
     <div className="link-list">
       {rows(head)}

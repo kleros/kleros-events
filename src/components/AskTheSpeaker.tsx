@@ -6,11 +6,11 @@ import { authorOf, byNew, byTop, useQuestions } from "@/lib/useQuestions";
 import { qaError } from "@/lib/qaErrors";
 import type { Question } from "@/lib/types";
 
-export default function AskTheSpeaker({ eventId, signedIn, isTeam, displayName, slug, past = false, isPrivate = false }: { eventId: string; signedIn: boolean; isTeam: boolean; displayName: string; slug: string; past?: boolean; isPrivate?: boolean }) {
+// Anyone can ask and upvote without an account (a quiet anonymous session), with an optional name.
+export default function AskTheSpeaker({ eventId, isTeam, slug, past = false, isPrivate = false }: { eventId: string; isTeam: boolean; slug: string; past?: boolean; isPrivate?: boolean }) {
   // the same live list as the phone page: realtime filtered to this event, reloads gathered and spread out
   const { questions, myVotes, uid, reload } = useQuestions(eventId, { poll: false });
   const [body, setBody] = useState("");
-  const [anon, setAnon] = useState(false);
   const [guestName, setGuestName] = useState("");
   const [sort, setSort] = useState<"top" | "new">("top");
   const [err, setErr] = useState("");
@@ -27,14 +27,11 @@ export default function AskTheSpeaker({ eventId, signedIn, isTeam, displayName, 
     const sb = supabaseBrowser();
     let me: string;
     try { me = (await ensureUser()).id; } catch (x) { setErr(qaError(x)); return; }
-    const named = !anon && (signedIn ? displayName : guestName).trim().slice(0, 60);
+    const named = guestName.trim().slice(0, 60);
     // no automatic upvote of one's own question: the list counts other people's votes
     const { error } = await sb.from("questions").insert({ event_id: eventId, body: body.trim(), anonymous: !named, author_id: me, author_name: named || null });
     if (error) {
-      // a signed-in account asks under its display name, so the fix is there, not in a name field
-      setErr(error.code === "PT422" && signedIn && named
-        ? "Your display name is reserved on this site. Change it on My events, or tick Ask anonymously."
-        : qaError(error));
+      setErr(qaError(error));
       return;
     }
     setBody(""); reload();
@@ -58,9 +55,7 @@ export default function AskTheSpeaker({ eventId, signedIn, isTeam, displayName, 
     <div className="stack">
       <form className="row-flex" onSubmit={ask}>
         <input className="search" value={body} onChange={(e) => setBody(e.target.value)} placeholder={past ? "Leave a question for the speakers" : "Ask the Kleros speakers a question"} maxLength={280} minLength={3} required aria-label="Your question" enterKeyHint="send" />
-        {signedIn
-          ? <label className="muted small"><input type="checkbox" checked={anon} onChange={(e) => setAnon(e.target.checked)} /> Ask anonymously</label>
-          : <input className="search" style={{ flex: "0 1 160px" }} value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Your name (optional)" maxLength={40} aria-label="Your name" />}
+        <input className="search" style={{ flex: "0 1 160px" }} value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Your name (optional)" maxLength={40} aria-label="Your name" />
         <button className="btn primary sm" type="submit" disabled={busy}>{busy ? "Sending…" : "Send question"}</button>
       </form>
       {err && <div className="note" role="alert">{err}</div>}

@@ -5,7 +5,7 @@ import { SITE_URL } from "@/lib/kleros";
 export default function robots(): MetadataRoute.Robots {
   const base = SITE_URL.replace(/\/$/, "");
   return {
-    rules: { userAgent: "*", allow: "/", disallow: ["/admin", "/record", "/saved", "/me", "/login", "/auth", "/api", "/f/", "/q/", "/session/"] },
+    rules: { userAgent: "*", allow: "/", disallow: ["/admin", "/record", "/me", "/login", "/auth", "/api", "/f/", "/q/", "/session/"] },
     sitemap: `${base}/sitemap.xml`,
   };
 }

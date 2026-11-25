@@ -7,16 +7,16 @@ import Ext from "./Ext";
 import ThemeToggle, { ThemeChoice } from "./ThemeToggle";
 import { useAccount } from "@/lib/useAccount";
 
-/** Header navigation. Desktop: Events and Talks, then account, theme and Kickback on the right.
+/** Header navigation. Desktop: Events, Talks and People, then the team links, theme and Kickback on the right.
  *  Phones: Kickback and a Menu sheet that holds the rest.
- *  The account links are filled in by the browser (lib/useAccount.ts), so every page can be sent ready-made. */
+ *  The site is public with no visitor accounts: only the Kleros team (and guests added to an internal event) sign in,
+ *  from the footer's Team sign-in. Their links are filled in by the browser (lib/useAccount.ts), so every page can
+ *  be sent ready-made. */
 export default function NavLinks() {
   const path = usePathname();
   const acct = useAccount();
   const signedIn = !!acct;
   const isTeam = !!acct?.team;
-  // until the browser has checked, the account link keeps its place but is not shown
-  const checking = acct === undefined;
   const on = (href: string) => (path === href || path.startsWith(href + "/") ? "page" : undefined);
   const team = useRef<HTMLDetailsElement>(null);
   const sheet = useRef<HTMLDetailsElement>(null);
@@ -55,7 +55,6 @@ export default function NavLinks() {
     if ((e.target as HTMLElement).closest("a")) e.currentTarget.closest("details")?.removeAttribute("open");
   };
 
-  const account = signedIn ? { href: "/me", label: "My events" } : { href: "/login", label: "Sign in" };
   return (
     <nav className="nav" aria-label="Main">
       <div className="nav-main">
@@ -64,8 +63,7 @@ export default function NavLinks() {
         <Link className="nav-link" href="/people" aria-current={on("/people")}>People</Link>
       </div>
       <div className="nav-end">
-        {/* everyone signed in keeps a Saved list; only @kleros.io accounts get the Team menu */}
-        {signedIn && <Link className="nav-link wide" href="/saved" aria-current={on("/saved")}>Saved</Link>}
+        {/* the team gets its menu; a guest added to an internal event gets a link to the events shared with them */}
         {isTeam ? (
           <details className="menu end acct wide" ref={team}>
             <summary className="nav-link">Team<span aria-hidden="true"> ▾</span></summary>
@@ -74,8 +72,8 @@ export default function NavLinks() {
               <Link href="/me" aria-current={on("/me")}>My events</Link>
             </div>
           </details>
-        ) : (
-          <Link className="nav-link wide" href={account.href} aria-current={on(account.href)} style={checking ? { visibility: "hidden" } : undefined}>{account.label}</Link>
+        ) : signedIn && (
+          <Link className="nav-link wide" href="/me" aria-current={on("/me")}>My events</Link>
         )}
         <ThemeToggle className="wide" />
         <a className="btn sm nav-kickback" href={KICKBACK_SITE} target="_blank" rel="noopener">Kickback<Ext /></a>
@@ -88,8 +86,7 @@ export default function NavLinks() {
             <Link href="/events" aria-current={on("/events")}>Events</Link>
             <Link href="/talks" aria-current={on("/talks")}>Talks</Link>
             <Link href="/people" aria-current={on("/people")}>People</Link>
-            {signedIn && <Link href="/saved" aria-current={on("/saved")}>Saved</Link>}
-            <Link href={account.href} aria-current={on(account.href)}>{account.label}</Link>
+            {signedIn && <Link href="/me" aria-current={on("/me")}>My events</Link>}
             {isTeam && <Link href="/admin" aria-current={on("/admin")}>Team desk</Link>}
             <ThemeChoice />
           </div>

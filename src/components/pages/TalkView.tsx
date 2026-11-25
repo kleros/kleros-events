@@ -22,8 +22,6 @@ import TranscriptArea from "@/components/transcript/TranscriptArea";
 import { MediaPlayer, YouTubePlayer } from "@/components/transcript/MediaPlayers";
 import StartAt from "@/components/transcript/StartAt";
 import { MaterialEditButton } from "@/components/admin/MaterialEditor";
-import SaveButton from "@/components/SaveButton";
-import Comments from "@/components/Comments";
 import SpeakerNames from "@/components/SpeakerNames";
 import PersonChips from "@/components/PersonChips";
 
@@ -99,7 +97,7 @@ export default async function TalkView({ id, as }: { id: string; as: As }) {
     player = <MediaPlayer kind="audio" src={fileUrl(m.file_path)} title={m.title} />;
     canSeek = true;
   } else {
-    player = <TalkPlayer materialId={m.id} pdfUrl={pdf} audioUrl={m.kind === "talk" ? fileUrl(m.audio_path) : undefined} marks={m.marks} notes={m.notes} signedIn={!!user} />;
+    player = <TalkPlayer pdfUrl={pdf} audioUrl={m.kind === "talk" ? fileUrl(m.audio_path) : undefined} marks={m.marks} notes={m.notes} />;
     canSeek = m.kind === "talk" && !!m.audio_path;
   }
 
@@ -135,7 +133,6 @@ export default async function TalkView({ id, as }: { id: string; as: As }) {
         <h1 className="talk-title">{main}</h1>
         <div className="muted small">{m.speaker && <SpeakerNames speaker={m.speaker} />}{m.speaker && detailRest && " · "}{detailRest}</div>
         <PersonChips speaker={m.speaker} />
-        {m.events && <div className="talk-save"><SaveButton id={m.id} next={`/talks/${m.id}`} /></div>}
         {canRename && <div className="talk-edit"><MaterialEditButton m={{ id: m.id, title: m.title, speaker: m.speaker }} label="Edit title or speaker" /></div>}
         {m.linkedEvents.length > 1 && (
           <div className="talk-events">
@@ -155,12 +152,6 @@ export default async function TalkView({ id, as }: { id: string; as: As }) {
           {player}
         </TranscriptArea>
       ) : player}
-      {m.events && (
-        <section className="block" id="comments">
-          <div className="section-h"><h2>Comments</h2></div>
-          <Comments materialId={m.id} signedIn={!!user} canModerate={canRename} next={`/talks/${m.id}#comments`} displayName={profile?.display_name} />
-        </section>
-      )}
       {fullSession && (
         <p className="full-session-line">
           <Link className="full-session" href={`/talks/${fullSession.id}`}>From the full session: <b>{splitTitle(fullSession.title).main}</b> →</Link>

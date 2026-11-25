@@ -76,7 +76,7 @@ export default function QuickAsk({ eventId, title, slug }: { eventId: string; ti
         <button className="btn primary qa-send" type="submit" disabled={busy || body.trim().length < 3}>{busy ? "Sending…" : "Send question"}</button>
         <p className="muted small qa-fine">No account needed. Leave the name empty to ask anonymously.{
           // the guest mark comes with 0014; before that questions have no guest field
-          (!questions.length || questions.some((q) => q.guest !== undefined)) && " Without an account, the name shows with “(guest)” after it."}</p>
+          (!questions.length || questions.some((q) => q.guest !== undefined)) && " A name typed here shows with “(guest)” after it."}</p>
         {sent && <div className="ok" role="status">Sent. It is in the list below.</div>}
         {err && <div className="note" role="alert">{err}</div>}
       </form>

@@ -122,23 +122,6 @@ const publicAgendaSpeakers = unstable_cache(async () => {
   return (data ?? []) as { event_id: string; speaker: string }[];
 }, ["agenda-speakers"], { revalidate: 300 });
 
-type Counts = Record<string, { going: number; attended: number }>;
-/** Going and attended per event (view event_counts). "public" leaves out private events' totals. */
-export async function eventCounts(as: As = "public"): Promise<Counts> {
-  if (!supabaseConfigured) return {};
-  return as === "public" ? publicEventCounts() : readCounts(await supabaseServer());
-}
-// the same totals for every visitor; kept for 30 s, as the event pages were
-const publicEventCounts = unstable_cache(() => readCounts(visitorDb()), ["event-counts"], { revalidate: 30 });
-async function readCounts(sb: SupabaseClient): Promise<Counts> {
-  const { data, error } = await sb.from("event_counts").select("*");
-  if (error) {
-    console.error("eventCounts", error.message);
-    throw new Error("The events could not be loaded.");
-  }
-  return Object.fromEntries((data ?? []).map((r: { event_id: string; going: number; attended: number }) => [r.event_id, { going: r.going, attended: r.attended }]));
-}
-
 /** Materials of one event: linked ones (0006), or by materials.event_id before the migration. */
 export async function eventMaterials(sb: SupabaseClient, eventId: string): Promise<Material[]> {
   // one trip: each material with every event it is linked to

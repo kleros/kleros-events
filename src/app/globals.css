@@ -170,7 +170,7 @@ h1 em, .hero-title em { font-style: italic; }
 .btn.sm { min-height: 32px; padding: 0 12px; }
 .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
 .btn.on { background: var(--accent-soft); border-color: var(--accent); color: var(--white); }
-/* a pressed ghost button (Save, I'm going) stays pressed under the pointer */
+/* a pressed button stays pressed under the pointer */
 .btn.on:hover { background: var(--accent-soft); border-color: var(--accent); }
 .btn.more { justify-self: center; margin-top: var(--s-2); }
 .link-btn { border: 0; background: none; padding: 0; color: var(--lavender); cursor: pointer; text-decoration: underline; font-size: inherit; }
@@ -333,9 +333,6 @@ select.f { flex: 0 1 180px; }
 .table th, .table td { text-align: left; padding: var(--s-2) 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
 .table-wrap { overflow-x: auto; }
 
-/* my events */
-.me-grid { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: var(--s-5); }
-
 /* ask from your phone */
 .ask-page { max-width: 640px; padding-block: 28px var(--s-2); display: grid; gap: var(--s-4); }
 .ask-page h1 { font-size: clamp(1.8rem, 7vw, 2.6rem); }
@@ -353,13 +350,14 @@ footer.site .foot-h { font: 500 var(--t-sm)/1.4 var(--font-body), sans-serif; le
 footer.site a { color: var(--fg); text-decoration: none; display: block; padding: 4px 0; font-size: var(--t-sm); }
 footer.site a:hover { text-decoration: underline; }
 footer.site .foot-links a, footer.site .base a { display: inline; padding: 0; color: var(--lavender); }
+footer.site .foot-end { display: inline-flex; align-items: center; gap: var(--s-3) var(--s-5); flex-wrap: wrap; }
 footer.site .base { grid-column: 1 / -1; margin-top: var(--s-4); display: flex; justify-content: space-between; align-items: center; gap: var(--s-3) var(--s-5); flex-wrap: wrap; font-size: var(--t-sm); color: var(--muted); }
 
 .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--white); color: var(--bg); padding: 10px var(--s-4); border-radius: var(--r-sm); z-index: 200; font-size: 0.92rem; max-width: calc(100vw - 32px); }
 @media (prefers-reduced-motion: reduce) { .recording .dot { animation: none; } }
 
 @media (max-width: 860px) {
-  .player, .me-grid { grid-template-columns: minmax(0, 1fr); }
+  .player { grid-template-columns: minmax(0, 1fr); }
   /* header: one 56px row, still pinned: brand, Kickback and Menu; the rest is in the sheet */
   .nav-main, .nav-end .wide { display: none; }
   .nav-sheet { display: block; }
@@ -444,7 +442,6 @@ html { scroll-padding-top: calc(var(--header-h) + var(--s-4)); scroll-padding-bo
 label.btn:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* the calendar's month name is a section heading (h2) with the size it had as an h3 */
 .month-nav h2 { font-size: 1.02rem; line-height: 1.3; }
-.talk-save { margin-top: var(--s-3); }
 
 /* app/loading.tsx: while the next page is on its way. It fades in after a beat, so a quick page never flashes it. */
 .page-loading { min-height: 60vh; animation: page-loading-in 0.2s ease-out 0.15s both; }

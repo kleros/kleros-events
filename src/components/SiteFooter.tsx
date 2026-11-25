@@ -30,8 +30,8 @@ export default function SiteFooter() {
           {SOCIALS.filter((s) => s.label !== "Blog").map((s) => <a key={s.url} href={s.url} target="_blank" rel="noopener">{s.label}{NEW_TAB}</a>)}
         </div>
         <div className="base">
-          <span>Want Kleros at your event? <Link href="/contact">Get in touch</Link> · <Link href="/kickback">Run your own kickback event</Link></span>
-          <ThemeChoice />
+          <span>Want Kleros at your event? <Link href="/contact">Get in touch</Link> · <Link href="/kickback">Run your own kickback event</Link> </span>
+          <span className="foot-end"><Link href="/login" rel="nofollow">Team sign-in</Link><ThemeChoice /></span>
         </div>
       </div>
     </footer>

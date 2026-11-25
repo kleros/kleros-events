@@ -23,22 +23,18 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     sb.from("events").select("*").order("starts_on", { ascending: true }),
     sb.from("material_events").select("event_id"),
     sb.from("meeting_requests").select("*, events(title, slug)").order("created_at", { ascending: false }).limit(200),
-    sb.from("event_counts").select("*"),
     sb.from("luma_sync_log").select("ran_at, checked, updated, added, errors").order("ran_at", { ascending: false }).limit(1),
   ]);
   const { isTeam } = await requireTeam();
   if (!isTeam) return <NotTeam />;
   const { tab: rawTab } = await searchParams;
   const tab: Tab = (TABS as readonly string[]).includes(rawTab ?? "") ? (rawTab as Tab) : "upcoming";
-  const [ev, mats, reqs, counts, sync] = await lists0;
+  const [ev, mats, reqs, sync] = await lists0;
   const events = (ev.data ?? []) as EventRow[];
   // links (0006); before that migration, count by materials.event_id
   const linkRows = mats.error ? (await sb.from("materials").select("event_id")).data : mats.data;
   const matCount: Record<string, number> = {};
   for (const m of (linkRows ?? []) as { event_id: string | null }[]) if (m.event_id) matCount[m.event_id] = (matCount[m.event_id] ?? 0) + 1;
-  const going: Record<string, number> = Object.fromEntries(
-    ((counts.data ?? []) as { event_id: string; going: number }[]).map((c) => [c.event_id, c.going]),
-  );
 
   // private events reach this list for the team and their invited guests (RLS, 0021)
   const pub = events.filter((e) => e.visibility !== "private");
@@ -97,7 +93,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               {needsMaterials.length === 1 ? "1 past event has" : `${needsMaterials.length} past events have`} no talks or files yet.
             </p>
           )}
-          <EventList events={lists[tab]} tab={tab} matCount={matCount} going={going} />
+          <EventList events={lists[tab]} tab={tab} matCount={matCount} />
         </section>
       )}
     </div>
@@ -111,8 +107,8 @@ const EMPTY: Record<Exclude<Tab, "requests">, [string, string]> = {
   private: ["No private events", "Private events are internal: the whole Kleros team sees them, the public does not. Choose Private when adding an event."],
 };
 
-function EventList({ events, tab, matCount, going }: {
-  events: EventRow[]; tab: Exclude<Tab, "requests">; matCount: Record<string, number>; going: Record<string, number>;
+function EventList({ events, tab, matCount }: {
+  events: EventRow[]; tab: Exclude<Tab, "requests">; matCount: Record<string, number>;
 }) {
   if (!events.length) {
     const [title, body] = EMPTY[tab];
@@ -136,7 +132,6 @@ function EventList({ events, tab, matCount, going }: {
             </div>
           </div>
           <div className="desk-stats">
-            {!past && <span><b className="mono">{going[e.id] ?? 0}</b> going</span>}
             {past && mats === 0 && e.status === "published"
               ? <span className="pill ex">No talks or files yet</span>
               : (past || mats > 0) && <Count text={plural(mats, "talk or file", "talks and files")} />}

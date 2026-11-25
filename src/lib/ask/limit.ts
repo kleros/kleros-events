@@ -26,7 +26,7 @@ type Limits = ReturnType<typeof limits>;
 const MESSAGES = {
   burst: "That is a lot of questions in a short time. Try again in a few minutes.",
   daily: (tier: Tier) => tier === "visitor"
-    ? "That is the limit of questions for today without signing in. Sign in to ask more."
+    ? "That is the limit of questions for today. Try again tomorrow."
     : "That is the limit of questions for one account today. Try again tomorrow.",
   overall: "The assistant has answered as many questions as it can today. Try again tomorrow.",
   teamOnly: "The assistant is only open to the Kleros team for now.",

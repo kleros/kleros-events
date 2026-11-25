@@ -77,6 +77,10 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  // the Saved page went with visitor accounts (Nov 2026); old bookmarks land on the talks
+  async redirects() {
+    return [{ source: "/saved", destination: "/talks", permanent: false }];
+  },
 };
 
 export default nextConfig;

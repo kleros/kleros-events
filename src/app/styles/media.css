@@ -5,11 +5,6 @@
 /* ---------- grids: 3 / 2 / 1 columns ---------- */
 .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-7) var(--s-6); }
 .grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-6) var(--s-5); }
-/* /me: the cards sit in the column beside the profile panel, about 770px wide, so as many as fit
-   at 240px or more (two there) instead of three narrow ones. Phones keep the one-column rule below. */
-@media (min-width: 601px) {
-  .me-grid .grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); }
-}
 
 /* ---------- cards: no box; the cover, then a few quiet lines ---------- */
 .card { position: relative; display: grid; grid-template-rows: auto 1fr; gap: var(--s-4); min-width: 0; color: var(--fg); }
@@ -199,36 +194,6 @@ a.link-row:hover .link-s { color: var(--fg); }
   /* the hero's second action is a text link beside the 44px button: give it the same height */
   .hero-actions .text-link { display: inline-flex; align-items: center; min-height: 44px; }
 }
-
-/* ---------- saving and comments (visitors) ---------- */
-/* the bookmark on a talk card sits on the picture's corner; on a link row it ends the row */
-.save-ico { display: inline-grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
-  color: #fff; background: rgb(18 13 26 / 0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); transition: background-color 0.15s, color 0.15s; }
-.save-ico:hover { background: rgb(18 13 26 / 0.8); }
-.save-ico.on { color: #C9B8FF; }
-.save-ico[disabled] { opacity: 0.6; }
-.card.talk > .save-ico { position: absolute; z-index: 4; top: var(--s-2); right: var(--s-2); }
-.links > li:has(> .save-ico) { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--s-3); }
-.links > li > .save-ico { background: none; color: var(--muted); backdrop-filter: none; -webkit-backdrop-filter: none; }
-.links > li > .save-ico:hover { background: var(--sunk); color: var(--fg); }
-.links > li > .save-ico.on { color: var(--accent); }
-.save-wrap { display: inline-flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
-.save-btn.on svg { color: var(--accent); }
-
-.comments { display: grid; gap: var(--s-4); max-width: 720px; }
-.cm-list { list-style: none; margin: 0; padding: 0; display: grid; }
-.cm { padding-block: var(--s-4); border-top: 1px solid var(--line); }
-.cm:first-child { border-top: 0; padding-top: 0; }
-.cm-h { display: flex; align-items: baseline; gap: var(--s-3); font-size: var(--t-sm); }
-.cm-h b { color: var(--white); font-weight: 600; }
-.cm-del { margin-left: auto; color: var(--muted); font-size: var(--t-sm); text-decoration: none; }
-.cm-del:hover { color: var(--rec); text-decoration: underline; }
-.cm-body { margin-top: var(--s-1); white-space: pre-wrap; overflow-wrap: anywhere; }
-.cm-form { display: grid; gap: var(--s-2); }
-.cm-form textarea { width: 100%; min-height: 84px; padding: var(--s-3); border: 1px solid var(--field-line); border-radius: var(--r-sm); background: var(--surface); resize: vertical; }
-
-/* ---------- Saved page ---------- */
-.saved-tabs { margin-bottom: var(--s-6); }
 
 /* ---------- "You might also like" (components/Related.tsx) ---------- */
 .related .rel-group { display: grid; gap: var(--s-4); min-width: 0; }

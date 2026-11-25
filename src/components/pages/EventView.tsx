@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Material } from "@/lib/types";
-import { getEvent, eventCounts, listEvents, listMaterials, type As } from "@/lib/data";
+import { getEvent, listEvents, listMaterials, type As } from "@/lib/data";
 import Related from "@/components/Related";
 import { eventProfile, related } from "@/lib/related";
 import { cleanDescription, excerpt, fmtRange, googleCalendarUrl, isLive, isPast, place, plural, safeHref } from "@/lib/format";
@@ -14,8 +14,7 @@ import Ext from "@/components/Ext";
 import SpeakerNames from "@/components/SpeakerNames";
 import { peopleIn } from "@/lib/people";
 import Linkify from "@/components/Linkify";
-import Comments from "@/components/Comments";
-import AttendanceButtons from "@/components/AttendanceButtons";
+import CalendarButtons from "@/components/CalendarButtons";
 import AskTheSpeaker from "@/components/AskTheSpeaker";
 import MeetingForm from "@/components/MeetingForm";
 import ManageMenu from "@/components/ManageMenu";
@@ -54,10 +53,10 @@ export async function eventMetadata(slug: string, as: As): Promise<Metadata> {
 }
 
 export default async function EventView({ slug, as }: { slug: string; as: As }) {
-  // everything at once: the event itself, who is looking, and the public lists for "You might also like"
-  // (kept for a minute on the server, so usually no trip to the database)
-  const [data, publicCounts, { user, profile }, allEvents, allMaterials] = await Promise.all([
-    getEvent(slug, as), eventCounts(), as === "public" ? NOBODY : currentUser(), listEvents("public"), listMaterials("public"),
+  // everything at once: the event itself, who is looking (the team, or a private event's guests), and the public
+  // lists for "You might also like" (kept for a minute on the server, so usually no trip to the database)
+  const [data, { user, profile }, allEvents, allMaterials] = await Promise.all([
+    getEvent(slug, as), as === "public" ? NOBODY : currentUser(), listEvents("public"), listMaterials("public"),
   ]);
   if (!data) {
     // a private event is only readable once signed in with a Kleros team account or an invited email; the same page shows for
@@ -95,9 +94,6 @@ export default async function EventView({ slug, as }: { slug: string; as: As }) 
   const matLabel = has("Slides") ? "Slides and links" : has("Photos") ? "Photos and posts" : has("Audio") || has("Documents") ? "Files and links" : "Links and posts";
   // recordings saved without slides, for "Attach slides to a recording"
   const bareRecordings = materials.filter((m) => m.kind === "audio" && !!m.file_path);
-  // a private event's totals are only counted for its members
-  const counts = e.visibility === "private" ? await eventCounts("session") : publicCounts;
-  const c = counts[e.id] ?? { going: 0, attended: 0 };
   const products = productsFor(e.topics);
   const booker = team.map((t) => t.team_members).find((m) => m?.calendar_url);
   const time = e.start_time ? `${e.start_time.slice(0, 5)}${e.timezone ? ` ${e.timezone}` : ""}` : "";
@@ -115,10 +111,9 @@ export default async function EventView({ slug, as }: { slug: string; as: As }) 
       { exclude: new Set([e.id, ...materials.map((m) => m.id)]), talks: 3, events: 3, reads: 4 })
     : { talks: [], events: [], reads: [] };
 
-  // one quiet line: whether it is on now, Kleros's part, the format and the turnout.
+  // one quiet line: whether it is on now, Kleros's part and the format.
   // Draft and Private are said in the note under the buttons instead.
   const statusWord = isLive(e) ? <span className="st live">Happening now</span> : e.is_example ? <span className="st ex">Example</span> : null;
-  const turnout = past ? (c.attended > 0 ? `${c.attended} attended` : "") : c.going > 0 ? `${c.going} going` : "";
   // before the event its link is the ticket button; after it, the official site
   const site = past && linkUrl(e.url) ? <a className="text-link" href={linkUrl(e.url)} target="_blank" rel="noopener">{sourceOf(e.url) || "Official site"}<Ext /></a> : null;
   const organiser = e.organizer || site ? (
@@ -138,12 +133,12 @@ export default async function EventView({ slug, as }: { slug: string; as: As }) 
           <span>{fmtRange(e.starts_on, e.ends_on, { weekday: true })}{time && ` · ${time}`}</span>
           {where && <span>{where}</span>}
         </div>
-        <p className="role-line">{statusWord && <>{statusWord} · </>}{ROLE_LABEL[e.kleros_role]} · {e.event_type}{turnout && ` · ${turnout}`}</p>
+        <p className="role-line">{statusWord && <>{statusWord} · </>}{ROLE_LABEL[e.kleros_role]} · {e.event_type}</p>
         {!hasAbout && organiser}
         <div className="ev-actions">
           {past && talks.length > 0 && <a className="btn primary" href="#talks">Watch {plural(talks.length, "talk")}</a>}
           {linkUrl(e.url) && !past && <a className="btn primary" href={linkUrl(e.url)} target="_blank" rel="noopener">{ticketLabel}<Ext /></a>}
-          <AttendanceButtons eventId={e.id} past={past} signedIn={!!user} slug={e.slug} calendarUrl={googleCalendarUrl(e, `${SITE_URL}/events/${e.slug}`)} />
+          {!past && <CalendarButtons slug={e.slug} calendarUrl={googleCalendarUrl(e, `${SITE_URL}/events/${e.slug}`)} />}
           {canEdit && <ManageMenu slug={e.slug} eventId={e.id} isTeam={isTeam} hasBareRecordings={bareRecordings.length > 0} />}
         </div>
         {e.visibility === "private"
@@ -246,12 +241,7 @@ export default async function EventView({ slug, as }: { slug: string; as: As }) 
 
       <section id="ask" className="sec">
         <h2>{past ? "Questions for the speakers" : "Ask the speaker"}</h2>
-        <AskTheSpeaker eventId={e.id} signedIn={!!user} isTeam={canEdit} displayName={profile?.display_name ?? ""} slug={e.slug} past={past} isPrivate={e.visibility === "private"} />
-      </section>
-
-      <section id="comments" className="sec">
-        <h2>Comments</h2>
-        <Comments eventId={e.id} signedIn={!!user} canModerate={canEdit} next={`/events/${e.slug}#comments`} displayName={profile?.display_name} />
+        <AskTheSpeaker eventId={e.id} isTeam={canEdit} slug={e.slug} past={past} isPrivate={e.visibility === "private"} />
       </section>
 
       <Related data={alsoLike} variant="sec" />
