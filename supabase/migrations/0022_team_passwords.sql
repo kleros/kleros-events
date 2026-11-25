@@ -10,7 +10,9 @@
 --   * an unconfirmed account (every self sign-up, and anonymous QR guests) never keeps one;
 --   * when an account becomes confirmed, a password it already had is emptied: that is the
 --     password someone set before the owner proved the address. Only a password written in the
---     same step as the confirmation (the admin's SQL, or the dashboard with Auto Confirm) is kept.
+--     same step as the confirmation (the admin's SQL scripts) is kept. The dashboard's Add user may
+--     create the account first and confirm it after, which drops its password: after a dashboard add,
+--     set the password with the SQL (team-accounts/new-password-for-one-person.sql).
 -- A confirmed user changing their own password (My events) keeps working.
 -- Confirm email must stay ON (Authentication > Sign In / Providers > Email). Re-runnable.
 
