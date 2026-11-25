@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { KLEROS_ABOUT, KLEROS_AI_URL, SOCIALS } from "@/lib/kleros";
+import { KLEROS_AI_URL, KLEROS_TAGLINE, SOCIALS } from "@/lib/kleros";
 import Ext from "./Ext";
 import KlerosLogo from "./KlerosLogo";
 import { ThemeChoice } from "./ThemeToggle";
@@ -12,7 +12,8 @@ export default function SiteFooter() {
       <div className="wrap">
         <div className="about">
           <KlerosLogo className="brand-logo" />
-          <p>{KLEROS_ABOUT}</p>
+          {/* the one-line tagline: the homepage and event pages already give the full story just above */}
+          <p>{KLEROS_TAGLINE}</p>
           <p className="foot-links">
             <a href="https://kleros.io" target="_blank" rel="noopener">Explore Kleros<Ext /></a> · <a href={KLEROS_AI_URL} target="_blank" rel="noopener">Kleros for AI agents<Ext /></a>
           </p>

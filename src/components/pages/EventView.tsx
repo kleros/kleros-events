@@ -239,10 +239,14 @@ export default async function EventView({ slug, as }: { slug: string; as: As }) 
         </section>
       )}
 
-      <section id="ask" className="sec">
-        <h2>{past ? "Questions for the speakers" : "Ask the speaker"}</h2>
-        <AskTheSpeaker eventId={e.id} isTeam={canEdit} slug={e.slug} past={past} isPrivate={e.visibility === "private"} />
-      </section>
+      {/* "Ask the speaker" only where someone speaks: not on a public event Kleros only attends or has a booth at
+          with no talks or agenda yet (the team still sees it, to run questions live) */}
+      {(canEdit || talks.length > 0 || agenda.length > 0 || !["attending", "booth"].includes(e.kleros_role)) && (
+        <section id="ask" className="sec">
+          <h2>{past ? "Questions for the speakers" : "Ask the speaker"}</h2>
+          <AskTheSpeaker eventId={e.id} isTeam={canEdit} slug={e.slug} past={past} isPrivate={e.visibility === "private"} />
+        </section>
+      )}
 
       <Related data={alsoLike} variant="sec" />
 

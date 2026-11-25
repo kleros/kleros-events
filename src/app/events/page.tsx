@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { listEvents, listMaterials, materialCounts } from "@/lib/data";
 import EventBrowser from "@/components/EventBrowser";
 import { isWatchable } from "@/components/MaterialRow";
@@ -17,7 +18,7 @@ export default async function EventsPage() {
       <SetupNotice />
       <header className="page-head">
         <h1>Where to find <em>Kleros</em></h1>
-        <p className="lede">Conferences, meetups and workshops where Kleros hosts, speaks or has a booth, with the talks and slides from each one.</p>
+        <p className="lede">Conferences, meetups and workshops where Kleros hosts, speaks or has a booth, with the talks and slides from each one. Want Kleros at your event? <Link href="/contact">Invite Kleros</Link>.</p>
       </header>
       <EventBrowser events={events} counts={{ talks, materials: items }} initialMonth={todayIso().slice(0, 7)} />
     </div>
