@@ -27,8 +27,8 @@ select u.email, u.created_at, u.confirmation_sent_at,
  where u.email is not null and u.email_confirmed_at is null
  order by u.created_at desc;
 
--- 3. Live sessions that started with a password sign-in. The site never asks for a
---    password, so any row here was made by calling Supabase Auth directly.
+-- 3. Live sessions that started with a password sign-in. Since 0022 the team may sign in with a
+--    password the admin set; a row for anyone else was made by calling Supabase Auth directly.
 --    (Rows disappear when that session signs out or expires.)
 select u.email, p.is_team, p.is_admin, c.authentication_method, c.created_at as signed_in_at
   from auth.mfa_amr_claims c
