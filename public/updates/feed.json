@@ -1020,6 +1020,64 @@
       "material_kind": "social",
       "title": "Entity.ID's Devcon 8 recap: five points on who stands behind an AI agent, from Husam Abboud's sessions with Federico Ast, Wei Wei Ooi, Pree, Fortunato Cinquepalmi and Facundo Trotz (LinkedIn, with an 11-page document)",
       "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7524924132384493568/"
+    },
+    {
+      "id": "2026-11-26-x-2125391620333846614",
+      "kind": "material",
+      "source": "https://x.com/Kleros_io/status/2125391620333846614",
+      "event_slug": "devcon-8-mumbai",
+      "material_kind": "video",
+      "title": "Clip from Facundo Trotz's Devcon 8 lightning talk (5 Nov): private evidence and courts that ask jurors for credentials, and the next step, independently verifiable evidence storage, trusted execution environments and ZK proofs for credentials",
+      "speaker": "Facundo Trotz",
+      "url": "https://x.com/Kleros_io/status/2125391620333846614"
+    },
+    {
+      "id": "2026-11-26-yt-v_l7b_JuVzs",
+      "kind": "material",
+      "source": "https://www.youtube.com/watch?v=v_l7b_JuVzs",
+      "event_slug": "devcon-8-mumbai",
+      "material_kind": "video",
+      "title": "Federico Ast looks back at Devcon 8: fewer exchanges and DeFi projects, more privacy, cryptography and open-source work, and cybersecurity now that AI makes vulnerabilities easier to find (Kleros Live Stream, 25 Nov 2026)",
+      "speaker": "Federico Ast",
+      "url": "https://www.youtube.com/watch?v=v_l7b_JuVzs&t=251s"
+    },
+    {
+      "id": "2026-11-26-yt-v_l7b_JuVzs-t911",
+      "kind": "material",
+      "source": "https://www.youtube.com/watch?v=v_l7b_JuVzs",
+      "event_slug": "legal-governance-hub-devcon-8-2026",
+      "material_kind": "video",
+      "title": "Legal & Governance Hub recap: Kleros Fellowship of Justice members Saravanan Dhandapani on AI agents as arbitrators and how Kleros could fit India's legal system, and Parul Anand on copyright disputes (Kleros Live Stream, 25 Nov 2026)",
+      "speaker": "Federico Ast",
+      "url": "https://www.youtube.com/watch?v=v_l7b_JuVzs&t=911s"
+    },
+    {
+      "id": "2026-11-26-yt-v_l7b_JuVzs-t1067",
+      "kind": "material",
+      "source": "https://www.youtube.com/watch?v=v_l7b_JuVzs",
+      "event_slug": "devcon-8-mumbai",
+      "material_kind": "video",
+      "title": "Fortunato Cinquepalmi reports from the Devcon 8 Agentic Hub: whether an agent should have its own identity or be tied to a human, payment standards, and what happens when an agent fails to deliver on a transaction worth a few cents (Kleros Live Stream, 25 Nov 2026)",
+      "speaker": "Fortunato Cinquepalmi",
+      "url": "https://www.youtube.com/watch?v=v_l7b_JuVzs&t=1067s"
+    },
+    {
+      "id": "2026-11-26-x-2125349499367510263",
+      "kind": "event",
+      "source": "https://x.com/federicoast/status/2125349499367510263",
+      "event": {
+        "slug": "bitcoin-argentina-laboratorio-bitcoin-sociedad-online-2026",
+        "title": "Laboratorio Bitcoin y Sociedad #3: ¿Quién decide en el mundo digital? (ONG Bitcoin Argentina)",
+        "kleros_role": "speaking",
+        "organizer": "ONG Bitcoin Argentina",
+        "event_type": "Online talk / Space",
+        "starts_on": "2026-11-26",
+        "city": "Online",
+        "region": "Online",
+        "venue": "YouTube live stream",
+        "url": "https://www.youtube.com/watch?v=ingd4_PQwfs",
+        "description": "A Spanish-language live stream by ONG Bitcoin Argentina. Federico Ast joins Diego Fernández and other early figures of the crypto ecosystem to ask, nearly 20 years after Satoshi Nakamoto's paper, which of crypto's promises to decentralize the power of banks, governments and big tech companies were kept, which are still outstanding, and what to expect as AI rises."
+      }
     }
   ]
 }
