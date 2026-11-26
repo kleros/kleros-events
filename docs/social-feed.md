@@ -31,6 +31,8 @@ Only confirmed facts get in. Every item must carry a `source`: a public link (a 
 
 - **A new event** needs a public post from Kleros, a team member, or the organiser. The post must name Kleros or the team member, and give the event's name and date. Plans that appear only in Slack ("we might go to…") stay out.
 - **Recordings, slides, photo albums and recap posts** link to an event that is already on the site.
+- **One entry per real talk.** The site is curated, not an archive of every post (Wei Wei, 26 Nov 2026). Leave out short clips, Shorts, teasers and highlight reels cut from a talk or event whose full recording is already on the site, even when they are posted again and again for marketing. A clip gets in only when it is the only recording of that talk, and then once, not one per post.
+- **Live stream segments** (the weekly Kleros Live Stream and similar) stay out when they recap talks that are already on the site. Add one only when it is the only record of what Kleros did at that event.
 - **Slack** is for leads: it points to links and to events that are already public. Private discussion, budgets, internal names and anything marked internal never go in the feed.
 
 When in doubt, the item stays out and the check mentions it in its run summary instead.

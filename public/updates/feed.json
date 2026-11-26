@@ -239,15 +239,6 @@
       }
     },
     {
-      "id": "2026-10-28-yt-f8Y6EduCQR0",
-      "kind": "material",
-      "source": "https://www.youtube.com/shorts/f8Y6EduCQR0",
-      "event_slug": "who-judges-the-machines-buenos-aires-2026",
-      "material_kind": "video",
-      "title": "¿Quién juzga a las máquinas? El evento en dos minutos (two-minute recap, Spanish)",
-      "url": "https://www.youtube.com/shorts/f8Y6EduCQR0"
-    },
-    {
       "id": "2026-10-29-x-2112586513057759449",
       "kind": "material",
       "source": "https://x.com/labs_compass/status/2112586513057759449",
@@ -444,16 +435,6 @@
       "title": "Who Do You Sue? Federico Ast in a fireside at the Legal Summit (4 Nov, 11:00 IST, Legal & Governance Hub)",
       "speaker": "Federico Ast",
       "url": "https://x.com/Kleros_io/status/2116517508584821046"
-    },
-    {
-      "id": "2026-11-02-yt-clmUpyK02M4",
-      "kind": "material",
-      "source": "https://www.youtube.com/shorts/clmUpyK02M4",
-      "event_slug": "who-judges-the-machines-buenos-aires-2026",
-      "material_kind": "video",
-      "title": "Who Judges the Machines? Federico Ast on AI agents and the law (short)",
-      "speaker": "Federico Ast",
-      "url": "https://www.youtube.com/shorts/clmUpyK02M4"
     },
     {
       "id": "2026-11-02-linkedin-7519416491532898305",
@@ -763,16 +744,6 @@
       "url": "https://x.com/Kleros_io/status/2120589969454481574"
     },
     {
-      "id": "2026-11-17-x-2122276785593168070",
-      "kind": "material",
-      "source": "https://x.com/Kleros_io/status/2122276785593168070",
-      "event_slug": "legal-governance-hub-devcon-8-2026",
-      "material_kind": "video",
-      "title": "Clip: Lucía Bocalandro walks through a Lemon case decided by jurors in Kleros Court (from 'Can a Fintech Let Users Judge Its Complaints?', 5 Nov)",
-      "speaker": "Lucía Bocalandro",
-      "url": "https://x.com/Kleros_io/status/2122276785593168070"
-    },
-    {
       "id": "2026-11-17-x-2118702687663374640",
       "kind": "material",
       "source": "https://x.com/Kleros_io/status/2118702687663374640",
@@ -781,46 +752,6 @@
       "title": "Kleros recap of the two Jasmine Stage 4 lightning talks on 5 Nov: Facundo Trotz on the first Kleros pilots in Argentina, then Federico Ast on disputes between people and AI agents (with a clip)",
       "speaker": "Facundo Trotz and Federico Ast",
       "url": "https://x.com/Kleros_io/status/2118702687663374640"
-    },
-    {
-      "id": "2026-11-17-x-2119885709347537288",
-      "kind": "material",
-      "source": "https://x.com/Kleros_io/status/2119885709347537288",
-      "event_slug": "devcon-8-mumbai",
-      "material_kind": "video",
-      "title": "Clip from Facundo Trotz's Devcon 8 lightning talk (5 Nov): consumer complaints in Junín, Argentina",
-      "speaker": "Facundo Trotz",
-      "url": "https://x.com/Kleros_io/status/2119885709347537288"
-    },
-    {
-      "id": "2026-11-17-x-2120214130090979529",
-      "kind": "material",
-      "source": "https://x.com/Kleros_io/status/2120214130090979529",
-      "event_slug": "devcon-8-mumbai",
-      "material_kind": "video",
-      "title": "Clip from Facundo Trotz's Devcon 8 lightning talk (5 Nov): governments want a service, not a protocol, so Kleros started with advisory rulings in cities",
-      "speaker": "Facundo Trotz",
-      "url": "https://x.com/Kleros_io/status/2120214130090979529"
-    },
-    {
-      "id": "2026-11-17-x-2121163964994175337",
-      "kind": "material",
-      "source": "https://x.com/Kleros_io/status/2121163964994175337",
-      "event_slug": "devcon-8-mumbai",
-      "material_kind": "video",
-      "title": "Clip from Facundo Trotz's Devcon 8 lightning talk (5 Nov): why an Argentine consumer protection office sends its cases to a court where only certified lawyers can be drawn as jurors",
-      "speaker": "Facundo Trotz",
-      "url": "https://x.com/Kleros_io/status/2121163964994175337"
-    },
-    {
-      "id": "2026-11-17-x-2120553292472184975",
-      "kind": "material",
-      "source": "https://x.com/Kleros_io/status/2120553292472184975",
-      "event_slug": "devcon-8-mumbai",
-      "material_kind": "video",
-      "title": "Clip from Federico Ast's Devcon 8 lightning talk (5 Nov): does an AI agent have a right to a fair trial?",
-      "speaker": "Federico Ast",
-      "url": "https://x.com/Kleros_io/status/2120553292472184975"
     },
     {
       "id": "2026-11-17-x-2118615110553858508",
@@ -850,26 +781,6 @@
       "title": "Federico Ast's wrap-up of the Devcon 8 week in Mumbai, with four photos",
       "speaker": "Federico Ast",
       "url": "https://x.com/federicoast/status/2120063170744074622"
-    },
-    {
-      "id": "2026-11-17-x-2120374475506204809",
-      "kind": "material",
-      "source": "https://x.com/Kleros_io/status/2120374475506204809",
-      "event_slug": "onchain-legal-summit-devcon-india",
-      "material_kind": "video",
-      "title": "Clip: Federico Ast with Husam Abboud at the Onchain Legal Summit on who decides when deals between AI agents go wrong (the full session is on YouTube)",
-      "speaker": "Federico Ast and Husam Abboud",
-      "url": "https://x.com/Kleros_io/status/2120374475506204809"
-    },
-    {
-      "id": "2026-11-18-x-2122899626973954318",
-      "kind": "material",
-      "source": "https://x.com/Kleros_io/status/2122899626973954318",
-      "event_slug": "devcon-8-mumbai",
-      "material_kind": "video",
-      "title": "Clip from Federico Ast's Devcon 8 lightning talk (5 Nov): when agents hire, pay and deliver for people, someone still has to decide who was right",
-      "speaker": "Federico Ast",
-      "url": "https://x.com/Kleros_io/status/2122899626973954318"
     },
     {
       "id": "2026-11-18-x-2122587032316743687",
@@ -918,16 +829,6 @@
           "Community"
         ]
       }
-    },
-    {
-      "id": "2026-11-19-x-2122993406532038887",
-      "kind": "material",
-      "source": "https://x.com/Kleros_io/status/2122993406532038887",
-      "event_slug": "the-future-is-tradable",
-      "material_kind": "video",
-      "title": "Clip from Clément Lesaege's talk 'From Event Markets to Information Finance' (15 Oct): as AI makes work cheap to produce, reviewing it becomes the expensive part; opportunity markets built with Seer could act as the filter, with Kleros Court deciding disputed results",
-      "speaker": "Clément Lesaege",
-      "url": "https://x.com/Kleros_io/status/2122993406532038887"
     },
     {
       "id": "2026-11-19-x-2122595495763915053",
@@ -1020,36 +921,6 @@
       "material_kind": "social",
       "title": "Entity.ID's Devcon 8 recap: five points on who stands behind an AI agent, from Husam Abboud's sessions with Federico Ast, Wei Wei Ooi, Pree, Fortunato Cinquepalmi and Facundo Trotz (LinkedIn, with an 11-page document)",
       "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7524924132384493568/"
-    },
-    {
-      "id": "2026-11-26-yt-v_l7b_JuVzs",
-      "kind": "material",
-      "source": "https://www.youtube.com/watch?v=v_l7b_JuVzs",
-      "event_slug": "devcon-8-mumbai",
-      "material_kind": "video",
-      "title": "Federico Ast looks back at Devcon 8: fewer exchanges and DeFi projects, more privacy, cryptography and open-source work, and cybersecurity now that AI makes vulnerabilities easier to find (Kleros Live Stream, 25 Nov 2026)",
-      "speaker": "Federico Ast",
-      "url": "https://www.youtube.com/watch?v=v_l7b_JuVzs&t=251s"
-    },
-    {
-      "id": "2026-11-26-yt-v_l7b_JuVzs-t911",
-      "kind": "material",
-      "source": "https://www.youtube.com/watch?v=v_l7b_JuVzs",
-      "event_slug": "legal-governance-hub-devcon-8-2026",
-      "material_kind": "video",
-      "title": "Legal & Governance Hub recap: Kleros Fellowship of Justice members Saravanan Dhandapani on AI agents as arbitrators and how Kleros could fit India's legal system, and Parul Anand on copyright disputes (Kleros Live Stream, 25 Nov 2026)",
-      "speaker": "Federico Ast",
-      "url": "https://www.youtube.com/watch?v=v_l7b_JuVzs&t=911s"
-    },
-    {
-      "id": "2026-11-26-yt-v_l7b_JuVzs-t1067",
-      "kind": "material",
-      "source": "https://www.youtube.com/watch?v=v_l7b_JuVzs",
-      "event_slug": "devcon-8-mumbai",
-      "material_kind": "video",
-      "title": "Fortunato Cinquepalmi reports from the Devcon 8 Agentic Hub: whether an agent should have its own identity or be tied to a human, payment standards, and what happens when an agent fails to deliver on a transaction worth a few cents (Kleros Live Stream, 25 Nov 2026)",
-      "speaker": "Fortunato Cinquepalmi",
-      "url": "https://www.youtube.com/watch?v=v_l7b_JuVzs&t=1067s"
     },
     {
       "id": "2026-11-26-x-2125349499367510263",
